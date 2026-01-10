@@ -1,21 +1,21 @@
 import bindAll from 'lodash.bindall';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { connect } from 'react-redux';
+import {connect} from 'react-redux';
 
-import { setHoveredSprite } from '../reducers/hovered-target';
-import { updateAssetDrag } from '../reducers/asset-drag';
+import {setHoveredSprite} from '../reducers/hovered-target';
+import {updateAssetDrag} from '../reducers/asset-drag';
 import storage from '../lib/storage';
 import VM from 'scratch-vm';
 import getCostumeUrl from '../lib/get-costume-url';
 import DragRecognizer from '../lib/drag-recognizer';
-import { getEventXY } from '../lib/touch-utils';
+import {getEventXY} from '../lib/touch-utils';
 import DeleteConfirmationPrompt from '../components/delete-confirmation-prompt/delete-confirmation-prompt.jsx';
 
 import SpriteSelectorItemComponent from '../components/sprite-selector-item/sprite-selector-item.jsx';
 
 class SpriteSelectorItem extends React.PureComponent {
-    constructor(props) {
+    constructor (props) {
         super(props);
         bindAll(this, [
             'getCostumeData',
@@ -40,22 +40,22 @@ class SpriteSelectorItem extends React.PureComponent {
             onDragEnd: this.handleDragEnd
         });
 
-        this.state = { isDeletePromptOpen: false };
+        this.state = {isDeletePromptOpen: false};
     }
-    componentDidMount() {
+    componentDidMount () {
         document.addEventListener('touchend', this.handleTouchEnd);
     }
-    componentWillUnmount() {
+    componentWillUnmount () {
         document.removeEventListener('touchend', this.handleTouchEnd);
         this.dragRecognizer.reset();
     }
-    getCostumeData() {
+    getCostumeData () {
         if (this.props.costumeURL) return this.props.costumeURL;
         if (!this.props.asset) return null;
 
         return getCostumeUrl(this.props.asset);
     }
-    handleDragEnd() {
+    handleDragEnd () {
         if (this.props.dragging) {
             this.props.onDrag({
                 img: null,
@@ -69,7 +69,7 @@ class SpriteSelectorItem extends React.PureComponent {
             this.noClick = false;
         });
     }
-    handleDrag(currentOffset) {
+    handleDrag (currentOffset) {
         this.props.onDrag({
             img: this.getCostumeData(),
             currentOffset: currentOffset,
@@ -80,57 +80,57 @@ class SpriteSelectorItem extends React.PureComponent {
         });
         this.noClick = true;
     }
-    handleTouchEnd(e) {
-        const { x, y } = getEventXY(e);
-        const { top, left, bottom, right } = this.ref.getBoundingClientRect();
+    handleTouchEnd (e) {
+        const {x, y} = getEventXY(e);
+        const {top, left, bottom, right} = this.ref.getBoundingClientRect();
         if (x >= left && x <= right && y >= top && y <= bottom) {
             this.handleMouseEnter();
         }
     }
-    handleMouseDown(e) {
+    handleMouseDown (e) {
         this.dragRecognizer.start(e);
     }
-    handleClick(e) {
+    handleClick (e) {
         e.preventDefault();
         if (!this.noClick) {
             this.props.onClick(this.props.id);
         }
     }
-    handleDuplicate(e) {
+    handleDuplicate (e) {
         e.stopPropagation(); // To prevent from bubbling back to handleClick
         this.props.onDuplicateButtonClick(this.props.id);
     }
-    handleExport(e) {
+    handleExport (e) {
         e.stopPropagation();
         this.props.onExportButtonClick(this.props.id);
     }
-    handleMouseLeave() {
+    handleMouseLeave () {
         this.props.dispatchSetHoveredSprite(null);
     }
-    handleMouseEnter() {
+    handleMouseEnter () {
         this.props.dispatchSetHoveredSprite(this.props.id);
     }
-    handleDeleteButtonClick(e) {
+    handleDeleteButtonClick (e) {
         e.stopPropagation(); // To prevent from bubbling back to handleClick
 
         if (this.props.withDeleteConfirmation) {
-            this.setState({ isDeletePromptOpen: true });
+            this.setState({isDeletePromptOpen: true});
         } else {
             this.props.onDeleteButtonClick(this.props.id);
         }
     }
-    handleDeleteSpriteModalClose() {
-        this.setState({ isDeletePromptOpen: false });
+    handleDeleteSpriteModalClose () {
+        this.setState({isDeletePromptOpen: false});
     }
-    handleDeleteSpriteModalConfirm() {
+    handleDeleteSpriteModalConfirm () {
         this.props.onDeleteButtonClick(this.props.id);
-        this.setState({ isDeletePromptOpen: false });
+        this.setState({isDeletePromptOpen: false});
     }
-    setRef(component) {
+    setRef (component) {
         // Access the DOM node using .elem because it is going through ContextMenuTrigger
         this.ref = component && component.elem;
     }
-    render() {
+    render () {
         const {
             /* eslint-disable no-unused-vars */
             asset,
@@ -196,7 +196,7 @@ SpriteSelectorItem.propTypes = {
     vm: PropTypes.instanceOf(VM).isRequired
 };
 
-const mapStateToProps = (state, { id }) => ({
+const mapStateToProps = (state, {id}) => ({
     dragging: state.scratchGui.assetDrag.dragging,
     receivedBlocks: state.scratchGui.hoveredTarget.receivedBlocks &&
         state.scratchGui.hoveredTarget.sprite === id,

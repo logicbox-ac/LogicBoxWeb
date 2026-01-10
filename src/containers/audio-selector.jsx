@@ -2,14 +2,14 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import bindAll from 'lodash.bindall';
 import AudioSelectorComponent from '../components/audio-trimmer/audio-selector.jsx';
-import { getEventXY } from '../lib/touch-utils';
+import {getEventXY} from '../lib/touch-utils';
 import DragRecognizer from '../lib/drag-recognizer';
 
 const MIN_LENGTH = 0.01;
 const MIN_DURATION = 500;
 
 class AudioSelector extends React.Component {
-    constructor(props) {
+    constructor (props) {
         super(props);
         bindAll(this, [
             'handleNewSelectionMouseDown',
@@ -42,19 +42,19 @@ class AudioSelector extends React.Component {
             distanceThreshold: 0
         });
     }
-    UNSAFE_componentWillReceiveProps(newProps) {
-        const { trimStart, trimEnd } = this.props;
+    UNSAFE_componentWillReceiveProps (newProps) {
+        const {trimStart, trimEnd} = this.props;
         if (newProps.trimStart === trimStart && newProps.trimEnd === trimEnd) return;
         this.setState({
             trimStart: newProps.trimStart,
             trimEnd: newProps.trimEnd
         });
     }
-    clearSelection() {
+    clearSelection () {
         this.props.onSetTrim(null, null);
     }
-    handleNewSelectionMouseDown(e) {
-        const { width, left } = this.containerElement.getBoundingClientRect();
+    handleNewSelectionMouseDown (e) {
+        const {width, left} = this.containerElement.getBoundingClientRect();
         this.initialTrimEnd = (getEventXY(e).x - left) / width;
         this.initialTrimStart = this.initialTrimEnd;
         this.props.onSetTrim(this.initialTrimStart, this.initialTrimEnd);
@@ -66,7 +66,7 @@ class AudioSelector extends React.Component {
 
         e.preventDefault();
     }
-    handleTrimStartMouseMove(currentOffset, initialOffset) {
+    handleTrimStartMouseMove (currentOffset, initialOffset) {
         const dx = (currentOffset.x - initialOffset.x) / this.containerSize;
         const newTrim = Math.max(0, Math.min(1, this.initialTrimStart + dx));
         if (newTrim > this.initialTrimEnd) {
@@ -81,7 +81,7 @@ class AudioSelector extends React.Component {
             });
         }
     }
-    handleTrimEndMouseMove(currentOffset, initialOffset) {
+    handleTrimEndMouseMove (currentOffset, initialOffset) {
         const dx = (currentOffset.x - initialOffset.x) / this.containerSize;
         const newTrim = Math.min(1, Math.max(0, this.initialTrimEnd + dx));
         if (newTrim < this.initialTrimStart) {
@@ -96,10 +96,10 @@ class AudioSelector extends React.Component {
             });
         }
     }
-    handleTrimStartMouseUp() {
+    handleTrimStartMouseUp () {
         this.props.onSetTrim(this.state.trimStart, this.state.trimEnd);
     }
-    handleTrimEndMouseUp() {
+    handleTrimEndMouseUp () {
         // If the selection was made quickly (tooFast) and is small (tooShort),
         // deselect instead. This allows click-to-deselect even if you drag
         // a little bit by accident. It also allows very quickly making a
@@ -112,7 +112,7 @@ class AudioSelector extends React.Component {
             this.props.onSetTrim(this.state.trimStart, this.state.trimEnd);
         }
     }
-    handleTrimStartMouseDown(e) {
+    handleTrimStartMouseDown (e) {
         this.containerSize = this.containerElement.getBoundingClientRect().width;
         this.trimStartDragRecognizer.start(e);
         this.initialTrimStart = this.props.trimStart;
@@ -120,7 +120,7 @@ class AudioSelector extends React.Component {
         e.stopPropagation();
         e.preventDefault();
     }
-    handleTrimEndMouseDown(e) {
+    handleTrimEndMouseDown (e) {
         this.containerSize = this.containerElement.getBoundingClientRect().width;
         this.trimEndDragRecognizer.start(e);
         this.initialTrimEnd = this.props.trimEnd;
@@ -128,10 +128,10 @@ class AudioSelector extends React.Component {
         e.stopPropagation();
         e.preventDefault();
     }
-    storeRef(el) {
+    storeRef (el) {
         this.containerElement = el;
     }
-    render() {
+    render () {
         return (
             <AudioSelectorComponent
                 containerRef={this.storeRef}

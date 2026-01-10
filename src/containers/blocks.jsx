@@ -14,21 +14,21 @@ import ExtensionLibrary from './extension-library.jsx';
 import extensionData from '../lib/libraries/extensions/index.jsx';
 import CustomProcedures from './custom-procedures.jsx';
 import errorBoundaryHOC from '../lib/error-boundary-hoc.jsx';
-import { BLOCKS_DEFAULT_SCALE, STAGE_DISPLAY_SIZES } from '../lib/layout-constants';
+import {BLOCKS_DEFAULT_SCALE, STAGE_DISPLAY_SIZES} from '../lib/layout-constants';
 import DropAreaHOC from '../lib/drop-area-hoc.jsx';
 import DragConstants from '../lib/drag-constants';
 import defineDynamicBlock from '../lib/define-dynamic-block';
-import { DEFAULT_THEME, getColorsForTheme, themeMap } from '../lib/themes';
-import { injectExtensionBlockTheme, injectExtensionCategoryTheme } from '../lib/themes/blockHelpers';
+import {DEFAULT_THEME, getColorsForTheme, themeMap} from '../lib/themes';
+import {injectExtensionBlockTheme, injectExtensionCategoryTheme} from '../lib/themes/blockHelpers';
 
-import { connect } from 'react-redux';
-import { updateToolbox } from '../reducers/toolbox';
-import { activateColorPicker } from '../reducers/color-picker';
-import { closeExtensionLibrary, openSoundRecorder, openConnectionModal } from '../reducers/modals';
-import { activateCustomProcedures, deactivateCustomProcedures } from '../reducers/custom-procedures';
-import { setConnectionModalExtensionId } from '../reducers/connection-modal';
-import { updateMetrics } from '../reducers/workspace-metrics';
-import { isTimeTravel2020 } from '../reducers/time-travel';
+import {connect} from 'react-redux';
+import {updateToolbox} from '../reducers/toolbox';
+import {activateColorPicker} from '../reducers/color-picker';
+import {closeExtensionLibrary, openSoundRecorder, openConnectionModal} from '../reducers/modals';
+import {activateCustomProcedures, deactivateCustomProcedures} from '../reducers/custom-procedures';
+import {setConnectionModalExtensionId} from '../reducers/connection-modal';
+import {updateMetrics} from '../reducers/workspace-metrics';
+import {isTimeTravel2020} from '../reducers/time-travel';
 
 import {
     activateTab,
@@ -49,7 +49,7 @@ const DroppableBlocks = DropAreaHOC([
 ])(BlocksComponent);
 
 class Blocks extends React.Component {
-    constructor(props) {
+    constructor (props) {
         super(props);
         this.ScratchBlocks = VMScratchBlocks(props.vm, false);
         bindAll(this, [
@@ -93,7 +93,7 @@ class Blocks extends React.Component {
         this.toolboxUpdateQueue = [];
         bindAll(this, ['handleToggleToolbox']);
     }
-    componentDidMount() {
+    componentDidMount () {
         this.ScratchBlocks = VMScratchBlocks(this.props.vm, this.props.useCatBlocks);
         this.ScratchBlocks.prompt = this.handlePromptStart;
         this.ScratchBlocks.statusButtonCallback = this.handleConnectionModalStart;
@@ -106,7 +106,7 @@ class Blocks extends React.Component {
         const workspaceConfig = defaultsDeep({},
             Blocks.defaultOptions,
             this.props.options,
-            { rtl: this.props.isRtl, toolbox: this.props.toolboxXML, colours: getColorsForTheme(this.props.theme) }
+            {rtl: this.props.isRtl, toolbox: this.props.toolboxXML, colours: getColorsForTheme(this.props.theme)}
         );
         this.workspace = this.ScratchBlocks.inject(this.blocks, workspaceConfig);
 
@@ -167,7 +167,7 @@ class Blocks extends React.Component {
             this.setLocale();
         }
     }
-    shouldComponentUpdate(nextProps, nextState) {
+    shouldComponentUpdate (nextProps, nextState) {
         const shouldUpdate = (
             this.state.prompt !== nextState.prompt ||
             this.state.isToolboxCollapsed !== nextState.isToolboxCollapsed ||
@@ -180,11 +180,11 @@ class Blocks extends React.Component {
             this.props.anyModalVisible !== nextProps.anyModalVisible ||
             this.props.stageSize !== nextProps.stageSize
         );
-        console.log('[Blocks] shouldComponentUpdate:', shouldUpdate, 
+        console.log('[Blocks] shouldComponentUpdate:', shouldUpdate,
             'isFlyoutVisible:', this.state.isFlyoutVisible, '->', nextState.isFlyoutVisible);
         return shouldUpdate;
     }
-    componentDidUpdate(prevProps, prevState) {
+    componentDidUpdate (prevProps, prevState) {
         // resize workspace if toolbox collapsed state changed
         if (this.state.isToolboxCollapsed !== prevState.isToolboxCollapsed) {
             this.workspace.resize();
@@ -227,7 +227,7 @@ class Blocks extends React.Component {
             this.workspace.setVisible(false);
         }
     }
-    componentWillUnmount() {
+    componentWillUnmount () {
         this.detachVM();
         this.workspace.dispose();
         clearTimeout(this.toolboxUpdateTimeout);
@@ -235,10 +235,10 @@ class Blocks extends React.Component {
         // Clear the flyout blocks so that they can be recreated on mount.
         this.props.vm.clearFlyoutBlocks();
     }
-    handleToggleToolbox() {
+    handleToggleToolbox () {
         // No-op for now as we removed the toggle logic
     }
-    handleCloseFlyout() {
+    handleCloseFlyout () {
         console.log('[handleCloseFlyout] called');
         const flyout = this.workspace.getFlyout();
         if (flyout && flyout.isVisible()) {
@@ -260,13 +260,13 @@ class Blocks extends React.Component {
             }
         }
     }
-    requestToolboxUpdate() {
+    requestToolboxUpdate () {
         clearTimeout(this.toolboxUpdateTimeout);
         this.toolboxUpdateTimeout = setTimeout(() => {
             this.updateToolbox();
         }, 0);
     }
-    setLocale() {
+    setLocale () {
         this.ScratchBlocks.ScratchMsgs.setLocale(this.props.locale);
         this.props.vm.setLocale(this.props.locale, this.props.messages)
             .then(() => {
@@ -279,7 +279,7 @@ class Blocks extends React.Component {
             });
     }
 
-    updateToolbox() {
+    updateToolbox () {
         this.toolboxUpdateTimeout = false;
 
         const categoryId = this.workspace.toolbox_.getSelectedCategoryId();
@@ -305,7 +305,7 @@ class Blocks extends React.Component {
         queue.forEach(fn => fn());
     }
 
-    withToolboxUpdates(fn) {
+    withToolboxUpdates (fn) {
         // if there is a queued toolbox update, we need to wait
         if (this.toolboxUpdateTimeout) {
             this.toolboxUpdateQueue.push(fn);
@@ -314,7 +314,7 @@ class Blocks extends React.Component {
         }
     }
 
-    attachVM() {
+    attachVM () {
         this.workspace.addChangeListener(this.props.vm.blockListener);
         this.flyoutWorkspace = this.workspace
             .getFlyout()
@@ -346,7 +346,7 @@ class Blocks extends React.Component {
             showTimestamp = Date.now();
             originalShow.call(this, xmlList);
             console.log('[FLYOUT] Setting isFlyoutVisible to TRUE');
-            self.setState({ isFlyoutVisible: true }, () => {
+            self.setState({isFlyoutVisible: true}, () => {
                 console.log('[FLYOUT] setState callback - isFlyoutVisible is now:', self.state.isFlyoutVisible);
             });
         };
@@ -360,7 +360,7 @@ class Blocks extends React.Component {
             console.log('[FLYOUT] hide() called, current state:', self.state.isFlyoutVisible);
             originalHide.call(this);
             console.log('[FLYOUT] Setting isFlyoutVisible to FALSE');
-            self.setState({ isFlyoutVisible: false }, () => {
+            self.setState({isFlyoutVisible: false}, () => {
                 console.log('[FLYOUT] setState callback - isFlyoutVisible is now:', self.state.isFlyoutVisible);
             });
             // On mobile, resize workspace to take full width after flyout hides
@@ -375,21 +375,21 @@ class Blocks extends React.Component {
         // The block drag/create listeners below handle closing the flyout
 
         // On mobile, close flyout when a block is created or dragged
-        this.workspace.addChangeListener((event) => {
+        this.workspace.addChangeListener(event => {
             if (event.type === this.ScratchBlocks.Events.BLOCK_CREATE) {
                 if (window.innerWidth <= 767) {
-                    const flyout = this.workspace.getFlyout();
-                    if (flyout && flyout.isVisible()) {
-                        flyout.hide();
+                    const currentFlyout = this.workspace.getFlyout();
+                    if (currentFlyout && currentFlyout.isVisible()) {
+                        currentFlyout.hide();
                     }
                 }
             }
             
             if (event.type === this.ScratchBlocks.Events.BLOCK_DRAG) {
                 if (event.isStart && window.innerWidth <= 767) {
-                    const flyout = this.workspace.getFlyout();
-                    if (flyout && flyout.isVisible()) {
-                        flyout.hide();
+                    const currentFlyout = this.workspace.getFlyout();
+                    if (currentFlyout && currentFlyout.isVisible()) {
+                        currentFlyout.hide();
                     }
                 }
             }
@@ -399,12 +399,12 @@ class Blocks extends React.Component {
         if (window.innerWidth <= 767) {
             const workspaceSvg = this.workspace.getParentSvg();
             if (workspaceSvg) {
-                workspaceSvg.addEventListener('pointerdown', (e) => {
-                    const flyout = this.workspace.getFlyout();
-                    if (!flyout || !flyout.isVisible()) return;
+                workspaceSvg.addEventListener('pointerdown', e => {
+                    const currentFlyout = this.workspace.getFlyout();
+                    if (!currentFlyout || !currentFlyout.isVisible()) return;
                     
                     // Get the flyout and toolbox elements
-                    const flyoutSvg = flyout.svgGroup_;
+                    const flyoutSvg = currentFlyout.svgGroup_;
                     const toolbox = this.workspace.getToolbox();
                     const toolboxDiv = toolbox ? toolbox.HtmlDiv : null;
                     
@@ -437,100 +437,100 @@ class Blocks extends React.Component {
         this.props.vm.removeListener('PERIPHERAL_DISCONNECTED', this.handleStatusButtonUpdate);
     }
 
-updateToolboxBlockValue(id, value) {
-    this.withToolboxUpdates(() => {
-        const block = this.workspace
-            .getFlyout()
-            .getWorkspace()
-            .getBlockById(id);
-        if (block) {
-            block.inputList[0].fieldRow[0].setValue(value);
-        }
-    });
-}
-
-onTargetsUpdate() {
-    if (this.props.vm.editingTarget && this.workspace.getFlyout()) {
-        ['glide', 'move', 'set'].forEach(prefix => {
-            this.updateToolboxBlockValue(`${prefix}x`, Math.round(this.props.vm.editingTarget.x).toString());
-            this.updateToolboxBlockValue(`${prefix}y`, Math.round(this.props.vm.editingTarget.y).toString());
+    updateToolboxBlockValue (id, value) {
+        this.withToolboxUpdates(() => {
+            const block = this.workspace
+                .getFlyout()
+                .getWorkspace()
+                .getBlockById(id);
+            if (block) {
+                block.inputList[0].fieldRow[0].setValue(value);
+            }
         });
     }
-}
-onWorkspaceMetricsChange() {
-    const target = this.props.vm.editingTarget;
-    if (target && target.id) {
+
+    onTargetsUpdate () {
+        if (this.props.vm.editingTarget && this.workspace.getFlyout()) {
+            ['glide', 'move', 'set'].forEach(prefix => {
+                this.updateToolboxBlockValue(`${prefix}x`, Math.round(this.props.vm.editingTarget.x).toString());
+                this.updateToolboxBlockValue(`${prefix}y`, Math.round(this.props.vm.editingTarget.y).toString());
+            });
+        }
+    }
+    onWorkspaceMetricsChange () {
+        const target = this.props.vm.editingTarget;
+        if (target && target.id) {
         // Dispatch updateMetrics later, since onWorkspaceMetricsChange may be (very indirectly)
         // called from a reducer, i.e. when you create a custom procedure.
         // TODO: Is this a vehement hack?
-        setTimeout(() => {
-            this.props.updateMetrics({
-                targetID: target.id,
-                scrollX: this.workspace.scrollX,
-                scrollY: this.workspace.scrollY,
-                scale: this.workspace.scale
-            });
-        }, 0);
+            setTimeout(() => {
+                this.props.updateMetrics({
+                    targetID: target.id,
+                    scrollX: this.workspace.scrollX,
+                    scrollY: this.workspace.scrollY,
+                    scale: this.workspace.scale
+                });
+            }, 0);
+        }
     }
-}
-onScriptGlowOn(data) {
-    this.workspace.glowStack(data.id, true);
-}
-onScriptGlowOff(data) {
-    this.workspace.glowStack(data.id, false);
-}
-onBlockGlowOn(data) {
-    this.workspace.glowBlock(data.id, true);
-}
-onBlockGlowOff(data) {
-    this.workspace.glowBlock(data.id, false);
-}
-onVisualReport(data) {
-    this.workspace.reportValue(data.id, data.value);
-}
-getToolboxXML() {
+    onScriptGlowOn (data) {
+        this.workspace.glowStack(data.id, true);
+    }
+    onScriptGlowOff (data) {
+        this.workspace.glowStack(data.id, false);
+    }
+    onBlockGlowOn (data) {
+        this.workspace.glowBlock(data.id, true);
+    }
+    onBlockGlowOff (data) {
+        this.workspace.glowBlock(data.id, false);
+    }
+    onVisualReport (data) {
+        this.workspace.reportValue(data.id, data.value);
+    }
+    getToolboxXML () {
     // Use try/catch because this requires digging pretty deep into the VM
     // Code inside intentionally ignores several error situations (no stage, etc.)
     // Because they would get caught by this try/catch
-    try {
-        let { editingTarget: target, runtime } = this.props.vm;
-        const stage = runtime.getTargetForStage();
-        if (!target) target = stage; // If no editingTarget, use the stage
+        try {
+            let {editingTarget: target, runtime} = this.props.vm;
+            const stage = runtime.getTargetForStage();
+            if (!target) target = stage; // If no editingTarget, use the stage
 
-        const stageCostumes = stage.getCostumes();
-        const targetCostumes = target.getCostumes();
-        const targetSounds = target.getSounds();
-        const dynamicBlocksXML = injectExtensionCategoryTheme(
-            this.props.vm.runtime.getBlocksXML(target),
-            this.props.theme
-        );
-        return makeToolboxXML(false, target.isStage, target.id, dynamicBlocksXML,
-            targetCostumes[targetCostumes.length - 1].name,
-            stageCostumes[stageCostumes.length - 1].name,
-            targetSounds.length > 0 ? targetSounds[targetSounds.length - 1].name : '',
-            getColorsForTheme(this.props.theme)
-        );
-    } catch {
-        return null;
+            const stageCostumes = stage.getCostumes();
+            const targetCostumes = target.getCostumes();
+            const targetSounds = target.getSounds();
+            const dynamicBlocksXML = injectExtensionCategoryTheme(
+                this.props.vm.runtime.getBlocksXML(target),
+                this.props.theme
+            );
+            return makeToolboxXML(false, target.isStage, target.id, dynamicBlocksXML,
+                targetCostumes[targetCostumes.length - 1].name,
+                stageCostumes[stageCostumes.length - 1].name,
+                targetSounds.length > 0 ? targetSounds[targetSounds.length - 1].name : '',
+                getColorsForTheme(this.props.theme)
+            );
+        } catch {
+            return null;
+        }
     }
-}
-onWorkspaceUpdate(data) {
+    onWorkspaceUpdate (data) {
     // When we change sprites, update the toolbox to have the new sprite's blocks
-    const toolboxXML = this.getToolboxXML();
-    if (toolboxXML) {
-        this.props.updateToolboxState(toolboxXML);
-    }
+        const toolboxXML = this.getToolboxXML();
+        if (toolboxXML) {
+            this.props.updateToolboxState(toolboxXML);
+        }
 
-    if (this.props.vm.editingTarget && !this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id]) {
-        this.onWorkspaceMetricsChange();
-    }
+        if (this.props.vm.editingTarget && !this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id]) {
+            this.onWorkspaceMetricsChange();
+        }
 
-    // Remove and reattach the workspace listener (but allow flyout events)
-    this.workspace.removeChangeListener(this.props.vm.blockListener);
-    const dom = this.ScratchBlocks.Xml.textToDom(data.xml);
-    try {
-        this.ScratchBlocks.Xml.clearWorkspaceAndLoadFromXml(dom, this.workspace);
-    } catch (error) {
+        // Remove and reattach the workspace listener (but allow flyout events)
+        this.workspace.removeChangeListener(this.props.vm.blockListener);
+        const dom = this.ScratchBlocks.Xml.textToDom(data.xml);
+        try {
+            this.ScratchBlocks.Xml.clearWorkspaceAndLoadFromXml(dom, this.workspace);
+        } catch (error) {
         // The workspace is likely incomplete. What did update should be
         // functional.
         //
@@ -540,223 +540,223 @@ onWorkspaceUpdate(data) {
         // incomplete. Throwing the error would keep things like setting the
         // correct editing target from happening which can interfere with
         // some blocks and processes in the vm.
-        if (error.message) {
-            error.message = `Workspace Update Error: ${error.message}`;
+            if (error.message) {
+                error.message = `Workspace Update Error: ${error.message}`;
+            }
+            log.error(error);
         }
-        log.error(error);
-    }
-    this.workspace.addChangeListener(this.props.vm.blockListener);
+        this.workspace.addChangeListener(this.props.vm.blockListener);
 
-    if (this.props.vm.editingTarget && this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id]) {
-        const { scrollX, scrollY, scale } = this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id];
-        this.workspace.scrollX = scrollX;
-        this.workspace.scrollY = scrollY;
-        this.workspace.scale = scale;
-        this.workspace.resize();
-    }
+        if (this.props.vm.editingTarget && this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id]) {
+            const {scrollX, scrollY, scale} = this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id];
+            this.workspace.scrollX = scrollX;
+            this.workspace.scrollY = scrollY;
+            this.workspace.scale = scale;
+            this.workspace.resize();
+        }
 
-    // Clear the undo state of the workspace since this is a
-    // fresh workspace and we don't want any changes made to another sprites
-    // workspace to be 'undone' here.
-    this.workspace.clearUndo();
-}
-handleMonitorsUpdate(monitors) {
+        // Clear the undo state of the workspace since this is a
+        // fresh workspace and we don't want any changes made to another sprites
+        // workspace to be 'undone' here.
+        this.workspace.clearUndo();
+    }
+    handleMonitorsUpdate (monitors) {
     // Update the checkboxes of the relevant monitors.
     // TODO: What about monitors that have fields? See todo in scratch-vm blocks.js changeBlock:
     // https://github.com/LLK/scratch-vm/blob/2373f9483edaf705f11d62662f7bb2a57fbb5e28/src/engine/blocks.js#L569-L576
-    const flyout = this.workspace.getFlyout();
-    for (const monitor of monitors.values()) {
-        const blockId = monitor.get('id');
-        const isVisible = monitor.get('visible');
-        flyout.setCheckboxState(blockId, isVisible);
-        // We also need to update the isMonitored flag for this block on the VM, since it's used to determine
-        // whether the checkbox is activated or not when the checkbox is re-displayed (e.g. local variables/blocks
-        // when switching between sprites).
-        const block = this.props.vm.runtime.monitorBlocks.getBlock(blockId);
-        if (block) {
-            block.isMonitored = isVisible;
+        const flyout = this.workspace.getFlyout();
+        for (const monitor of monitors.values()) {
+            const blockId = monitor.get('id');
+            const isVisible = monitor.get('visible');
+            flyout.setCheckboxState(blockId, isVisible);
+            // We also need to update the isMonitored flag for this block on the VM, since it's used to determine
+            // whether the checkbox is activated or not when the checkbox is re-displayed (e.g. local variables/blocks
+            // when switching between sprites).
+            const block = this.props.vm.runtime.monitorBlocks.getBlock(blockId);
+            if (block) {
+                block.isMonitored = isVisible;
+            }
         }
     }
-}
-handleExtensionAdded(categoryInfo) {
-    const defineBlocks = blockInfoArray => {
-        if (blockInfoArray && blockInfoArray.length > 0) {
-            const staticBlocksJson = [];
-            const dynamicBlocksInfo = [];
-            blockInfoArray.forEach(blockInfo => {
-                if (blockInfo.info && blockInfo.info.isDynamic) {
-                    dynamicBlocksInfo.push(blockInfo);
-                } else if (blockInfo.json) {
-                    staticBlocksJson.push(injectExtensionBlockTheme(blockInfo.json, this.props.theme));
-                }
+    handleExtensionAdded (categoryInfo) {
+        const defineBlocks = blockInfoArray => {
+            if (blockInfoArray && blockInfoArray.length > 0) {
+                const staticBlocksJson = [];
+                const dynamicBlocksInfo = [];
+                blockInfoArray.forEach(blockInfo => {
+                    if (blockInfo.info && blockInfo.info.isDynamic) {
+                        dynamicBlocksInfo.push(blockInfo);
+                    } else if (blockInfo.json) {
+                        staticBlocksJson.push(injectExtensionBlockTheme(blockInfo.json, this.props.theme));
+                    }
                 // otherwise it's a non-block entry such as '---'
-            });
+                });
 
-            this.ScratchBlocks.defineBlocksWithJsonArray(staticBlocksJson);
-            dynamicBlocksInfo.forEach(blockInfo => {
+                this.ScratchBlocks.defineBlocksWithJsonArray(staticBlocksJson);
+                dynamicBlocksInfo.forEach(blockInfo => {
                 // This is creating the block factory / constructor -- NOT a specific instance of the block.
                 // The factory should only know static info about the block: the category info and the opcode.
                 // Anything else will be picked up from the XML attached to the block instance.
-                const extendedOpcode = `${categoryInfo.id}_${blockInfo.info.opcode}`;
-                const blockDefinition =
+                    const extendedOpcode = `${categoryInfo.id}_${blockInfo.info.opcode}`;
+                    const blockDefinition =
                     defineDynamicBlock(this.ScratchBlocks, categoryInfo, blockInfo, extendedOpcode);
-                this.ScratchBlocks.Blocks[extendedOpcode] = blockDefinition;
-            });
+                    this.ScratchBlocks.Blocks[extendedOpcode] = blockDefinition;
+                });
+            }
+        };
+
+        // scratch-blocks implements a menu or custom field as a special kind of block ("shadow" block)
+        // these actually define blocks and MUST run regardless of the UI state
+        defineBlocks(
+            Object.getOwnPropertyNames(categoryInfo.customFieldTypes)
+                .map(fieldTypeName => categoryInfo.customFieldTypes[fieldTypeName].scratchBlocksDefinition));
+        defineBlocks(categoryInfo.menus);
+        defineBlocks(categoryInfo.blocks);
+
+        // Update the toolbox with new blocks if possible
+        const toolboxXML = this.getToolboxXML();
+        if (toolboxXML) {
+            this.props.updateToolboxState(toolboxXML);
         }
-    };
-
-    // scratch-blocks implements a menu or custom field as a special kind of block ("shadow" block)
-    // these actually define blocks and MUST run regardless of the UI state
-    defineBlocks(
-        Object.getOwnPropertyNames(categoryInfo.customFieldTypes)
-            .map(fieldTypeName => categoryInfo.customFieldTypes[fieldTypeName].scratchBlocksDefinition));
-    defineBlocks(categoryInfo.menus);
-    defineBlocks(categoryInfo.blocks);
-
-    // Update the toolbox with new blocks if possible
-    const toolboxXML = this.getToolboxXML();
-    if (toolboxXML) {
-        this.props.updateToolboxState(toolboxXML);
     }
-}
-handleBlocksInfoUpdate(categoryInfo) {
+    handleBlocksInfoUpdate (categoryInfo) {
     // @todo Later we should replace this to avoid all the warnings from redefining blocks.
-    this.handleExtensionAdded(categoryInfo);
-}
-handleCategorySelected(categoryId) {
-    const extension = extensionData.find(ext => ext.extensionId === categoryId);
-    if (extension && extension.launchPeripheralConnectionFlow) {
-        this.handleConnectionModalStart(categoryId);
+        this.handleExtensionAdded(categoryInfo);
     }
+    handleCategorySelected (categoryId) {
+        const extension = extensionData.find(ext => ext.extensionId === categoryId);
+        if (extension && extension.launchPeripheralConnectionFlow) {
+            this.handleConnectionModalStart(categoryId);
+        }
 
-    this.withToolboxUpdates(() => {
-        this.workspace.toolbox_.setSelectedCategoryById(categoryId);
-    });
-}
-setBlocks(blocks) {
-    this.blocks = blocks;
-}
-handlePromptStart(message, defaultValue, callback, optTitle, optVarType) {
-    const p = { prompt: { callback, message, defaultValue } };
-    p.prompt.title = optTitle ? optTitle :
-        this.ScratchBlocks.Msg.VARIABLE_MODAL_TITLE;
-    p.prompt.varType = typeof optVarType === 'string' ?
-        optVarType : this.ScratchBlocks.SCALAR_VARIABLE_TYPE;
-    p.prompt.showVariableOptions = // This flag means that we should show variable/list options about scope
+        this.withToolboxUpdates(() => {
+            this.workspace.toolbox_.setSelectedCategoryById(categoryId);
+        });
+    }
+    setBlocks (blocks) {
+        this.blocks = blocks;
+    }
+    handlePromptStart (message, defaultValue, callback, optTitle, optVarType) {
+        const p = {prompt: {callback, message, defaultValue}};
+        p.prompt.title = optTitle ? optTitle :
+            this.ScratchBlocks.Msg.VARIABLE_MODAL_TITLE;
+        p.prompt.varType = typeof optVarType === 'string' ?
+            optVarType : this.ScratchBlocks.SCALAR_VARIABLE_TYPE;
+        p.prompt.showVariableOptions = // This flag means that we should show variable/list options about scope
         optVarType !== this.ScratchBlocks.BROADCAST_MESSAGE_VARIABLE_TYPE &&
         p.prompt.title !== this.ScratchBlocks.Msg.RENAME_VARIABLE_MODAL_TITLE &&
         p.prompt.title !== this.ScratchBlocks.Msg.RENAME_LIST_MODAL_TITLE;
-    p.prompt.showCloudOption = (optVarType === this.ScratchBlocks.SCALAR_VARIABLE_TYPE) && this.props.canUseCloud;
-    this.setState(p);
-}
-handleConnectionModalStart(extensionId) {
-    this.props.onOpenConnectionModal(extensionId);
-}
-handleStatusButtonUpdate() {
-    this.ScratchBlocks.refreshStatusButtons(this.workspace);
-}
-handleOpenSoundRecorder() {
-    this.props.onOpenSoundRecorder();
-}
+        p.prompt.showCloudOption = (optVarType === this.ScratchBlocks.SCALAR_VARIABLE_TYPE) && this.props.canUseCloud;
+        this.setState(p);
+    }
+    handleConnectionModalStart (extensionId) {
+        this.props.onOpenConnectionModal(extensionId);
+    }
+    handleStatusButtonUpdate () {
+        this.ScratchBlocks.refreshStatusButtons(this.workspace);
+    }
+    handleOpenSoundRecorder () {
+        this.props.onOpenSoundRecorder();
+    }
 
-/*
+    /*
  * Pass along information about proposed name and variable options (scope and isCloud)
  * and additional potentially conflicting variable names from the VM
  * to the variable validation prompt callback used in scratch-blocks.
  */
-handlePromptCallback(input, variableOptions) {
-    this.state.prompt.callback(
-        input,
-        this.props.vm.runtime.getAllVarNamesOfType(this.state.prompt.varType),
-        variableOptions);
-    this.handlePromptClose();
-}
-handlePromptClose() {
-    this.setState({ prompt: null });
-}
-handleCustomProceduresClose(data) {
-    this.props.onRequestCloseCustomProcedures(data);
-    const ws = this.workspace;
-    ws.refreshToolboxSelection_();
-    ws.toolbox_.scrollToCategoryById('myBlocks');
-}
-handleDrop(dragInfo) {
-    fetch(dragInfo.payload.bodyUrl)
-        .then(response => response.json())
-        .then(blocks => this.props.vm.shareBlocksToTarget(blocks, this.props.vm.editingTarget.id))
-        .then(() => {
-            this.props.vm.refreshWorkspace();
-            this.updateToolbox(); // To show new variables/custom blocks
-        });
-}
-render() {
-    console.log('[Blocks Container] render - isFlyoutVisible:', this.state.isFlyoutVisible);
-    /* eslint-disable no-unused-vars */
-    const {
-        anyModalVisible,
-        canUseCloud,
-        customProceduresVisible,
-        extensionLibraryVisible,
-        options,
-        stageSize,
-        vm,
-        isRtl,
-        isVisible,
-        onActivateColorPicker,
-        onOpenConnectionModal,
-        onOpenSoundRecorder,
-        updateToolboxState,
-        onActivateCustomProcedures,
-        onRequestCloseExtensionLibrary,
-        onRequestCloseCustomProcedures,
-        toolboxXML,
-        updateMetrics: updateMetricsProp,
-        useCatBlocks,
-        workspaceMetrics,
-        ...props
-    } = this.props;
-    /* eslint-enable no-unused-vars */
-    return (
-        <React.Fragment>
-            <DroppableBlocks
-                componentRef={this.setBlocks}
-                onDrop={this.handleDrop}
-                isFlyoutVisible={this.state.isFlyoutVisible}
-                onCloseFlyout={this.handleCloseFlyout}
-                {...props}
-            />
-            {this.state.prompt ? (
-                <Prompt
-                    defaultValue={this.state.prompt.defaultValue}
-                    isStage={vm.runtime.getEditingTarget().isStage}
-                    showListMessage={this.state.prompt.varType === this.ScratchBlocks.LIST_VARIABLE_TYPE}
-                    label={this.state.prompt.message}
-                    showCloudOption={this.state.prompt.showCloudOption}
-                    showVariableOptions={this.state.prompt.showVariableOptions}
-                    title={this.state.prompt.title}
-                    vm={vm}
-                    onCancel={this.handlePromptClose}
-                    onOk={this.handlePromptCallback}
+    handlePromptCallback (input, variableOptions) {
+        this.state.prompt.callback(
+            input,
+            this.props.vm.runtime.getAllVarNamesOfType(this.state.prompt.varType),
+            variableOptions);
+        this.handlePromptClose();
+    }
+    handlePromptClose () {
+        this.setState({prompt: null});
+    }
+    handleCustomProceduresClose (data) {
+        this.props.onRequestCloseCustomProcedures(data);
+        const ws = this.workspace;
+        ws.refreshToolboxSelection_();
+        ws.toolbox_.scrollToCategoryById('myBlocks');
+    }
+    handleDrop (dragInfo) {
+        fetch(dragInfo.payload.bodyUrl)
+            .then(response => response.json())
+            .then(blocks => this.props.vm.shareBlocksToTarget(blocks, this.props.vm.editingTarget.id))
+            .then(() => {
+                this.props.vm.refreshWorkspace();
+                this.updateToolbox(); // To show new variables/custom blocks
+            });
+    }
+    render () {
+        console.log('[Blocks Container] render - isFlyoutVisible:', this.state.isFlyoutVisible);
+        /* eslint-disable no-unused-vars */
+        const {
+            anyModalVisible,
+            canUseCloud,
+            customProceduresVisible,
+            extensionLibraryVisible,
+            options,
+            stageSize,
+            vm,
+            isRtl,
+            isVisible,
+            onActivateColorPicker,
+            onOpenConnectionModal,
+            onOpenSoundRecorder,
+            updateToolboxState,
+            onActivateCustomProcedures,
+            onRequestCloseExtensionLibrary,
+            onRequestCloseCustomProcedures,
+            toolboxXML,
+            updateMetrics: updateMetricsProp,
+            useCatBlocks,
+            workspaceMetrics,
+            ...props
+        } = this.props;
+        /* eslint-enable no-unused-vars */
+        return (
+            <React.Fragment>
+                <DroppableBlocks
+                    componentRef={this.setBlocks}
+                    onDrop={this.handleDrop}
+                    isFlyoutVisible={this.state.isFlyoutVisible}
+                    onCloseFlyout={this.handleCloseFlyout}
+                    {...props}
                 />
-            ) : null}
-            {extensionLibraryVisible ? (
-                <ExtensionLibrary
-                    vm={vm}
-                    onCategorySelected={this.handleCategorySelected}
-                    onRequestClose={onRequestCloseExtensionLibrary}
-                />
-            ) : null}
-            {customProceduresVisible ? (
-                <CustomProcedures
-                    options={{
-                        media: options.media
-                    }}
-                    onRequestClose={this.handleCustomProceduresClose}
-                />
-            ) : null}
-        </React.Fragment>
-    );
-}
+                {this.state.prompt ? (
+                    <Prompt
+                        defaultValue={this.state.prompt.defaultValue}
+                        isStage={vm.runtime.getEditingTarget().isStage}
+                        showListMessage={this.state.prompt.varType === this.ScratchBlocks.LIST_VARIABLE_TYPE}
+                        label={this.state.prompt.message}
+                        showCloudOption={this.state.prompt.showCloudOption}
+                        showVariableOptions={this.state.prompt.showVariableOptions}
+                        title={this.state.prompt.title}
+                        vm={vm}
+                        onCancel={this.handlePromptClose}
+                        onOk={this.handlePromptCallback}
+                    />
+                ) : null}
+                {extensionLibraryVisible ? (
+                    <ExtensionLibrary
+                        vm={vm}
+                        onCategorySelected={this.handleCategorySelected}
+                        onRequestClose={onRequestCloseExtensionLibrary}
+                    />
+                ) : null}
+                {customProceduresVisible ? (
+                    <CustomProcedures
+                        options={{
+                            media: options.media
+                        }}
+                        onRequestClose={this.handleCustomProceduresClose}
+                    />
+                ) : null}
+            </React.Fragment>
+        );
+    }
 }
 
 Blocks.propTypes = {

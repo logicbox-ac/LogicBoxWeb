@@ -26,15 +26,16 @@ const BlocksComponent = props => {
             {isFlyoutVisible && (
                 <div
                     className={styles.flyoutCloseButton}
-                    onClick={() => {
-                        console.log('[X BTN] clicked');
-                        onCloseFlyout();
-                    }}
+                    onClick={onCloseFlyout}
                     role="button"
                     tabIndex={0}
                     aria-label="Close flyout"
                 >
-                    <svg width="12" height="12" viewBox="0 0 12 12">
+                    <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                    >
                         <path
                             d="M10 2L2 10M2 2l8 8"
                             stroke="currentColor"
