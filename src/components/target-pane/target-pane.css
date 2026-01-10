@@ -1,0 +1,47 @@
+@import "../../css/units.css";
+
+.target-pane {
+    /* Makes columns for the sprite library selector + and the stage selector */
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+.stage-selector-wrapper {
+    display: flex;
+    flex-basis: 72px;
+    flex-shrink: 0;
+}
+
+[dir="ltr"] .stage-selector-wrapper {
+    margin-left: calc($space / 2);
+}
+
+[dir="rtl"] .stage-selector-wrapper {
+    margin-right: calc($space / 2);
+}
+
+@media (max-width: 767px) {
+    .target-pane {
+        flex-direction: column !important;
+        height: 100% !important;
+        overflow: hidden !important;
+    }
+
+    .stage-selector-wrapper {
+        flex-basis: auto !important;
+        height: 50% !important;
+        /* Force half height */
+        flex: 0 0 50% !important;
+        /* Do not shrink/grow freely, stick to 50% */
+        margin: 0 !important;
+        width: 100% !important;
+        border-top: 1px solid hsla(0, 0%, 0%, 0.15);
+        padding-top: 0 !important;
+        /* Remove padding to maximize space */
+    }
+
+    [dir="ltr"] .stage-selector-wrapper {
+        margin-left: 0 !important;
+    }
+}

@@ -1,0 +1,742 @@
+@import "../../css/units.css";
+@import "../../css/colors.css";
+@import "../../css/z-index.css";
+
+.page-wrapper {
+    height: 100%;
+}
+
+.body-wrapper {
+    height: calc(100% - $menu-bar-height);
+    background-color: $ui-primary;
+}
+
+.body-wrapper * {
+    box-sizing: border-box;
+}
+
+.flex-wrapper {
+    display: flex;
+
+    /*
+        Make 2 columns:
+        a) for the blocks + workspace panes, and
+        b) for combined stage menu + stage + sprite/stage selectors
+    */
+    flex-direction: row;
+    height: 100%;
+
+    /*
+        Stop scrollbar popping in and out from scratch-blocks border issue
+        https://github.com/LLK/scratch-gui/issues/318
+    */
+    overflow-y: hidden;
+}
+
+.editor-wrapper {
+    /*
+        This is carefully balanced--  the minimum width at which the GUI will be displayed is 1024px.
+        At that size, the stage pane is 408px wide, with $space of padding to each side.
+        However, we must also add the border width to the stage pane. All-in-all, the stage pane's final width is
+        408px + ($space + $stage-standard-border-width * 2) (one border & padding per left/right side).
+
+        @todo This is in place to prevent "doubling up" of horizontal scrollbars in narrow windows, but there are likely
+        much better ways to solve that (e.g. undo #2124, remove this flex-basis entirely). However, they run their own
+        risks of breaking things, so let's just leave this as-is for the time being.
+    */
+    flex-basis: calc(1024px - 408px - (($space + $stage-standard-border-width) * 2));
+    flex-grow: 1;
+    flex-shrink: 0;
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-list {
+    height: $stage-menu-height;
+    width: 250px;
+    /* Match width of the toolbox */
+    display: flex;
+    align-items: flex-end;
+    flex-shrink: 0;
+
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 500;
+    font-size: 0.80rem;
+
+    /* Overrides for react-tabs styling */
+    margin: 0 !important;
+    border-bottom: 0 !important;
+}
+
+.tab {
+    flex-grow: 1;
+    height: 80%;
+    margin-bottom: 0;
+
+    border-radius: 1rem 1rem 0 0;
+    border: 1px solid $ui-black-transparent;
+
+    padding: 0.125rem 1.25rem 0;
+    font-size: 0.75rem;
+
+    background-color: $ui-tertiary;
+    color: $text-primary-transparent;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    user-select: none;
+    white-space: nowrap;
+}
+
+[dir="ltr"] .tab {
+    margin-left: -0.5rem;
+}
+
+[dir="rtl"] .tab {
+    margin-right: -0.5rem;
+}
+
+[dir="ltr"] .tab:nth-of-type(1) {
+    margin-left: 0;
+}
+
+[dir="rtl"] .tab:nth-of-type(1) {
+    margin-right: 0;
+}
+
+/* Use z-indices to force left-on-top for tabs */
+.tab:nth-of-type(1) {
+    z-index: 3;
+}
+
+.tab:nth-of-type(2) {
+    z-index: 2;
+}
+
+.tab:nth-of-type(3) {
+    z-index: 1;
+}
+
+.tab:hover {
+    background-color: $ui-primary;
+}
+
+.tab.is-selected {
+    height: 90%;
+    color: $looks-secondary;
+    background-color: $ui-white;
+    z-index: 4;
+    /* Make sure selected is always above */
+}
+
+.tab img {
+    width: 1.375rem;
+    filter: grayscale(100%);
+}
+
+[dir="ltr"] .tab img {
+    margin-right: 0.125rem;
+}
+
+[dir="rtl"] .tab img {
+    margin-left: 0.125rem;
+}
+
+/* mirror blocks and sound tab icons */
+[dir="rtl"] .tab:nth-of-type(1) img {
+    transform: scaleX(-1);
+}
+
+[dir="rtl"] .tab:nth-of-type(3) img {
+    transform: scaleX(-1);
+}
+
+.tab.is-selected img {
+    filter: none;
+}
+
+/* Tab style overrides from react-tabs */
+.tab.is-selected:after {
+    display: none;
+}
+
+.tab.is-selected:focus {
+    outline: none;
+    box-shadow: none;
+    border-color: $ui-black-transparent;
+}
+
+.tab.is-selected:focus:after {
+    display: none;
+}
+
+/* Body of the tabs */
+.tabs {
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.tab-panel {
+    position: relative;
+    flex-grow: 1;
+    display: none;
+}
+
+.tab-panel.is-selected {
+    display: flex;
+}
+
+.blocks-wrapper {
+    flex-grow: 1;
+    position: relative;
+}
+
+.stage-and-target-wrapper {
+    /*
+        Makes rows for children:
+          1) stage menu
+          2) stage
+          3) sprite/stage selectors
+        Only reason we need this, is so .targetWrapper, which holds the selectors,
+        goes to full vertical height of the window
+    */
+    display: flex;
+    flex-direction: column;
+    /* pad entire wrapper to the left and right; allow children to fill width */
+    padding-left: $space;
+    padding-right: $space;
+
+    /* this will only ever be as wide as the stage */
+    flex-basis: 0;
+}
+
+.target-wrapper {
+    display: flex;
+    flex-grow: 1;
+    flex-basis: 0;
+
+    padding-top: $space;
+    min-height: 0;
+    /* this makes it work in Firefox */
+
+    /*
+        For making the sprite-selector a scrollable pane
+        @todo: Not working in Safari
+    */
+    /* TODO this also breaks the thermometer menu */
+    /* overflow: hidden; */
+}
+
+.extension-button-container {
+    width: 3.75rem;
+    height: 3.25rem;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: $z-index-extension-button;
+    background: $looks-secondary;
+
+    border: 1px solid $looks-secondary;
+    box-sizing: content-box;
+    /* To match scratch-block vertical toolbox borders */
+}
+
+$fade-out-distance: 15px;
+
+.extension-button-container:before {
+    content: "";
+    position: absolute;
+    top: calc(calc(-1 * $fade-out-distance) - 1px);
+    left: -1px;
+    background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.15));
+    height: $fade-out-distance;
+    width: calc(100% + 0.5px);
+}
+
+
+.extension-button {
+    background: none;
+    border: none;
+    outline: none;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.extension-button-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+}
+
+[dir="rtl"] .extension-button-icon {
+    transform: scaleX(-1);
+}
+
+.extension-button>div {
+    margin-top: 0;
+}
+
+/* Sprite Selection Watermark */
+.watermark {
+    position: absolute;
+    top: 1.25rem;
+    pointer-events: none;
+}
+
+[dir="ltr"] .watermark {
+    right: 1.25rem;
+}
+
+[dir="rtl"] .watermark {
+    left: 1.25rem;
+}
+
+/* Menu */
+
+.menu-bar-position {
+    position: relative;
+    z-index: $z-index-menu-bar;
+}
+
+/* Alerts */
+
+.alerts-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    z-index: $z-index-alerts;
+    position: absolute;
+    margin-top: 53px;
+    pointer-events: none;
+}
+
+/*
+    Make the (background) page not scrollable when modals are open
+    This CSS class is automatically added to the body when react-modal is open
+*/
+:global(.ReactModal__Body--open) {
+    overflow: hidden;
+}
+
+
+/* ============================================
+   MOBILE RESPONSIVE LAYOUT
+   ============================================ */
+
+@media (max-width: 767px) {
+
+    /* ----------------------------------------
+       MAIN LAYOUT ADJUSTMENTS
+       ---------------------------------------- */
+
+    /* Stack layout vertically on mobile */
+    .flex-wrapper {
+        flex-direction: column !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    /* Editor wrapper takes full width */
+    .editor-wrapper {
+        flex-basis: auto !important;
+        width: 100% !important;
+        min-height: 0 !important;
+    }
+
+    /* Hide stage and target wrapper by default on mobile */
+    .stage-and-target-wrapper {
+        display: none !important;
+        width: 100% !important;
+        padding: 0 !important;
+        flex-basis: auto !important;
+    }
+
+    /* ----------------------------------------
+       MOBILE TAB-BASED PANEL VISIBILITY
+       ---------------------------------------- */
+
+    /* When code, costumes, or sounds tab is active - show editor */
+    [data-mobile-tab="code"] .editor-wrapper,
+    [data-mobile-tab="costumes"] .editor-wrapper,
+    [data-mobile-tab="sounds"] .editor-wrapper {
+        display: flex !important;
+        flex: 1 !important;
+    }
+
+    [data-mobile-tab="code"] .stage-and-target-wrapper,
+    [data-mobile-tab="costumes"] .stage-and-target-wrapper,
+    [data-mobile-tab="sounds"] .stage-and-target-wrapper {
+        display: none !important;
+    }
+
+    /* When stage tab is active - show stage only */
+    [data-mobile-tab="stage"] .editor-wrapper {
+        display: none !important;
+    }
+
+    [data-mobile-tab="stage"] .stage-and-target-wrapper {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 !important;
+        padding: 8px !important;
+        width: 100% !important;
+        height: 100% !important;
+        overflow: auto !important;
+    }
+
+    [data-mobile-tab="stage"] .target-wrapper {
+        display: none !important;
+    }
+
+    /* Make stage wrapper fill available space and center content */
+    [data-mobile-tab="stage"] .stage-and-target-wrapper>div:first-child {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        width: 100% !important;
+        flex: 1 !important;
+        min-height: 0 !important;
+    }
+
+    /* When files tab is active - show target pane only */
+    [data-mobile-tab="files"] .editor-wrapper {
+        display: none !important;
+    }
+
+    [data-mobile-tab="files"] .stage-and-target-wrapper {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 !important;
+        padding: 8px !important;
+    }
+
+    [data-mobile-tab="files"] .target-wrapper {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 !important;
+        overflow-y: hidden !important;
+        /* Let children handle scroll */
+    }
+
+    [data-mobile-tab="files"] .target-wrapper>* {
+        width: 100% !important;
+        height: 50% !important;
+        flex-grow: 1 !important;
+        flex-basis: 0 !important;
+    }
+
+    /* Hide stage in files tab, show only target pane */
+    [data-mobile-tab="files"] .stage-and-target-wrapper>div:first-child {
+        display: none !important;
+    }
+
+    /* ----------------------------------------
+       TAB LIST ADJUSTMENTS
+       ---------------------------------------- */
+
+    .tab-list {
+        display: none !important;
+    }
+
+    .tab {
+        padding: 8px 12px !important;
+        font-size: 11px !important;
+        min-height: 40px !important;
+    }
+
+    .tab img {
+        width: 1rem !important;
+    }
+
+    /* ----------------------------------------
+       BLOCKS WORKSPACE ADJUSTMENTS
+       ---------------------------------------- */
+
+    .blocks-wrapper {
+        min-height: 300px !important;
+    }
+
+    /* Extension button smaller on mobile */
+    .extension-button-container {
+        width: 3rem !important;
+        height: 2.75rem !important;
+    }
+
+    .extension-button-icon {
+        width: 1.5rem !important;
+        height: 1.5rem !important;
+    }
+
+    /* ----------------------------------------
+       TOUCH OPTIMIZATION
+       ---------------------------------------- */
+
+    /* Minimum touch target size */
+    button,
+    [role="button"] {
+        min-height: 44px !important;
+        min-width: 44px !important;
+    }
+
+    /* Prevent iOS auto-zoom on input focus */
+    input,
+    textarea,
+    select {
+        font-size: 16px !important;
+    }
+
+    /* Momentum scrolling */
+    .blocks-wrapper,
+    .target-wrapper {
+        -webkit-overflow-scrolling: touch !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain !important;
+    }
+
+    /* ----------------------------------------
+       MENU BAR ADJUSTMENTS
+       ---------------------------------------- */
+
+    .menu-bar-position {
+        /* Keep menu bar but make it more compact */
+    }
+
+    /* ----------------------------------------
+       BODY WRAPPER ADJUSTMENTS
+       ---------------------------------------- */
+
+    .body-wrapper {
+        height: calc(100% - $menu-bar-height - 56px) !important;
+        /* Account for mobile tab bar */
+        overflow: hidden !important;
+    }
+
+    /* ----------------------------------------
+       WATERMARK ADJUSTMENTS
+       ---------------------------------------- */
+
+    .watermark {
+        display: none !important;
+    }
+
+    /* ----------------------------------------
+       ALERTS ADJUSTMENTS
+       ---------------------------------------- */
+
+    .alerts-container {
+        margin-top: 100px !important;
+        /* Account for mobile tab bar */
+    }
+}
+
+/* ============================================
+   TABLET LAYOUT (768px - 1023px)
+   ============================================ */
+
+@media (min-width: 768px) and (max-width: 1023px) {
+    .editor-wrapper {
+        flex-basis: 45% !important;
+    }
+
+    .stage-and-target-wrapper {
+        flex-basis: 55% !important;
+    }
+
+    .tab-list {
+        width: 200px !important;
+    }
+
+    .tab {
+        padding: 0.125rem 0.75rem 0 !important;
+        font-size: 0.7rem !important;
+    }
+}
+
+/* ============================================
+   GLOBAL MOBILE FIXES
+   ============================================ */
+
+@media (max-width: 767px) {
+
+    /* Prevent horizontal scroll */
+    .page-wrapper {
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+    }
+
+    /* Disable text selection on non-input elements */
+    *:not(input):not(textarea):not([contenteditable="true"]) {
+        -webkit-user-select: none !important;
+        user-select: none !important;
+    }
+
+    /* Remove tap highlight */
+    * {
+        -webkit-tap-highlight-color: transparent !important;
+    }
+}
+
+/* ============================================
+   LANDSCAPE MODE ADJUSTMENTS
+   ============================================ */
+@media (max-width: 896px) and (orientation: landscape) {
+
+    /* Hide top menu bar to save vertical space */
+    .menu-bar-position {
+        display: none !important;
+    }
+
+    /* Shift body wrapper to the right to make room for fixed sidebar */
+    .body-wrapper {
+        height: 100vh !important;
+        margin-left: 72px !important;
+        /* Width of sidebar */
+        width: calc(100vw - 72px) !important;
+    }
+
+    /* Reset flex direction for editor wrapper to row if needed.
+       Mobile portrait forces it to column.
+       In landscape, we might want it back to row?
+       Let's force it to row for Code tab.
+    */
+    :global(.gui-active-tab-code) .flex-wrapper {
+        flex-direction: row !important;
+    }
+
+    /* Ensure editor wrapper takes full height */
+    :global(.gui-active-tab-code) .editor-wrapper {
+        height: 100% !important;
+    }
+}
+
+/* ============================================
+   PAINT EDITOR MOBILE OVERRIDES
+   ============================================ */
+@media only screen and (max-width: 767px) {
+    /* 
+       Targeting scratch-paint internal classes using attribute selectors
+       because they are likely hahed.
+    */
+
+    /* Top editor top container (Group, Ungroup, etc) */
+    :global([class*="paint-editor_editor-container-top"]) {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        justify-content: flex-start !important;
+        width: 100% !important;
+        padding-right: 20px !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Mode selector (Tools on left) */
+    /* User suggested putting behind menu, but for now lets make it compact/absolute 
+       or just small on the left site to allow canvas max width */
+    :global([class*="paint-editor_mode-selector"]) {
+        flex-basis: 44px !important;
+        width: 44px !important;
+        overflow-y: auto !important;
+    }
+
+    /* Canvas Container */
+    :global([class*="paint-editor_canvas-container"]) {
+        position: relative !important;
+        width: 100% !important;
+        flex-grow: 1 !important;
+        flex-shrink: 1 !important;
+        min-height: 200px !important;
+        max-height: calc(100vh - 350px) !important;
+        overflow: hidden !important;
+        background-color: #f0f0f0;
+    }
+
+    /* Zoom controls - bottom left with white background */
+    :global([class*="paint-editor_zoom-controls"]) {
+        position: fixed !important;
+        bottom: 60px !important;
+        left: 60px !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 5px !important;
+        background: rgba(255, 255, 255, 0.98) !important;
+        border-radius: 8px !important;
+        padding: 5px 8px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+        z-index: 500 !important;
+        pointer-events: auto !important;
+    }
+
+    :global([class*="paint-editor_zoom-controls"]) button {
+        pointer-events: auto !important;
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
+    }
+
+    /* Undo/Redo Group */
+    :global([class*="paint-editor_button-group"]) {
+        flex-shrink: 0 !important;
+    }
+
+    /* Fix dropdown vertical alignment */
+    :global([class*="fixed-tools_mod-unselect"]) {
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    /* Canvas Controls (Convert to Bitmap/Vector) - bottom left above zoom controls */
+    :global([class*="paint-editor_canvas-controls"]) {
+        position: fixed !important;
+        bottom: 120px !important;
+        left: 60px !important;
+        width: auto !important;
+        height: auto !important;
+        background: transparent !important;
+        border: none !important;
+        pointer-events: auto !important;
+        z-index: 500 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 8px !important;
+    }
+
+    :global([class*="paint-editor_canvas-controls"])>span[class*="button"],
+    :global([class*="paint-editor_canvas-controls"])>span[role="button"] {
+        pointer-events: auto !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border: 1px solid rgba(0, 0, 0, 0.2) !important;
+        border-radius: 1rem !important;
+        padding: 6px 14px !important;
+        font-size: 0.75rem !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        color: #333 !important;
+    }
+
+    :global([class*="paint-editor_canvas-controls"]) span[class*="button-text"] {
+        color: #333 !important;
+    }
+
+    /* Ensure the wrapper structure allows vertical layout */
+    :global([class*="paint-editor_editor-container_"]) {
+        flex-direction: column !important;
+        height: 100% !important;
+        width: 100% !important;
+    }
+}

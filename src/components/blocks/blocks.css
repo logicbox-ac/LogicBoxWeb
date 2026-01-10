@@ -1,0 +1,188 @@
+@import "../../css/units.css";
+@import "../../css/colors.css";
+@import "../../css/z-index.css";
+
+.blocks {
+    height: 100%;
+}
+
+.drag-over:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.75;
+    background-color: $drop-highlight;
+    transition: all 0.25s ease;
+}
+
+.blocks :global(.injectionDiv) {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    border: 1px solid $ui-black-transparent;
+    border-top-right-radius: $space;
+    border-bottom-right-radius: $space;
+}
+
+[dir="rtl"] .blocks :global(.injectionDiv) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: $space;
+    border-bottom-left-radius: $space;
+}
+
+.blocks :global(.blocklyMainBackground) {
+    stroke: none;
+}
+
+.blocks :global(.blocklyToolboxDiv) {
+    border-right: 1px solid $ui-black-transparent;
+    border-bottom: 1px solid $ui-black-transparent;
+    box-sizing: content-box;
+    height: calc(100% - 3.25rem) !important;
+
+    /*
+        For now, the layout cannot support scrollbars in the category menu.
+        The line below works for Edge, the `::-webkit-scrollbar` line
+        below that is for webkit browsers. It isn't possible to do the
+        same for Firefox, so a different solution may be needed for them.
+    */
+    -ms-overflow-style: none;
+}
+
+[dir="rtl"] .blocks :global(.blocklyToolboxDiv) {
+    border-right: none;
+    border-left: 1px solid $ui-black-transparent;
+}
+
+.blocks :global(.blocklyToolboxDiv::-webkit-scrollbar) {
+    display: none;
+}
+
+.blocks :global(.blocklyFlyout) {
+    border-right: 1px solid $ui-black-transparent;
+    box-sizing: content-box;
+}
+
+[dir="rtl"] .blocks :global(.blocklyFlyout) {
+    border-right: none;
+    border-left: 1px solid $ui-black-transparent;
+}
+
+
+.blocks :global(.blocklyBlockDragSurface) {
+    /*
+        Fix an issue where the drag surface was preventing hover events for sharing blocks.
+        This does not prevent user interaction on the blocks themselves.
+    */
+    pointer-events: none;
+    z-index: $z-index-drag-layer;
+    /* make blocks match gui drag layer */
+}
+
+/*
+    Shrink category font to fit "My Blocks" for now.
+    Probably will need different solutions for language support later, so
+    make the change here instead of in scratch-blocks.
+*/
+.blocks :global(.scratchCategoryMenuItemLabel) {
+    font-size: 0.65rem;
+}
+
+.blocks :global(.blocklyMinimalBody) {
+    min-width: auto;
+    min-height: auto;
+}
+
+@media only screen and (max-width: 767px) {
+
+    /* Make the workspace take full width by pulling the toolbox out of flow */
+    .blocks :global(.blocklyToolboxDiv) {
+        position: absolute !important;
+        height: 100% !important;
+        z-index: 20;
+        /* Above workspace */
+        background-color: rgba(255, 255, 255, 0.95);
+        /* Smooth slide animation */
+        transform: translateX(0);
+        transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+    }
+
+    /* Flyout should overlay but not block the workspace when dragging */
+    .blocks :global(.blocklyFlyout) {
+        z-index: 25 !important;
+        /* Allow pointer events to pass through to workspace when dragging */
+        pointer-events: auto;
+        /* Smooth slide animation */
+        transform: translateX(0);
+        transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+    }
+
+    /* Make the main workspace SVG take full width on mobile */
+    .blocks :global(.blocklySvg) {
+        width: 100% !important;
+        left: 0 !important;
+    }
+
+    /* Ensure injectionDiv takes full width */
+    .blocks :global(.injectionDiv) {
+        width: 100% !important;
+    }
+
+    /* The flyout background should not block the entire screen */
+    .blocks :global(.blocklyFlyoutBackground) {
+        /* Keep flyout visible but don't let it block workspace interactions */
+    }
+
+    /* Ensure the workspace is always interactive */
+    .blocks :global(.blocklyWorkspace) {
+        pointer-events: auto !important;
+    }
+
+    /* The main block canvas should be fully accessible */
+    .blocks :global(.blocklyBlockCanvas) {
+        pointer-events: auto !important;
+    }
+}
+
+.flyoutCloseButton {
+    display: none;
+}
+
+/* On mobile, show close button inside the flyout area */
+@media only screen and (max-width: 767px) {
+    .flyoutCloseButton {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 8px;
+        left: 268px; /* Inside the flyout (60px category + ~210px into flyout) */
+        z-index: 30;
+        width: 28px;
+        height: 28px;
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        border: none;
+        color: #575e75;
+        cursor: pointer;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+        transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .flyoutCloseButton:hover {
+        background-color: #fff;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        transform: scale(1.05);
+    }
+
+    .flyoutCloseButton:active {
+        transform: scale(0.95);
+        background-color: #f0f0f0;
+    }
+}

@@ -1,0 +1,241 @@
+@import "../../css/units.css";
+@import "../../css/colors.css";
+
+.sprite-info {
+    padding: 0.75rem;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background-color: white;
+    color: $text-primary;
+    border-top-left-radius: $space;
+    border-top-right-radius: $space;
+    border-bottom: 1px solid $ui-black-transparent;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.row-primary {
+    margin-bottom: 0.5rem;
+}
+
+.label {
+    opacity: 0.8;
+}
+
+.group {
+    display: inline-flex;
+    flex-direction: row;
+    /* makes columns, for each label/form group */
+    align-items: center;
+}
+
+.column {
+    display: inline-flex;
+    flex-direction: column;
+    /* put label above input */
+    align-items: flex-start;
+}
+
+.column span {
+    margin-bottom: .25rem;
+}
+
+.icon-wrapper {
+    display: inline-block;
+    width: calc(2rem + 2px);
+    height: calc(2rem + 2px);
+    padding: 0.5rem;
+    outline: none;
+    user-select: none;
+}
+
+.icon {
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.rotation-select {
+    width: 100%;
+    height: 1.85rem;
+    border: 1px solid $ui-black-transparent;
+    user-select: none;
+    outline: none;
+}
+
+.rotation-select:focus {
+    border-color: $looks-secondary;
+    box-shadow: inset 0 0 0 1px $ui-black-transparent);
+}
+
+.larger-input input {
+    width: 4rem;
+}
+
+.sprite-input {
+    width: 8rem;
+}
+
+@media (max-width: 767px) {
+    .sprite-info {
+        padding: 8px 10px !important;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Primary Row: Sprite Name + X + Y all on one row */
+    .row-primary {
+        display: flex;
+        flex-wrap: nowrap !important;
+        /* Keep everything on one line */
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    /* Sprite Name Group - takes most space */
+    .row-primary .group:nth-child(1) {
+        flex: 2;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    /* Make Name label inline and compact */
+    .row-primary .group:nth-child(1) :global(label) {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        width: 100%;
+    }
+
+    .row-primary .group:nth-child(1) :global(span) {
+        margin-right: 8px;
+        margin-bottom: 0;
+        font-weight: bold;
+        font-size: 0.7rem;
+        white-space: nowrap;
+        min-width: 38px;
+    }
+
+    .sprite-input {
+        width: 100% !important;
+        max-width: none !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* X & Y Groups - compact inline */
+    .row-primary .group:nth-child(2),
+    .row-primary .group:nth-child(3) {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        width: auto !important;
+    }
+
+    .row-primary .group:nth-child(2) :global(label),
+    .row-primary .group:nth-child(3) :global(label) {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .row-primary .group:nth-child(2) :global(span),
+    .row-primary .group:nth-child(3) :global(span) {
+        margin-right: 4px;
+        margin-bottom: 0;
+        font-weight: bold;
+        font-size: 0.75rem;
+        color: #575E75;
+    }
+
+    /* Compact X/Y inputs */
+    .row-primary .group:nth-child(2) input,
+    .row-primary .group:nth-child(3) input {
+        width: 50px !important;
+        min-width: 50px !important;
+        max-width: 50px !important;
+        text-align: center;
+        font-size: 0.85rem !important;
+    }
+
+    /* Reset general group styling */
+    .group {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* --- Secondary Row (Show, Size, Direction) --- */
+    .row-secondary {
+        display: flex;
+        flex-wrap: nowrap !important;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+
+    .row-secondary .group,
+    .row-secondary .column {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: auto !important;
+    }
+
+    /* Labels inline with inputs */
+    .row-secondary :global(label) {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .row-secondary :global(span) {
+        margin-right: 6px;
+        margin-bottom: 0;
+        font-size: 0.7rem;
+        font-weight: bold;
+        white-space: nowrap;
+        color: #575E75;
+    }
+
+    /* Compact Show/Hide toggle */
+    .icon-wrapper {
+        width: 28px;
+        height: 28px;
+        padding: 3px;
+        margin: 0;
+    }
+
+    /* Compact Size input */
+    .larger-input input {
+        width: 48px !important;
+        min-width: 48px !important;
+        max-width: 48px !important;
+        text-align: center;
+        font-size: 0.85rem !important;
+    }
+
+    /* Compact Direction input */
+    .rotation-select {
+        width: 48px !important;
+        min-width: 48px !important;
+        max-width: 48px !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* Column layout for Show label */
+    .column {
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+
+    .column span {
+        margin-bottom: 0;
+        margin-right: 6px;
+    }
+}

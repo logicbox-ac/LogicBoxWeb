@@ -1,0 +1,144 @@
+@import "../../css/colors.css";
+
+/* Tab bar container - hidden by default (desktop) */
+.tab-bar {
+    display: none;
+    width: 100%;
+    background-color: $ui-white;
+    border-bottom: 1px solid $ui-black-transparent;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    z-index: 100;
+}
+
+/* Individual tab button */
+.tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    transition: all 0.2s ease;
+
+    /* Touch target - minimum 44x44px per iOS guidelines */
+    min-height: 56px;
+    min-width: 44px;
+}
+
+.tab:hover {
+    background-color: $ui-primary;
+}
+
+.tab:focus {
+    outline: 2px solid $motion-primary;
+    outline-offset: -2px;
+}
+
+.tab:active {
+    background-color: $ui-tertiary;
+}
+
+/* Active tab styling */
+.tab.active {
+    border-bottom-color: $motion-primary;
+    background-color: $ui-white;
+}
+
+.tab.active .tab-label {
+    color: $motion-primary;
+    font-weight: 600;
+}
+
+.tab.active .tab-icon {
+    transform: scale(1.1);
+}
+
+/* Tab icon */
+.tab-icon {
+    font-size: 20px;
+    margin-bottom: 2px;
+    transition: transform 0.2s ease;
+}
+
+/* Tab label */
+.tab-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: $text-primary;
+    transition: color 0.2s ease;
+}
+
+/* ============================================
+   MOBILE MEDIA QUERY
+   Show tab bar only on mobile screens
+   ============================================ */
+
+@media (max-width: 767px) {
+    .tab-bar {
+        display: flex;
+        flex-direction: row;
+        position: sticky;
+        top: 0;
+    }
+}
+
+/* Tablet - slightly larger tabs */
+@media (min-width: 480px) and (max-width: 767px) {
+    .tab {
+        padding: 10px 12px;
+    }
+
+    .tab-icon {
+        font-size: 22px;
+    }
+
+    .tab-label {
+        font-size: 12px;
+    }
+}
+
+/* ============================================
+   LANDSCAPE MODE (Sidebar Layout)
+   ============================================ */
+@media (max-width: 896px) and (orientation: landscape) {
+    .tab-bar {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 72px;
+        /* Fixed sidebar width */
+        height: 100vh;
+        border-bottom: none;
+        border-right: 1px solid rgba(0, 0, 0, 0.15);
+        justify-content: flex-start;
+        padding-top: 5px;
+        background-color: $ui-white;
+        overflow-y: auto;
+    }
+
+    .tab {
+        flex: 0 0 auto;
+        /* Don't stretch vertically */
+        width: 100%;
+        min-height: 64px;
+        /* Taller touch targets */
+        border-bottom: none;
+        border-right: 4px solid transparent;
+        /* Active indicator on right */
+        border-left: none;
+    }
+
+    .tab.active {
+        border-bottom-color: transparent;
+        border-right-color: $motion-primary;
+        background-color: $ui-secondary;
+    }
+}
