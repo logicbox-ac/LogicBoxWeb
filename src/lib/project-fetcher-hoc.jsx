@@ -1,10 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {intlShape, injectIntl} from 'react-intl';
+import { intlShape, injectIntl } from 'react-intl';
 import bindAll from 'lodash.bindall';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 
-import {setProjectUnchanged} from '../reducers/project-changed';
+import { setProjectUnchanged } from '../reducers/project-changed';
 import {
     LoadingStates,
     getIsCreatingNew,
@@ -30,7 +30,7 @@ import storage from './storage';
  */
 const ProjectFetcherHOC = function (WrappedComponent) {
     class ProjectFetcherComponent extends React.Component {
-        constructor (props) {
+        constructor(props) {
             super(props);
             bindAll(this, [
                 'fetchProject'
@@ -51,7 +51,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                 this.props.setProjectId(props.projectId.toString());
             }
         }
-        componentDidUpdate (prevProps) {
+        componentDidUpdate(prevProps) {
             if (prevProps.projectHost !== this.props.projectHost) {
                 storage.setProjectHost(this.props.projectHost);
             }
@@ -71,7 +71,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                 this.props.onActivateTab(BLOCKS_TAB_INDEX);
             }
         }
-        fetchProject (projectId, loadingState) {
+        fetchProject(projectId, loadingState) {
             return storage
                 .load(storage.AssetType.Project, projectId, storage.DataFormat.JSON)
                 .then(projectAsset => {
@@ -88,7 +88,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                     log.error(err);
                 });
         }
-        render () {
+        render() {
             const {
                 /* eslint-disable no-unused-vars */
                 assetHost,
@@ -135,7 +135,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         setProjectId: PropTypes.func
     };
     ProjectFetcherComponent.defaultProps = {
-        assetHost: 'https://assets.scratch.mit.edu',
+        assetHost: 'https://cdn.assets.scratch.mit.edu',
         projectHost: 'https://projects.scratch.mit.edu'
     };
 

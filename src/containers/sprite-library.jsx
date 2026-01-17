@@ -1,7 +1,7 @@
 import bindAll from 'lodash.bindall';
 import PropTypes from 'prop-types';
 import React from 'react';
-import {injectIntl, intlShape, defineMessages} from 'react-intl';
+import { injectIntl, intlShape, defineMessages } from 'react-intl';
 import VM from 'scratch-vm';
 
 import spriteLibraryContent from '../lib/libraries/sprites.json';
@@ -19,20 +19,39 @@ const messages = defineMessages({
 });
 
 class SpriteLibrary extends React.PureComponent {
-    constructor (props) {
+    constructor(props) {
         super(props);
         bindAll(this, [
             'handleItemSelect'
         ]);
     }
-    handleItemSelect (item) {
+    handleItemSelect(item) {
+        console.log('[SPRITE-LIBRARY] handleItemSelect called with item:', {
+            name: item?.name,
+            md5ext: item?.md5ext,
+            costumes: item?.costumes?.length
+        });
+
+        if (!item) {
+            console.error('[SPRITE-LIBRARY] ERROR: item is undefined or null!');
+            return;
+        }
+
         // Randomize position of library sprite
         randomizeSpritePosition(item);
-        this.props.vm.addSprite(JSON.stringify(item)).then(() => {
-            this.props.onActivateBlocksTab();
-        });
+
+        console.log('[SPRITE-LIBRARY] Calling vm.addSprite with:', JSON.stringify(item).substring(0, 200));
+
+        this.props.vm.addSprite(JSON.stringify(item))
+            .then(() => {
+                console.log('[SPRITE-LIBRARY] vm.addSprite resolved, activating blocks tab');
+                this.props.onActivateBlocksTab();
+            })
+            .catch(err => {
+                console.error('[SPRITE-LIBRARY] vm.addSprite rejected:', err);
+            });
     }
-    render () {
+    render() {
         return (
             <LibraryComponent
                 data={spriteLibraryContent}

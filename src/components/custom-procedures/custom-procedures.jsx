@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import Modal from '../../containers/modal.jsx';
 import Box from '../box/box.jsx';
-import {defineMessages, injectIntl, intlShape, FormattedMessage} from 'react-intl';
+import { defineMessages, injectIntl, intlShape, FormattedMessage } from 'react-intl';
 
 import booleanInputIcon from './icon--boolean-input.svg';
 import textInputIcon from './icon--text-input.svg';
@@ -22,6 +22,7 @@ const CustomProcedures = props => (
     <Modal
         className={styles.modalContent}
         contentLabel={props.intl.formatMessage(messages.myblockModalTitle)}
+        id="customProceduresModal"
         onRequestClose={props.onCancel}
     >
         <Box

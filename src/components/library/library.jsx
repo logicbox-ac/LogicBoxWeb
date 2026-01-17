@@ -2,7 +2,7 @@ import classNames from 'classnames';
 import bindAll from 'lodash.bindall';
 import PropTypes from 'prop-types';
 import React from 'react';
-import {defineMessages, injectIntl, intlShape} from 'react-intl';
+import { defineMessages, injectIntl, intlShape } from 'react-intl';
 
 import LibraryItem from '../../containers/library-item.jsx';
 import Modal from '../../containers/modal.jsx';
@@ -10,7 +10,7 @@ import Divider from '../divider/divider.jsx';
 import Filter from '../filter/filter.jsx';
 import TagButton from '../../containers/tag-button.jsx';
 import Spinner from '../spinner/spinner.jsx';
-import {CATEGORIES} from '../../../src/lib/libraries/decks/index.jsx';
+import { CATEGORIES } from '../../../src/lib/libraries/decks/index.jsx';
 
 import styles from './library.css';
 
@@ -49,11 +49,11 @@ const messages = defineMessages({
     }
 });
 
-const ALL_TAG = {tag: 'all', intlLabel: messages.allTag};
+const ALL_TAG = { tag: 'all', intlLabel: messages.allTag };
 const tagListPrefix = [ALL_TAG];
 
 class LibraryComponent extends React.Component {
-    constructor (props) {
+    constructor(props) {
         super(props);
         bindAll(this, [
             'handleClose',
@@ -73,28 +73,48 @@ class LibraryComponent extends React.Component {
             loaded: false
         };
     }
-    componentDidMount () {
+    componentDidMount() {
         // Allow the spinner to display before loading the content
         setTimeout(() => {
-            this.setState({loaded: true});
+            this.setState({ loaded: true });
         });
         if (this.props.setStopHandler) this.props.setStopHandler(this.handlePlayingEnd);
     }
-    componentDidUpdate (prevProps, prevState) {
+    componentDidUpdate(prevProps, prevState) {
         if (prevState.filterQuery !== this.state.filterQuery ||
             prevState.selectedTag !== this.state.selectedTag) {
             this.scrollToTop();
         }
     }
-    handleSelect (id) {
+    handleSelect(id) {
+        console.log('[LIBRARY] handleSelect called with id:', id);
+        const filteredData = this.getFilteredData();
+        const selectedItem = filteredData.find(item => this.constructKey(item) === id);
+        console.log('[LIBRARY] Found item:', selectedItem ? {
+            name: selectedItem.name,
+            md5ext: selectedItem.md5ext,
+            hasOnItemSelected: !!this.props.onItemSelected
+        } : 'NOT FOUND');
+
+        if (!selectedItem) {
+            console.error('[LIBRARY] ERROR: Could not find item with id:', id);
+            return;
+        }
+
+        if (!this.props.onItemSelected) {
+            console.error('[LIBRARY] ERROR: onItemSelected prop is not defined!');
+            return;
+        }
+
+        console.log('[LIBRARY] Closing modal and calling onItemSelected...');
         this.handleClose();
-        this.props.onItemSelected(this.getFilteredData()
-            .find(item => this.constructKey(item) === id));
+        this.props.onItemSelected(selectedItem);
+        console.log('[LIBRARY] onItemSelected called successfully');
     }
-    handleClose () {
+    handleClose() {
         this.props.onRequestClose();
     }
-    handleTagClick (tag) {
+    handleTagClick(tag) {
         if (this.state.playingItem === null) {
             this.setState({
                 filterQuery: '',
@@ -110,7 +130,7 @@ class LibraryComponent extends React.Component {
             });
         }
     }
-    handleMouseEnter (id) {
+    handleMouseEnter(id) {
         // don't restart if mouse over already playing item
         if (this.props.onItemMouseEnter && this.state.playingItem !== id) {
             this.props.onItemMouseEnter(this.getFilteredData()
@@ -120,7 +140,7 @@ class LibraryComponent extends React.Component {
             });
         }
     }
-    handleMouseLeave (id) {
+    handleMouseLeave(id) {
         if (this.props.onItemMouseLeave) {
             this.props.onItemMouseLeave(this.getFilteredData()
                 .find(item => this.constructKey(item) === id));
@@ -129,14 +149,14 @@ class LibraryComponent extends React.Component {
             });
         }
     }
-    handlePlayingEnd () {
+    handlePlayingEnd() {
         if (this.state.playingItem !== null) {
             this.setState({
                 playingItem: null
             });
         }
     }
-    handleFilterChange (event) {
+    handleFilterChange(event) {
         if (this.state.playingItem === null) {
             this.setState({
                 filterQuery: event.target.value,
@@ -152,10 +172,10 @@ class LibraryComponent extends React.Component {
             });
         }
     }
-    handleFilterClear () {
-        this.setState({filterQuery: ''});
+    handleFilterClear() {
+        this.setState({ filterQuery: '' });
     }
-    getFilteredData () {
+    getFilteredData() {
         if (this.state.selectedTag === ALL_TAG.tag) {
             if (!this.state.filterQuery) return this.props.data;
             return this.props.data.filter(dataItem => (
@@ -164,7 +184,7 @@ class LibraryComponent extends React.Component {
                     .map(String.prototype.toLowerCase.call, String.prototype.toLowerCase)
                     .concat(dataItem.name ?
                         (typeof dataItem.name === 'string' ?
-                        // Use the name if it is a string, else use formatMessage to get the translated name
+                            // Use the name if it is a string, else use formatMessage to get the translated name
                             dataItem.name : this.props.intl.formatMessage(dataItem.name.props)
                         ).toLowerCase() :
                         null)
@@ -179,16 +199,16 @@ class LibraryComponent extends React.Component {
                 .indexOf(this.state.selectedTag) !== -1
         ));
     }
-    constructKey (data) {
+    constructKey(data) {
         return typeof data.name === 'string' ? data.name : data.rawURL;
     }
-    scrollToTop () {
+    scrollToTop() {
         this.filteredDataRef.scrollTop = 0;
     }
-    setFilteredDataRef (ref) {
+    setFilteredDataRef(ref) {
         this.filteredDataRef = ref;
     }
-    renderElement (data) {
+    renderElement(data) {
         const key = this.constructKey(data);
         return (<LibraryItem
             bluetoothRequired={data.bluetoothRequired}
@@ -213,7 +233,7 @@ class LibraryComponent extends React.Component {
             onSelect={this.handleSelect}
         />);
     }
-    renderData (data) {
+    renderData(data) {
         if (this.state.selectedTag !== ALL_TAG.tag || !this.props.withCategories) {
             return data.map(item => this.renderElement(item));
         }
@@ -224,24 +244,24 @@ class LibraryComponent extends React.Component {
         return Object.entries(dataByCategory)
             .sort(([key1], [key2]) => categoriesOrder.indexOf(key1) - categoriesOrder.indexOf(key2))
             .map(([key, values]) =>
-                (<div
-                    key={key}
-                    className={styles.libraryCategory}
+            (<div
+                key={key}
+                className={styles.libraryCategory}
+            >
+                {key === 'undefined' ?
+                    null :
+                    <span className={styles.libraryCategoryTitle}>
+                        {this.props.intl.formatMessage(messages[key])}
+                    </span>
+                }
+                <div
+                    className={styles.libraryCategoryItems}
                 >
-                    {key === 'undefined' ?
-                        null :
-                        <span className={styles.libraryCategoryTitle}>
-                            {this.props.intl.formatMessage(messages[key])}
-                        </span>
-                    }
-                    <div
-                        className={styles.libraryCategoryItems}
-                    >
-                        {values.map(item => this.renderElement(item))}
-                    </div>
-                </div>));
+                    {values.map(item => this.renderElement(item))}
+                </div>
+            </div>));
     }
-    render () {
+    render() {
         return (
             <Modal
                 fullScreen

@@ -23,8 +23,16 @@
         width: 100% !important;
         flex: 0 0 50% !important;
         height: 50% !important;
-        overflow: hidden;
-        /* Ensure content doesn't spill */
+        overflow: visible !important;
+        /* Allow add-button to be visible outside bounds */
+    }
+
+    /* Move the add-button inside the visible area on mobile */
+    .add-button {
+        position: absolute !important;
+        bottom: 0.75rem !important;
+        right: 0.75rem !important;
+        z-index: 50 !important;
     }
 }
 

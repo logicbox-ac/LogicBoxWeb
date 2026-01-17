@@ -25,7 +25,8 @@
     .target-pane {
         flex-direction: column !important;
         height: 100% !important;
-        overflow: hidden !important;
+        overflow: visible !important;
+        /* Allow add-buttons to be visible */
     }
 
     .stage-selector-wrapper {

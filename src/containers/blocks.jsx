@@ -14,21 +14,21 @@ import ExtensionLibrary from './extension-library.jsx';
 import extensionData from '../lib/libraries/extensions/index.jsx';
 import CustomProcedures from './custom-procedures.jsx';
 import errorBoundaryHOC from '../lib/error-boundary-hoc.jsx';
-import {BLOCKS_DEFAULT_SCALE, STAGE_DISPLAY_SIZES} from '../lib/layout-constants';
+import { BLOCKS_DEFAULT_SCALE, STAGE_DISPLAY_SIZES } from '../lib/layout-constants';
 import DropAreaHOC from '../lib/drop-area-hoc.jsx';
 import DragConstants from '../lib/drag-constants';
 import defineDynamicBlock from '../lib/define-dynamic-block';
-import {DEFAULT_THEME, getColorsForTheme, themeMap} from '../lib/themes';
-import {injectExtensionBlockTheme, injectExtensionCategoryTheme} from '../lib/themes/blockHelpers';
+import { DEFAULT_THEME, getColorsForTheme, themeMap } from '../lib/themes';
+import { injectExtensionBlockTheme, injectExtensionCategoryTheme } from '../lib/themes/blockHelpers';
 
-import {connect} from 'react-redux';
-import {updateToolbox} from '../reducers/toolbox';
-import {activateColorPicker} from '../reducers/color-picker';
-import {closeExtensionLibrary, openSoundRecorder, openConnectionModal} from '../reducers/modals';
-import {activateCustomProcedures, deactivateCustomProcedures} from '../reducers/custom-procedures';
-import {setConnectionModalExtensionId} from '../reducers/connection-modal';
-import {updateMetrics} from '../reducers/workspace-metrics';
-import {isTimeTravel2020} from '../reducers/time-travel';
+import { connect } from 'react-redux';
+import { updateToolbox } from '../reducers/toolbox';
+import { activateColorPicker } from '../reducers/color-picker';
+import { closeExtensionLibrary, openSoundRecorder, openConnectionModal } from '../reducers/modals';
+import { activateCustomProcedures, deactivateCustomProcedures } from '../reducers/custom-procedures';
+import { setConnectionModalExtensionId } from '../reducers/connection-modal';
+import { updateMetrics } from '../reducers/workspace-metrics';
+import { isTimeTravel2020 } from '../reducers/time-travel';
 
 import {
     activateTab,
@@ -49,7 +49,7 @@ const DroppableBlocks = DropAreaHOC([
 ])(BlocksComponent);
 
 class Blocks extends React.Component {
-    constructor (props) {
+    constructor(props) {
         super(props);
         this.ScratchBlocks = VMScratchBlocks(props.vm, false);
         bindAll(this, [
@@ -78,7 +78,10 @@ class Blocks extends React.Component {
             'onWorkspaceUpdate',
             'onWorkspaceMetricsChange',
             'setBlocks',
-            'setLocale'
+            'setLocale',
+            'handleMobileBlockLongPress',
+            'handleMobileDelete',
+            'handleCancelMobileDelete'
         ]);
         this.ScratchBlocks.prompt = this.handlePromptStart;
         this.ScratchBlocks.statusButtonCallback = this.handleConnectionModalStart;
@@ -87,13 +90,34 @@ class Blocks extends React.Component {
         this.state = {
             prompt: null,
             isToolboxCollapsed: false,
-            isFlyoutVisible: false
+            isFlyoutVisible: false,
+            mobileDeletePosition: null,
+            mobileDeleteBlockId: null
         };
         this.onTargetsUpdate = debounce(this.onTargetsUpdate, 100);
         this.toolboxUpdateQueue = [];
+        this.longPressTimer = null;
+        this.longPressBlockId = null;
         bindAll(this, ['handleToggleToolbox']);
     }
-    componentDidMount () {
+    componentDidMount() {
+        // MONKEY PATCH: Prevent IndexSizeError in Scratch Blocks/Paint
+        // Mobile browsers sometimes report 0 width/height for canvases during initial layout,
+        // causing getImageData to throw and break block creation.
+        if (!window.CanvasRenderingContext2D.prototype._originalGetImageData) {
+            const originalGetImageData = window.CanvasRenderingContext2D.prototype.getImageData;
+            window.CanvasRenderingContext2D.prototype._originalGetImageData = originalGetImageData;
+
+            window.CanvasRenderingContext2D.prototype.getImageData = function (sx, sy, sw, sh) {
+                if (sw <= 0 || sh <= 0) {
+                    console.warn(`[MOBILE FIX] Prevented IndexSizeError in getImageData: w=${sw}, h=${sh}`);
+                    // Return a 1x1 transparent pixel to satisfy the return type contract
+                    return new ImageData(1, 1);
+                }
+                return originalGetImageData.apply(this, arguments);
+            };
+        }
+
         this.ScratchBlocks = VMScratchBlocks(this.props.vm, this.props.useCatBlocks);
         this.ScratchBlocks.prompt = this.handlePromptStart;
         this.ScratchBlocks.statusButtonCallback = this.handleConnectionModalStart;
@@ -106,7 +130,7 @@ class Blocks extends React.Component {
         const workspaceConfig = defaultsDeep({},
             Blocks.defaultOptions,
             this.props.options,
-            {rtl: this.props.isRtl, toolbox: this.props.toolboxXML, colours: getColorsForTheme(this.props.theme)}
+            { rtl: this.props.isRtl, toolbox: this.props.toolboxXML, colours: getColorsForTheme(this.props.theme) }
         );
         this.workspace = this.ScratchBlocks.inject(this.blocks, workspaceConfig);
 
@@ -153,21 +177,20 @@ class Blocks extends React.Component {
                     return isVisible ? originalGetWidth() : 0;
                 };
             }
-            
-            // Force initial resize
-            setTimeout(() => {
-                this.workspace.resize();
-            }, 100);
+
+            // Force initial resize using robust checker
+            this.ensureWorkspaceSize();
         }
 
         this.attachVM();
+
         // Only update blocks/vm locale when visible to avoid sizing issues
         // If locale changes while not visible it will get handled in didUpdate
         if (this.props.isVisible) {
             this.setLocale();
         }
     }
-    shouldComponentUpdate (nextProps, nextState) {
+    shouldComponentUpdate(nextProps, nextState) {
         const shouldUpdate = (
             this.state.prompt !== nextState.prompt ||
             this.state.isToolboxCollapsed !== nextState.isToolboxCollapsed ||
@@ -180,11 +203,9 @@ class Blocks extends React.Component {
             this.props.anyModalVisible !== nextProps.anyModalVisible ||
             this.props.stageSize !== nextProps.stageSize
         );
-        console.log('[Blocks] shouldComponentUpdate:', shouldUpdate,
-            'isFlyoutVisible:', this.state.isFlyoutVisible, '->', nextState.isFlyoutVisible);
         return shouldUpdate;
     }
-    componentDidUpdate (prevProps, prevState) {
+    componentDidUpdate(prevProps, prevState) {
         // resize workspace if toolbox collapsed state changed
         if (this.state.isToolboxCollapsed !== prevState.isToolboxCollapsed) {
             this.workspace.resize();
@@ -200,6 +221,14 @@ class Blocks extends React.Component {
         // Do not check against prevProps.toolboxXML because that may not have been rendered.
         if (this.props.isVisible && this.props.toolboxXML !== this._renderedToolboxXML) {
             this.requestToolboxUpdate();
+        }
+
+        // On mobile, check if flyout SVG has been replaced and re-attach listeners if needed
+        if (window.innerWidth <= 767 && this.props.isVisible) {
+            const flyout = this.workspace.getFlyout();
+            if (flyout && flyout.svgGroup_ && flyout.svgGroup_ !== this._connectedFlyoutSvg) {
+                this.attachFlyoutListeners();
+            }
         }
 
         if (this.props.isVisible === prevProps.isVisible) {
@@ -227,7 +256,7 @@ class Blocks extends React.Component {
             this.workspace.setVisible(false);
         }
     }
-    componentWillUnmount () {
+    componentWillUnmount() {
         this.detachVM();
         this.workspace.dispose();
         clearTimeout(this.toolboxUpdateTimeout);
@@ -235,11 +264,10 @@ class Blocks extends React.Component {
         // Clear the flyout blocks so that they can be recreated on mount.
         this.props.vm.clearFlyoutBlocks();
     }
-    handleToggleToolbox () {
+    handleToggleToolbox() {
         // No-op for now as we removed the toggle logic
     }
-    handleCloseFlyout () {
-        console.log('[handleCloseFlyout] called');
+    handleCloseFlyout() {
         const flyout = this.workspace.getFlyout();
         if (flyout && flyout.isVisible()) {
             flyout.hide();
@@ -255,18 +283,17 @@ class Blocks extends React.Component {
                     }
                 } catch (e) {
                     // Ignore errors from clearing selection
-                    console.log('[handleCloseFlyout] clearSelection error (ignored):', e.message);
                 }
             }
         }
     }
-    requestToolboxUpdate () {
+    requestToolboxUpdate() {
         clearTimeout(this.toolboxUpdateTimeout);
         this.toolboxUpdateTimeout = setTimeout(() => {
             this.updateToolbox();
         }, 0);
     }
-    setLocale () {
+    setLocale() {
         this.ScratchBlocks.ScratchMsgs.setLocale(this.props.locale);
         this.props.vm.setLocale(this.props.locale, this.props.messages)
             .then(() => {
@@ -279,7 +306,7 @@ class Blocks extends React.Component {
             });
     }
 
-    updateToolbox () {
+    updateToolbox() {
         this.toolboxUpdateTimeout = false;
 
         const categoryId = this.workspace.toolbox_.getSelectedCategoryId();
@@ -305,7 +332,7 @@ class Blocks extends React.Component {
         queue.forEach(fn => fn());
     }
 
-    withToolboxUpdates (fn) {
+    withToolboxUpdates(fn) {
         // if there is a queued toolbox update, we need to wait
         if (this.toolboxUpdateTimeout) {
             this.toolboxUpdateQueue.push(fn);
@@ -314,8 +341,197 @@ class Blocks extends React.Component {
         }
     }
 
-    attachVM () {
+    ensureWorkspaceSize(attempts = 0) {
+        if (!this.workspace || !this.blocks) return;
+
+        const width = this.blocks.clientWidth;
+        const height = this.blocks.clientHeight;
+
+        if (width > 0 && height > 0) {
+            this.workspace.resize();
+            // Just to be safe, resize again after a delay to handle transition ends
+            if (attempts === 0) setTimeout(() => this.ensureWorkspaceSize(1), 300);
+        } else if (attempts < 10) {
+            // Retry if 0 size
+            setTimeout(() => this.ensureWorkspaceSize(attempts + 1), 150);
+        }
+    }
+
+    attachFlyoutListeners() {
+        if (window.innerWidth > 767) return;
+
+        const flyout = this.workspace.getFlyout();
+        if (!flyout) return;
+
+        const flyoutSvgGroup = flyout.svgGroup_;
+        if (!flyoutSvgGroup) return;
+
+        // Avoid duplicate listeners on the same element
+        if (this._connectedFlyoutSvg === flyoutSvgGroup) {
+            return;
+        }
+
+        this._connectedFlyoutSvg = flyoutSvgGroup;
+        const flyoutWorkspace = flyout.getWorkspace();
+
+        let pointerStartPos = null;
+        // Relaxed thresholds for mobile headers/fingers
+        const TAP_THRESHOLD = 15;
+        const TAP_DURATION = 700;
+
+        flyoutSvgGroup.addEventListener('pointerdown', e => {
+            if (e.isPrimary) {
+                // Ensure we receive pointerup even if finger leaves the flyout
+                if (e.target.setPointerCapture) {
+                    e.target.setPointerCapture(e.pointerId);
+                }
+
+                pointerStartPos = {
+                    x: e.clientX,
+                    y: e.clientY,
+                    target: e.target,
+                    time: Date.now()
+                };
+            }
+        }, { passive: true });
+
+        // Live Drag State
+        let draggedBlock = null;
+        let lastDragEndTime = 0;
+
+        flyoutSvgGroup.addEventListener('pointermove', e => {
+            if (pointerStartPos && e.isPrimary) {
+                const currentX = e.clientX;
+                const currentY = e.clientY;
+                const dx = Math.abs(currentX - pointerStartPos.x);
+                const dy = Math.abs(currentY - pointerStartPos.y);
+
+                // Case 1: Detect Start of Drag (Horizontal Swipe)
+                if (!draggedBlock && dx > 20 && dx > dy * 1.5) {
+                    // If native drag is already active, don't interfere
+                    if (this.workspace.isDragging && this.workspace.isDragging()) {
+                        return;
+                    }
+
+                    let target = pointerStartPos.target;
+                    let blockId = null;
+                    while (target && target !== flyoutSvgGroup) {
+                        if (target.getAttribute && target.getAttribute('data-id')) {
+                            blockId = target.getAttribute('data-id');
+                            break;
+                        }
+                        target = target.parentNode;
+                    }
+
+                    if (blockId && flyoutWorkspace) {
+                        // Stop browser scroll and native Blockly handlers
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const sourceBlock = flyoutWorkspace.getBlockById(blockId);
+                        if (sourceBlock) {
+                            draggedBlock = flyout.createBlock(sourceBlock);
+
+                            // Initialize last position for delta updates
+                            pointerStartPos.lastX = currentX;
+                            pointerStartPos.lastY = currentY;
+
+                            // Initial jump to finger
+                            const scale = this.workspace.scale;
+                            draggedBlock.moveBy((currentX - pointerStartPos.x) / scale, (currentY - pointerStartPos.y) / scale);
+                        }
+                    }
+                }
+
+                // Case 2: Continue Live Drag
+                if (draggedBlock) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const scale = this.workspace.scale;
+                    // Calculate delta since last move event to avoid accumulation errors
+                    // use defaults in case lastX is missing (though it shouldn't be)
+                    const prevX = pointerStartPos.lastX || pointerStartPos.x;
+                    const prevY = pointerStartPos.lastY || pointerStartPos.y;
+
+                    const deltaX = (currentX - prevX) / scale;
+                    const deltaY = (currentY - prevY) / scale;
+
+                    draggedBlock.moveBy(deltaX, deltaY);
+
+                    pointerStartPos.lastX = currentX;
+                    pointerStartPos.lastY = currentY;
+                }
+            }
+        }, { passive: false });
+
+        flyoutSvgGroup.addEventListener('pointerup', e => {
+            if (!pointerStartPos) return;
+
+            // If we were dragging, just finish
+            if (draggedBlock) {
+                // CRITICAL FIX: Stop event propagation so Native Blockly doesn't interpret this as a Click/Tap
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+
+                draggedBlock = null;
+                lastDragEndTime = Date.now();
+                pointerStartPos = null;
+                return;
+            }
+
+            // Otherwise, check for Tap
+            if (!flyout.isVisible()) {
+                return;
+            }
+
+            const dx = Math.abs(e.clientX - pointerStartPos.x);
+            const dy = Math.abs(e.clientY - pointerStartPos.y);
+            const duration = Date.now() - pointerStartPos.time;
+
+            const isTap = dx < TAP_THRESHOLD && dy < TAP_THRESHOLD && duration < TAP_DURATION;
+
+            if (isTap) {
+                let target = pointerStartPos.target;
+                let blockId = null;
+
+                while (target && target !== flyoutSvgGroup) {
+                    if (target.getAttribute && target.getAttribute('data-id')) {
+                        blockId = target.getAttribute('data-id');
+                        break;
+                    }
+                    target = target.parentNode;
+                }
+
+                if (blockId && flyoutWorkspace) {
+                    const block = flyoutWorkspace.getBlockById(blockId);
+                    if (block) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        flyout.createBlock(block);
+                    }
+                }
+            } else {
+                // console.log('[MOBILE DEBUG] Interaction rejected (too vertical or too slow)', { dx, dy, duration });
+            }
+            pointerStartPos = null;
+        }, { passive: false });
+
+        // Suppress native touch interactions if we just finished a drag
+        flyoutSvgGroup.addEventListener('touchend', e => {
+            if (draggedBlock || (Date.now() - lastDragEndTime < 50)) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }
+        }, { passive: false });
+    }
+
+    attachVM() {
         this.workspace.addChangeListener(this.props.vm.blockListener);
+
         this.flyoutWorkspace = this.workspace
             .getFlyout()
             .getWorkspace();
@@ -340,29 +556,20 @@ class Blocks extends React.Component {
         const originalHide = flyout.hide;
         const self = this;
         let showTimestamp = 0;
-        
+
         flyout.show = function (xmlList) {
-            console.log('[FLYOUT] show() called, current state:', self.state.isFlyoutVisible);
             showTimestamp = Date.now();
             originalShow.call(this, xmlList);
-            console.log('[FLYOUT] Setting isFlyoutVisible to TRUE');
-            self.setState({isFlyoutVisible: true}, () => {
-                console.log('[FLYOUT] setState callback - isFlyoutVisible is now:', self.state.isFlyoutVisible);
-            });
+            self.setState({ isFlyoutVisible: true });
         };
         flyout.hide = function () {
             // Prevent hide if show was just called (within 50ms) - this prevents the show/hide race condition
             const timeSinceShow = Date.now() - showTimestamp;
             if (timeSinceShow < 50) {
-                console.log('[FLYOUT] hide() blocked - show was called', timeSinceShow, 'ms ago');
                 return;
             }
-            console.log('[FLYOUT] hide() called, current state:', self.state.isFlyoutVisible);
             originalHide.call(this);
-            console.log('[FLYOUT] Setting isFlyoutVisible to FALSE');
-            self.setState({isFlyoutVisible: false}, () => {
-                console.log('[FLYOUT] setState callback - isFlyoutVisible is now:', self.state.isFlyoutVisible);
-            });
+            self.setState({ isFlyoutVisible: false });
             // On mobile, resize workspace to take full width after flyout hides
             if (window.innerWidth <= 767) {
                 setTimeout(() => {
@@ -377,6 +584,7 @@ class Blocks extends React.Component {
         // On mobile, close flyout when a block is created or dragged
         this.workspace.addChangeListener(event => {
             if (event.type === this.ScratchBlocks.Events.BLOCK_CREATE) {
+                console.log('[MOBILE DEBUG] BLOCK_CREATE event', { blockId: event.blockId });
                 if (window.innerWidth <= 767) {
                     const currentFlyout = this.workspace.getFlyout();
                     if (currentFlyout && currentFlyout.isVisible()) {
@@ -384,9 +592,10 @@ class Blocks extends React.Component {
                     }
                 }
             }
-            
+
             if (event.type === this.ScratchBlocks.Events.BLOCK_DRAG) {
                 if (event.isStart && window.innerWidth <= 767) {
+                    console.log('[MOBILE DEBUG] BLOCK_DRAG start event', { blockId: event.blockId });
                     const currentFlyout = this.workspace.getFlyout();
                     if (currentFlyout && currentFlyout.isVisible()) {
                         currentFlyout.hide();
@@ -396,33 +605,143 @@ class Blocks extends React.Component {
         });
 
         // On mobile, close flyout when clicking on the main workspace area (outside flyout/toolbox)
+        // On mobile, close flyout when clicking on the main workspace area (outside flyout/toolbox)
+        // On mobile, close flyout when clicking on the main workspace area (outside flyout/toolbox)
         if (window.innerWidth <= 767) {
             const workspaceSvg = this.workspace.getParentSvg();
             if (workspaceSvg) {
+                // Close flyout when tapping outside
                 workspaceSvg.addEventListener('pointerdown', e => {
                     const currentFlyout = this.workspace.getFlyout();
                     if (!currentFlyout || !currentFlyout.isVisible()) return;
-                    
-                    // Get the flyout and toolbox elements
-                    const flyoutSvg = currentFlyout.svgGroup_;
+
+                    const flyoutSvg = currentFlyout ? currentFlyout.svgGroup_ : null;
                     const toolbox = this.workspace.getToolbox();
                     const toolboxDiv = toolbox ? toolbox.HtmlDiv : null;
-                    
-                    // Check if click is inside flyout or toolbox
+
                     const clickedInFlyout = flyoutSvg && flyoutSvg.contains(e.target);
                     const clickedInToolbox = toolboxDiv && toolboxDiv.contains(e.target);
-                    
-                    // If clicked outside both, close the flyout
+
                     if (!clickedInFlyout && !clickedInToolbox) {
-                        console.log('[WORKSPACE] Click outside flyout - closing');
-                        flyout.hide();
+                        currentFlyout.hide();
                     }
-                }, true); // Use capture phase
+                }, true);
+
+                // Polyfill: Tap to Create Block in Flyout
+                // Handles both Mouse and Touch via Pointer Events
+                this.attachFlyoutListeners();
             }
+
+            // Mobile long-press detection for block deletion
+            let longPressTimer = null;
+            let longPressStartPos = null;
+            const LONG_PRESS_DURATION = 500; // ms
+            const MOVE_THRESHOLD = 10; // pixels
+
+            workspaceSvg.addEventListener('touchstart', e => {
+                // Find if touch is on a block
+                let target = e.target;
+                let blockSvg = null;
+
+                // Walk up the DOM tree to find the block group
+                while (target && target !== workspaceSvg) {
+                    if (target.classList && target.classList.contains('blocklyDraggable')) {
+                        blockSvg = target;
+                        break;
+                    }
+                    // Also check for block path elements
+                    if (target.getAttribute && target.getAttribute('data-id')) {
+                        blockSvg = target;
+                        break;
+                    }
+                    target = target.parentElement;
+                }
+
+                if (!blockSvg) {
+                    // Try to find block through Blockly's internal structure
+                    target = e.target;
+                    while (target && target !== workspaceSvg) {
+                        // Look for the block group with a data-id
+                        if (target.getAttribute && target.getAttribute('data-id')) {
+                            blockSvg = target;
+                            break;
+                        }
+                        // Look for g.blocklyDraggable
+                        if (target.tagName === 'g' && target.classList && target.classList.contains('blocklyDraggable')) {
+                            blockSvg = target;
+                            break;
+                        }
+                        target = target.parentElement;
+                    }
+                }
+
+                if (blockSvg) {
+                    const touch = e.touches[0];
+                    longPressStartPos = { x: touch.clientX, y: touch.clientY };
+
+                    // Find the block ID from the SVG element
+                    let blockId = blockSvg.getAttribute('data-id');
+                    if (!blockId) {
+                        // Try to find via Blockly's block reference
+                        const parentGroup = blockSvg.closest('[data-id]');
+                        if (parentGroup) {
+                            blockId = parentGroup.getAttribute('data-id');
+                        }
+                    }
+
+                    if (blockId) {
+                        // Verify it's a main workspace block, not a flyout block
+                        const block = this.workspace.getBlockById(blockId);
+                        if (block && !block.isInFlyout) {
+                            longPressTimer = setTimeout(() => {
+                                // Trigger long press action
+                                this.handleMobileBlockLongPress(blockId, touch.clientX, touch.clientY);
+                            }, LONG_PRESS_DURATION);
+                            this.longPressBlockId = blockId;
+                        }
+                    }
+                }
+            }, { passive: true });
+
+            workspaceSvg.addEventListener('touchmove', e => {
+                if (longPressTimer && longPressStartPos) {
+                    const touch = e.touches[0];
+                    const dx = touch.clientX - longPressStartPos.x;
+                    const dy = touch.clientY - longPressStartPos.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    // Cancel long press if moved too much
+                    if (distance > MOVE_THRESHOLD) {
+                        clearTimeout(longPressTimer);
+                        longPressTimer = null;
+                        longPressStartPos = null;
+                        this.longPressBlockId = null;
+                    }
+                }
+            }, { passive: true });
+
+            workspaceSvg.addEventListener('touchend', () => {
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                longPressStartPos = null;
+                this.longPressBlockId = null;
+            }, { passive: true });
+
+            workspaceSvg.addEventListener('touchcancel', () => {
+                if (longPressTimer) {
+                    clearTimeout(longPressTimer);
+                    longPressTimer = null;
+                }
+                longPressStartPos = null;
+                this.longPressBlockId = null;
+            }, { passive: true });
         }
     }
 
-    detachVM () {
+
+    detachVM() {
         this.props.vm.removeListener('SCRIPT_GLOW_ON', this.onScriptGlowOn);
         this.props.vm.removeListener('SCRIPT_GLOW_OFF', this.onScriptGlowOff);
         this.props.vm.removeListener('BLOCK_GLOW_ON', this.onBlockGlowOn);
@@ -437,7 +756,7 @@ class Blocks extends React.Component {
         this.props.vm.removeListener('PERIPHERAL_DISCONNECTED', this.handleStatusButtonUpdate);
     }
 
-    updateToolboxBlockValue (id, value) {
+    updateToolboxBlockValue(id, value) {
         this.withToolboxUpdates(() => {
             const block = this.workspace
                 .getFlyout()
@@ -449,7 +768,7 @@ class Blocks extends React.Component {
         });
     }
 
-    onTargetsUpdate () {
+    onTargetsUpdate() {
         if (this.props.vm.editingTarget && this.workspace.getFlyout()) {
             ['glide', 'move', 'set'].forEach(prefix => {
                 this.updateToolboxBlockValue(`${prefix}x`, Math.round(this.props.vm.editingTarget.x).toString());
@@ -457,12 +776,12 @@ class Blocks extends React.Component {
             });
         }
     }
-    onWorkspaceMetricsChange () {
+    onWorkspaceMetricsChange() {
         const target = this.props.vm.editingTarget;
         if (target && target.id) {
-        // Dispatch updateMetrics later, since onWorkspaceMetricsChange may be (very indirectly)
-        // called from a reducer, i.e. when you create a custom procedure.
-        // TODO: Is this a vehement hack?
+            // Dispatch updateMetrics later, since onWorkspaceMetricsChange may be (very indirectly)
+            // called from a reducer, i.e. when you create a custom procedure.
+            // TODO: Is this a vehement hack?
             setTimeout(() => {
                 this.props.updateMetrics({
                     targetID: target.id,
@@ -473,27 +792,27 @@ class Blocks extends React.Component {
             }, 0);
         }
     }
-    onScriptGlowOn (data) {
+    onScriptGlowOn(data) {
         this.workspace.glowStack(data.id, true);
     }
-    onScriptGlowOff (data) {
+    onScriptGlowOff(data) {
         this.workspace.glowStack(data.id, false);
     }
-    onBlockGlowOn (data) {
+    onBlockGlowOn(data) {
         this.workspace.glowBlock(data.id, true);
     }
-    onBlockGlowOff (data) {
+    onBlockGlowOff(data) {
         this.workspace.glowBlock(data.id, false);
     }
-    onVisualReport (data) {
+    onVisualReport(data) {
         this.workspace.reportValue(data.id, data.value);
     }
-    getToolboxXML () {
-    // Use try/catch because this requires digging pretty deep into the VM
-    // Code inside intentionally ignores several error situations (no stage, etc.)
-    // Because they would get caught by this try/catch
+    getToolboxXML() {
+        // Use try/catch because this requires digging pretty deep into the VM
+        // Code inside intentionally ignores several error situations (no stage, etc.)
+        // Because they would get caught by this try/catch
         try {
-            let {editingTarget: target, runtime} = this.props.vm;
+            let { editingTarget: target, runtime } = this.props.vm;
             const stage = runtime.getTargetForStage();
             if (!target) target = stage; // If no editingTarget, use the stage
 
@@ -514,8 +833,8 @@ class Blocks extends React.Component {
             return null;
         }
     }
-    onWorkspaceUpdate (data) {
-    // When we change sprites, update the toolbox to have the new sprite's blocks
+    onWorkspaceUpdate(data) {
+        // When we change sprites, update the toolbox to have the new sprite's blocks
         const toolboxXML = this.getToolboxXML();
         if (toolboxXML) {
             this.props.updateToolboxState(toolboxXML);
@@ -531,15 +850,15 @@ class Blocks extends React.Component {
         try {
             this.ScratchBlocks.Xml.clearWorkspaceAndLoadFromXml(dom, this.workspace);
         } catch (error) {
-        // The workspace is likely incomplete. What did update should be
-        // functional.
-        //
-        // Instead of throwing the error, by logging it and continuing as
-        // normal lets the other workspace update processes complete in the
-        // gui and vm, which lets the vm run even if the workspace is
-        // incomplete. Throwing the error would keep things like setting the
-        // correct editing target from happening which can interfere with
-        // some blocks and processes in the vm.
+            // The workspace is likely incomplete. What did update should be
+            // functional.
+            //
+            // Instead of throwing the error, by logging it and continuing as
+            // normal lets the other workspace update processes complete in the
+            // gui and vm, which lets the vm run even if the workspace is
+            // incomplete. Throwing the error would keep things like setting the
+            // correct editing target from happening which can interfere with
+            // some blocks and processes in the vm.
             if (error.message) {
                 error.message = `Workspace Update Error: ${error.message}`;
             }
@@ -548,7 +867,7 @@ class Blocks extends React.Component {
         this.workspace.addChangeListener(this.props.vm.blockListener);
 
         if (this.props.vm.editingTarget && this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id]) {
-            const {scrollX, scrollY, scale} = this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id];
+            const { scrollX, scrollY, scale } = this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id];
             this.workspace.scrollX = scrollX;
             this.workspace.scrollY = scrollY;
             this.workspace.scale = scale;
@@ -560,10 +879,10 @@ class Blocks extends React.Component {
         // workspace to be 'undone' here.
         this.workspace.clearUndo();
     }
-    handleMonitorsUpdate (monitors) {
-    // Update the checkboxes of the relevant monitors.
-    // TODO: What about monitors that have fields? See todo in scratch-vm blocks.js changeBlock:
-    // https://github.com/LLK/scratch-vm/blob/2373f9483edaf705f11d62662f7bb2a57fbb5e28/src/engine/blocks.js#L569-L576
+    handleMonitorsUpdate(monitors) {
+        // Update the checkboxes of the relevant monitors.
+        // TODO: What about monitors that have fields? See todo in scratch-vm blocks.js changeBlock:
+        // https://github.com/LLK/scratch-vm/blob/2373f9483edaf705f11d62662f7bb2a57fbb5e28/src/engine/blocks.js#L569-L576
         const flyout = this.workspace.getFlyout();
         for (const monitor of monitors.values()) {
             const blockId = monitor.get('id');
@@ -578,7 +897,7 @@ class Blocks extends React.Component {
             }
         }
     }
-    handleExtensionAdded (categoryInfo) {
+    handleExtensionAdded(categoryInfo) {
         const defineBlocks = blockInfoArray => {
             if (blockInfoArray && blockInfoArray.length > 0) {
                 const staticBlocksJson = [];
@@ -589,17 +908,17 @@ class Blocks extends React.Component {
                     } else if (blockInfo.json) {
                         staticBlocksJson.push(injectExtensionBlockTheme(blockInfo.json, this.props.theme));
                     }
-                // otherwise it's a non-block entry such as '---'
+                    // otherwise it's a non-block entry such as '---'
                 });
 
                 this.ScratchBlocks.defineBlocksWithJsonArray(staticBlocksJson);
                 dynamicBlocksInfo.forEach(blockInfo => {
-                // This is creating the block factory / constructor -- NOT a specific instance of the block.
-                // The factory should only know static info about the block: the category info and the opcode.
-                // Anything else will be picked up from the XML attached to the block instance.
+                    // This is creating the block factory / constructor -- NOT a specific instance of the block.
+                    // The factory should only know static info about the block: the category info and the opcode.
+                    // Anything else will be picked up from the XML attached to the block instance.
                     const extendedOpcode = `${categoryInfo.id}_${blockInfo.info.opcode}`;
                     const blockDefinition =
-                    defineDynamicBlock(this.ScratchBlocks, categoryInfo, blockInfo, extendedOpcode);
+                        defineDynamicBlock(this.ScratchBlocks, categoryInfo, blockInfo, extendedOpcode);
                     this.ScratchBlocks.Blocks[extendedOpcode] = blockDefinition;
                 });
             }
@@ -619,11 +938,11 @@ class Blocks extends React.Component {
             this.props.updateToolboxState(toolboxXML);
         }
     }
-    handleBlocksInfoUpdate (categoryInfo) {
-    // @todo Later we should replace this to avoid all the warnings from redefining blocks.
+    handleBlocksInfoUpdate(categoryInfo) {
+        // @todo Later we should replace this to avoid all the warnings from redefining blocks.
         this.handleExtensionAdded(categoryInfo);
     }
-    handleCategorySelected (categoryId) {
+    handleCategorySelected(categoryId) {
         const extension = extensionData.find(ext => ext.extensionId === categoryId);
         if (extension && extension.launchPeripheralConnectionFlow) {
             this.handleConnectionModalStart(categoryId);
@@ -633,54 +952,54 @@ class Blocks extends React.Component {
             this.workspace.toolbox_.setSelectedCategoryById(categoryId);
         });
     }
-    setBlocks (blocks) {
+    setBlocks(blocks) {
         this.blocks = blocks;
     }
-    handlePromptStart (message, defaultValue, callback, optTitle, optVarType) {
-        const p = {prompt: {callback, message, defaultValue}};
+    handlePromptStart(message, defaultValue, callback, optTitle, optVarType) {
+        const p = { prompt: { callback, message, defaultValue } };
         p.prompt.title = optTitle ? optTitle :
             this.ScratchBlocks.Msg.VARIABLE_MODAL_TITLE;
         p.prompt.varType = typeof optVarType === 'string' ?
             optVarType : this.ScratchBlocks.SCALAR_VARIABLE_TYPE;
         p.prompt.showVariableOptions = // This flag means that we should show variable/list options about scope
-        optVarType !== this.ScratchBlocks.BROADCAST_MESSAGE_VARIABLE_TYPE &&
-        p.prompt.title !== this.ScratchBlocks.Msg.RENAME_VARIABLE_MODAL_TITLE &&
-        p.prompt.title !== this.ScratchBlocks.Msg.RENAME_LIST_MODAL_TITLE;
+            optVarType !== this.ScratchBlocks.BROADCAST_MESSAGE_VARIABLE_TYPE &&
+            p.prompt.title !== this.ScratchBlocks.Msg.RENAME_VARIABLE_MODAL_TITLE &&
+            p.prompt.title !== this.ScratchBlocks.Msg.RENAME_LIST_MODAL_TITLE;
         p.prompt.showCloudOption = (optVarType === this.ScratchBlocks.SCALAR_VARIABLE_TYPE) && this.props.canUseCloud;
         this.setState(p);
     }
-    handleConnectionModalStart (extensionId) {
+    handleConnectionModalStart(extensionId) {
         this.props.onOpenConnectionModal(extensionId);
     }
-    handleStatusButtonUpdate () {
+    handleStatusButtonUpdate() {
         this.ScratchBlocks.refreshStatusButtons(this.workspace);
     }
-    handleOpenSoundRecorder () {
+    handleOpenSoundRecorder() {
         this.props.onOpenSoundRecorder();
     }
 
     /*
- * Pass along information about proposed name and variable options (scope and isCloud)
- * and additional potentially conflicting variable names from the VM
- * to the variable validation prompt callback used in scratch-blocks.
- */
-    handlePromptCallback (input, variableOptions) {
+    * Pass along information about proposed name and variable options (scope and isCloud)
+    * and additional potentially conflicting variable names from the VM
+    * to the variable validation prompt callback used in scratch-blocks.
+    */
+    handlePromptCallback(input, variableOptions) {
         this.state.prompt.callback(
             input,
             this.props.vm.runtime.getAllVarNamesOfType(this.state.prompt.varType),
             variableOptions);
         this.handlePromptClose();
     }
-    handlePromptClose () {
-        this.setState({prompt: null});
+    handlePromptClose() {
+        this.setState({ prompt: null });
     }
-    handleCustomProceduresClose (data) {
+    handleCustomProceduresClose(data) {
         this.props.onRequestCloseCustomProcedures(data);
         const ws = this.workspace;
         ws.refreshToolboxSelection_();
         ws.toolbox_.scrollToCategoryById('myBlocks');
     }
-    handleDrop (dragInfo) {
+    handleDrop(dragInfo) {
         fetch(dragInfo.payload.bodyUrl)
             .then(response => response.json())
             .then(blocks => this.props.vm.shareBlocksToTarget(blocks, this.props.vm.editingTarget.id))
@@ -689,8 +1008,38 @@ class Blocks extends React.Component {
                 this.updateToolbox(); // To show new variables/custom blocks
             });
     }
-    render () {
-        console.log('[Blocks Container] render - isFlyoutVisible:', this.state.isFlyoutVisible);
+
+    // Mobile long-press block handlers
+    handleMobileBlockLongPress(blockId, x, y) {
+        if (window.innerWidth > 767) return; // Only on mobile
+        this.setState({
+            mobileDeletePosition: { x, y },
+            mobileDeleteBlockId: blockId
+        });
+    }
+
+    handleMobileDelete() {
+        const blockId = this.state.mobileDeleteBlockId;
+        if (blockId && this.workspace) {
+            const block = this.workspace.getBlockById(blockId);
+            if (block) {
+                // Dispose the block (deletes it and all connected blocks)
+                block.dispose(false, true);
+            }
+        }
+        this.setState({
+            mobileDeletePosition: null,
+            mobileDeleteBlockId: null
+        });
+    }
+
+    handleCancelMobileDelete() {
+        this.setState({
+            mobileDeletePosition: null,
+            mobileDeleteBlockId: null
+        });
+    }
+    render() {
         /* eslint-disable no-unused-vars */
         const {
             anyModalVisible,
@@ -723,6 +1072,9 @@ class Blocks extends React.Component {
                     onDrop={this.handleDrop}
                     isFlyoutVisible={this.state.isFlyoutVisible}
                     onCloseFlyout={this.handleCloseFlyout}
+                    mobileDeletePosition={this.state.mobileDeletePosition}
+                    onMobileDelete={this.handleMobileDelete}
+                    onCancelMobileDelete={this.handleCancelMobileDelete}
                     {...props}
                 />
                 {this.state.prompt ? (

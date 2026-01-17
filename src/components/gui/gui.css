@@ -422,8 +422,8 @@ $fade-out-distance: 15px;
         display: flex !important;
         flex-direction: column !important;
         flex: 1 !important;
-        overflow-y: hidden !important;
-        /* Let children handle scroll */
+        overflow: visible !important;
+        /* Allow add-buttons to be visible */
     }
 
     [data-mobile-tab="files"] .target-wrapper>* {

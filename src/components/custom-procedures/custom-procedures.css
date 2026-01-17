@@ -3,7 +3,8 @@
 
 .modal-content {
     width: 700px;
-    margin: 50px auto; /* This modal is taller than most, reduce top margin */
+    margin: 50px auto;
+    /* This modal is taller than most, reduce top margin */
 }
 
 .body {
@@ -22,7 +23,7 @@
     position: relative;
 }
 
-.workspace :global(.injectionDiv){
+.workspace :global(.injectionDiv) {
     position: absolute;
     top: 0;
     right: 0;
@@ -57,7 +58,7 @@
     box-shadow: 0px 0px 0px 4px $looks-transparent;
 }
 
-.option-card + .option-card {
+.option-card+.option-card {
     margin-left: 1rem;
 }
 
@@ -97,10 +98,79 @@
     color: white;
 }
 
-[dir="ltr"] .button-row button + button {
+[dir="ltr"] .button-row button+button {
     margin-left: 0.5rem;
 }
 
-[dir="rtl"] .button-row button + button {
+[dir="rtl"] .button-row button+button {
     margin-right: 0.5rem;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+    .modal-content {
+        width: 95%;
+        margin: 20px auto;
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+    }
+
+    .body {
+        padding: 1rem;
+        overflow-y: auto;
+        /* Allow scrolling if content is tall */
+    }
+
+    .options-row {
+        flex-direction: column;
+    }
+
+    .option-card+.option-card {
+        margin-left: 0;
+        margin-top: 0.75rem;
+    }
+
+    .option-card {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 0.75rem;
+        text-align: left;
+    }
+
+    .option-icon {
+        max-height: 32px;
+        margin-bottom: 0;
+        margin-right: 1rem;
+    }
+
+    .option-description {
+        display: none;
+        /* Hide descriptions to save space, or keep tight */
+    }
+
+    .workspace {
+        min-height: 150px;
+        /* Smaller workspace on mobile */
+        flex-shrink: 0;
+    }
+
+    .button-row button {
+        padding: 0.75rem 1.5rem;
+        /* Larger touch targets */
+        width: 100%;
+        /* Full width buttons? Or side by side? */
+    }
+
+    /* Make buttons distinct row */
+    .button-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    [dir="ltr"] .button-row button+button {
+        margin-left: 0;
+    }
 }

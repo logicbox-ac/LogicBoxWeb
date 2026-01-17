@@ -104,13 +104,32 @@
     /* Make the workspace take full width by pulling the toolbox out of flow */
     .blocks :global(.blocklyToolboxDiv) {
         position: absolute !important;
-        height: 100% !important;
+        height: calc(100% - 56px) !important;
+        /* Account for mobile tab bar */
         z-index: 20;
         /* Above workspace */
         background-color: rgba(255, 255, 255, 0.95);
         /* Smooth slide animation */
         transform: translateX(0);
         transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+        /* Make the toolbox scrollable */
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* Make the category container scrollable */
+    .blocks :global(.blocklyToolboxDiv) :global(.scratchCategoryMenu) {
+        height: auto !important;
+        min-height: 100% !important;
+        overflow-y: visible !important;
+        padding-bottom: 60px !important;
+        /* Space for extension button */
+    }
+
+    /* Ensure category items can overflow beyond visible area */
+    .blocks :global(.blocklyToolboxDiv) :global(.scratchCategoryMenuRow) {
+        overflow: visible !important;
     }
 
     /* Flyout should overlay but not block the workspace when dragging */
@@ -121,6 +140,8 @@
         /* Smooth slide animation */
         transform: translateX(0);
         transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+        /* Account for mobile tab bar */
+        height: calc(100% - 56px) !important;
     }
 
     /* Make the main workspace SVG take full width on mobile */
@@ -162,7 +183,8 @@
         justify-content: center;
         position: absolute;
         top: 8px;
-        left: 268px; /* Inside the flyout (60px category + ~210px into flyout) */
+        left: 268px;
+        /* Inside the flyout (60px category + ~210px into flyout) */
         z-index: 30;
         width: 28px;
         height: 28px;
@@ -184,5 +206,78 @@
     .flyoutCloseButton:active {
         transform: scale(0.95);
         background-color: #f0f0f0;
+    }
+}
+
+/* Mobile delete button - appears on long press of a block */
+.mobileDeleteButton {
+    display: none;
+}
+
+@media only screen and (max-width: 767px) {
+    .mobileDeleteButton {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: fixed;
+        z-index: 1000;
+        padding: 10px 16px;
+        background-color: #ff4d4d;
+        border-radius: 8px;
+        border: none;
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(255, 77, 77, 0.4);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+        animation: mobileDeleteButtonAppear 0.2s ease-out;
+        gap: 6px;
+    }
+
+    .mobileDeleteButton:hover,
+    .mobileDeleteButton:active {
+        background-color: #e63939;
+        transform: scale(1.05);
+        box-shadow: 0 6px 16px rgba(255, 77, 77, 0.5);
+    }
+
+    .mobileDeleteButton svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    @keyframes mobileDeleteButtonAppear {
+        0% {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    /* Overlay to capture clicks outside the delete button */
+    .mobileDeleteOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 999;
+        background-color: rgba(0, 0, 0, 0.1);
+        animation: mobileDeleteOverlayAppear 0.15s ease-out;
+    }
+
+    @keyframes mobileDeleteOverlayAppear {
+        0% {
+            opacity: 0;
+        }
+
+        100% {
+            opacity: 1;
+        }
     }
 }

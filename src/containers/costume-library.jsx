@@ -1,7 +1,7 @@
 import bindAll from 'lodash.bindall';
 import PropTypes from 'prop-types';
 import React from 'react';
-import {defineMessages, injectIntl, intlShape} from 'react-intl';
+import { defineMessages, injectIntl, intlShape } from 'react-intl';
 import VM from 'scratch-vm';
 
 import costumeLibraryContent from '../lib/libraries/costumes.json';
@@ -18,13 +18,25 @@ const messages = defineMessages({
 
 
 class CostumeLibrary extends React.PureComponent {
-    constructor (props) {
+    constructor(props) {
         super(props);
         bindAll(this, [
             'handleItemSelected'
         ]);
     }
-    handleItemSelected (item) {
+    handleItemSelected(item) {
+        console.log('[COSTUME-LIBRARY] handleItemSelected called with item:', {
+            name: item?.name,
+            md5ext: item?.md5ext,
+            rotationCenterX: item?.rotationCenterX,
+            rotationCenterY: item?.rotationCenterY
+        });
+
+        if (!item) {
+            console.error('[COSTUME-LIBRARY] ERROR: item is undefined or null!');
+            return;
+        }
+
         const vmCostume = {
             name: item.name,
             rotationCenterX: item.rotationCenterX,
@@ -32,9 +44,27 @@ class CostumeLibrary extends React.PureComponent {
             bitmapResolution: item.bitmapResolution,
             skinId: null
         };
-        this.props.vm.addCostumeFromLibrary(item.md5ext, vmCostume);
+
+        console.log('[COSTUME-LIBRARY] Calling vm.addCostumeFromLibrary with:', {
+            md5ext: item.md5ext,
+            vmCostume: vmCostume
+        });
+
+        const result = this.props.vm.addCostumeFromLibrary(item.md5ext, vmCostume);
+
+        console.log('[COSTUME-LIBRARY] vm.addCostumeFromLibrary returned:', result);
+
+        if (result && typeof result.then === 'function') {
+            result
+                .then(res => {
+                    console.log('[COSTUME-LIBRARY] Promise resolved:', res);
+                })
+                .catch(err => {
+                    console.error('[COSTUME-LIBRARY] Promise rejected:', err);
+                });
+        }
     }
-    render () {
+    render() {
         return (
             <LibraryComponent
                 data={costumeLibraryContent}
