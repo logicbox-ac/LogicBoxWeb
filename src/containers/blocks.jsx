@@ -514,7 +514,7 @@ class Blocks extends React.Component {
                     }
                 }
             } else {
-                // console.log('[MOBILE DEBUG] Interaction rejected (too vertical or too slow)', { dx, dy, duration });
+                // Interaction rejected
             }
             pointerStartPos = null;
         }, { passive: false });
@@ -584,7 +584,6 @@ class Blocks extends React.Component {
         // On mobile, close flyout when a block is created or dragged
         this.workspace.addChangeListener(event => {
             if (event.type === this.ScratchBlocks.Events.BLOCK_CREATE) {
-                console.log('[MOBILE DEBUG] BLOCK_CREATE event', { blockId: event.blockId });
                 if (window.innerWidth <= 767) {
                     const currentFlyout = this.workspace.getFlyout();
                     if (currentFlyout && currentFlyout.isVisible()) {
@@ -595,7 +594,6 @@ class Blocks extends React.Component {
 
             if (event.type === this.ScratchBlocks.Events.BLOCK_DRAG) {
                 if (event.isStart && window.innerWidth <= 767) {
-                    console.log('[MOBILE DEBUG] BLOCK_DRAG start event', { blockId: event.blockId });
                     const currentFlyout = this.workspace.getFlyout();
                     if (currentFlyout && currentFlyout.isVisible()) {
                         currentFlyout.hide();
@@ -604,8 +602,6 @@ class Blocks extends React.Component {
             }
         });
 
-        // On mobile, close flyout when clicking on the main workspace area (outside flyout/toolbox)
-        // On mobile, close flyout when clicking on the main workspace area (outside flyout/toolbox)
         // On mobile, close flyout when clicking on the main workspace area (outside flyout/toolbox)
         if (window.innerWidth <= 767) {
             const workspaceSvg = this.workspace.getParentSvg();
