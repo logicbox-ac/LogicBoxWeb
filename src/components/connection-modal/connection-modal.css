@@ -109,10 +109,21 @@
     background-color: #DBDBDB;
 }
 
-.signal-bar:nth-of-type(1) { height: 25%; }
-.signal-bar:nth-of-type(2) { height: 50%; }
-.signal-bar:nth-of-type(3) { height: 75%; }
-.signal-bar:nth-of-type(4) { height: 100%; }
+.signal-bar:nth-of-type(1) {
+    height: 25%;
+}
+
+.signal-bar:nth-of-type(2) {
+    height: 50%;
+}
+
+.signal-bar:nth-of-type(3) {
+    height: 75%;
+}
+
+.signal-bar:nth-of-type(4) {
+    height: 100%;
+}
 
 .green-bar {
     background-color: $pen-primary;
@@ -199,11 +210,25 @@
 }
 
 @keyframes wiggle {
-    0% {transform: rotate(3deg) scale(1.05);}
-    25% {transform: rotate(-3deg) scale(1.05);}
-    50% {transform: rotate(5deg) scale(1.05);}
-    75% {transform: rotate(-2deg) scale(1.05);}
-    100% {transform: rotate(0deg) scale(1.05);}
+    0% {
+        transform: rotate(3deg) scale(1.05);
+    }
+
+    25% {
+        transform: rotate(-3deg) scale(1.05);
+    }
+
+    50% {
+        transform: rotate(5deg) scale(1.05);
+    }
+
+    75% {
+        transform: rotate(-2deg) scale(1.05);
+    }
+
+    100% {
+        transform: rotate(0deg) scale(1.05);
+    }
 }
 
 .bluetooth-centered-icon {
@@ -336,6 +361,7 @@
 [dir="ltr"] .button-icon-right {
     margin-left: 0.5rem;
 }
+
 [dir="rtl"] .button-icon-right {
     margin-right: 0.5rem;
 }
@@ -445,4 +471,58 @@
     resize: none;
     height: 60%;
     width: inherit;
+}
+
+/* Mobile responsive styles */
+@media only screen and (max-width: 767px) {
+    .modal-content {
+        width: 95%;
+        max-width: 100%;
+    }
+
+    .activityArea {
+        height: 120px;
+        padding: 0.25rem;
+    }
+
+    .radar-big {
+        width: 80px;
+        height: 80px;
+    }
+
+    .peripheral-tile {
+        padding: 8px;
+        height: auto;
+        flex-wrap: wrap;
+    }
+
+    .peripheral-tile-name {
+        flex-basis: 100%;
+        margin-bottom: 8px;
+    }
+
+    .peripheral-tile-widgets {
+        flex-basis: 100%;
+        justify-content: flex-end;
+    }
+
+    .scratch-link-help-step {
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+
+    .corner-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .connection-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .bottom-area {
+        padding: 0.75rem;
+    }
 }

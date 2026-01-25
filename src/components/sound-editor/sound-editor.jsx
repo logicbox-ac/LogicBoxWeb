@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import classNames from 'classnames';
-import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-intl';
+import { defineMessages, FormattedMessage, injectIntl, intlShape } from 'react-intl';
 
 import Waveform from '../waveform/waveform.jsx';
 import Label from '../forms/label.jsx';
@@ -30,9 +30,50 @@ import muteIcon from './icon--mute.svg';
 import deleteIcon from './icon--delete.svg';
 import copyIcon from './icon--copy.svg';
 import pasteIcon from './icon--paste.svg';
+import backIcon from '../../lib/assets/icon--back.svg';
 import copyToNewIcon from './icon--copy-to-new.svg';
 
 const BufferedInput = BufferedInputHOC(Input);
+
+const WaveformScrollWrapper = ({ children, waveformRef }) => {
+    const handleScrollLeft = () => {
+        if (waveformRef && waveformRef.current) {
+            waveformRef.current.scrollBy({ left: -150, behavior: 'smooth' });
+        }
+    };
+    const handleScrollRight = () => {
+        if (waveformRef && waveformRef.current) {
+            waveformRef.current.scrollBy({ left: 150, behavior: 'smooth' });
+        }
+    };
+    return (
+        <div className={styles.waveformScrollWrapper}>
+            <div className={styles.scrollArrows}>
+                <button
+                    className={styles.scrollArrowButton}
+                    onClick={handleScrollLeft}
+                    aria-label="Scroll left"
+                >
+                    <img src={backIcon} alt="" draggable={false} />
+                </button>
+                <span className={styles.scrollHint}>Scroll Audio</span>
+                <button
+                    className={classNames(styles.scrollArrowButton, styles.scrollArrowRight)}
+                    onClick={handleScrollRight}
+                    aria-label="Scroll right"
+                >
+                    <img src={backIcon} alt="" draggable={false} />
+                </button>
+            </div>
+            {children}
+        </div>
+    );
+};
+
+WaveformScrollWrapper.propTypes = {
+    children: PropTypes.node,
+    waveformRef: PropTypes.object
+};
 
 const messages = defineMessages({
     sound: {
@@ -209,23 +250,25 @@ const SoundEditor = props => (
                 onClick={props.onDelete}
             />
         </div>
-        <div className={styles.row}>
-            <div className={styles.waveformContainer}>
-                <Waveform
-                    data={props.chunkLevels}
-                    height={160}
-                    width={600}
-                />
-                <AudioSelector
-                    playhead={props.playhead}
-                    trimEnd={props.trimEnd}
-                    trimStart={props.trimStart}
-                    onPlay={props.onPlay}
-                    onSetTrim={props.onSetTrim}
-                    onStop={props.onStop}
-                />
+        <WaveformScrollWrapper waveformRef={props.waveformScrollRef}>
+            <div className={styles.row} ref={props.waveformScrollRef}>
+                <div className={styles.waveformContainer}>
+                    <Waveform
+                        data={props.chunkLevels}
+                        height={160}
+                        width={600}
+                    />
+                    <AudioSelector
+                        playhead={props.playhead}
+                        trimEnd={props.trimEnd}
+                        trimStart={props.trimStart}
+                        onPlay={props.onPlay}
+                        onSetTrim={props.onSetTrim}
+                        onStop={props.onStop}
+                    />
+                </div>
             </div>
-        </div>
+        </WaveformScrollWrapper>
         <div className={classNames(styles.row, styles.rowReverse)}>
             <div className={styles.inputGroup}>
                 {props.playhead ? (
@@ -343,7 +386,8 @@ SoundEditor.propTypes = {
     setRef: PropTypes.func,
     tooLoud: PropTypes.bool.isRequired,
     trimEnd: PropTypes.number,
-    trimStart: PropTypes.number
+    trimStart: PropTypes.number,
+    waveformScrollRef: PropTypes.object
 };
 
 export default injectIntl(SoundEditor);

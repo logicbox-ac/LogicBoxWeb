@@ -12,7 +12,7 @@
     align-items: center;
     z-index: 510;
 }
-  
+
 .debug-modal-container {
     background: white;
     border-radius: 8px;
@@ -36,7 +36,7 @@
         padding-right: 12px;
         background-color: $ui-green-2;
     }
-    
+
     .header-title {
         display: flex;
         gap: 8px;
@@ -44,17 +44,18 @@
         font-size: 1rem;
         line-height: 1.25rem;
         font-weight: 700;
-        color: white; 
+        color: white;
     }
+
     .debug-icon {
         height: 22px;
         width: 22px;
     }
-    
+
     .hidden {
         display: none;
     }
-      
+
     .close-button {
         display: flex;
         background: none;
@@ -63,7 +64,7 @@
         width: 32px;
         height: 32px;
     }
-    
+
     .modal-content {
         display: flex;
         width: 100%;
@@ -76,27 +77,28 @@
     }
 
     .modal-content::-webkit-scrollbar {
-    width: 8px; 
+        width: 8px;
     }
-    
+
     .previousIcon {
         position: absolute;
         cursor: pointer;
         top: 50%;
     }
-    
+
     .nextIcon {
         position: absolute;
         cursor: pointer;
         right: -24px;
         top: 50%;
     }
-    
+
     .topic-list {
         width: 30%;
-        border-right: 1px solid $ui-green;;
+        border-right: 1px solid $ui-green;
+        ;
     }
-    
+
     .topic-item {
         display: flex;
         gap: 8px;
@@ -105,15 +107,16 @@
         padding-left: 12px;
         font-size: 1rem;
         line-height: 1.5rem;
-        color: $ui-green;;
+        color: $ui-green;
+        ;
         cursor: pointer;
     }
-    
+
     .topic-item.active {
         background-color: #D1FAEE;
         font-weight: bold;
     }
-    
+
     .info-container {
         flex-direction: column;
         width: 70%;
@@ -121,23 +124,23 @@
         padding: 20px;
         color: $text-primary;
     }
-    
+
     .text-container {
         flex: 1;
         margin-left: 70px;
     }
-    
+
     .title-text {
         font-size: 24px;
         line-height: 32px;
         font-weight: 700;
     }
-    
+
     .description {
         font-size: 16px;
         line-height: 28px;
     }
-    
+
     .imageContainer {
         display: flex;
         justify-content: center;
@@ -145,19 +148,75 @@
         padding: 10px;
         margin-top: 10px;
     }
-    
+
     .topicImage {
         max-width: 100%;
         max-height: 100%;
-        object-fit: contain; /* Ensures image scales proportionally */
+        object-fit: contain;
+        /* Ensures image scales proportionally */
     }
-    
+
     .navigation-buttons {
         margin-top: 20px;
     }
-    
+
     button {
         margin: 5px;
     }
 }
 
+/* Mobile responsive styles */
+@media only screen and (max-width: 767px) {
+    .debug-modal-container {
+        width: 95%;
+        max-width: 100%;
+        margin: 10px;
+        max-height: 85%;
+
+        .modal-content {
+            flex-direction: column;
+        }
+
+        .topic-list {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid $ui-green;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .topic-item {
+            padding: 6px 12px;
+            font-size: 0.875rem;
+        }
+
+        .info-container {
+            width: 100%;
+            padding: 12px;
+        }
+
+        .text-container {
+            margin-left: 0;
+        }
+
+        .title-text {
+            font-size: 18px;
+            line-height: 24px;
+        }
+
+        .description {
+            font-size: 14px;
+            line-height: 22px;
+        }
+
+        .imageContainer {
+            padding: 5px;
+            margin-top: 5px;
+        }
+
+        .nextIcon,
+        .previousIcon {
+            display: none;
+        }
+    }
+}

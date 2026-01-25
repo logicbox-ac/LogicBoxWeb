@@ -355,3 +355,71 @@ $border-radius: 0.25rem;
         margin-bottom: 2px;
     }
 }
+
+/* Waveform scroll wrapper - Hidden on desktop, visible on mobile */
+.waveform-scroll-wrapper {
+    width: 100%;
+}
+
+.scroll-arrows {
+    display: none;
+}
+
+@media (max-width: 767px) {
+    .scroll-arrows {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: linear-gradient(135deg, hsla(260, 60%, 60%, 0.15), hsla(300, 53%, 60%, 0.15));
+        border-radius: 8px 8px 0 0;
+        margin-top: 10px;
+    }
+
+    .scroll-hint {
+        font-size: 0.75rem;
+        color: hsla(260, 60%, 40%, 0.8);
+        font-weight: 500;
+        user-select: none;
+    }
+
+    .scroll-arrow-button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 50%;
+        background: hsla(260, 60%, 60%, 0.9);
+        cursor: pointer;
+        padding: 8px;
+        transition: transform 0.15s ease, background 0.15s ease;
+        box-shadow: 0 2px 4px hsla(0, 0%, 0%, 0.15);
+    }
+
+    .scroll-arrow-button:active {
+        transform: scale(0.95);
+        background: hsla(260, 60%, 50%, 1);
+    }
+
+    .scroll-arrow-button img {
+        width: 16px;
+        height: 16px;
+        filter: brightness(0) invert(1);
+    }
+
+    .scroll-arrow-right {
+        transform: rotate(180deg);
+    }
+
+    .scroll-arrow-right:active {
+        transform: rotate(180deg) scale(0.95);
+    }
+
+    /* Adjust waveform row when inside wrapper */
+    .waveform-scroll-wrapper .row {
+        margin-top: 0;
+        border-radius: 0 0 8px 8px;
+    }
+}

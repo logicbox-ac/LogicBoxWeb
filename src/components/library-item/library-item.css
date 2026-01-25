@@ -181,7 +181,7 @@
     font-weight: bold;
 }
 
-.featured-extension-metadata-detail img{
+.featured-extension-metadata-detail img {
     margin-right: 0.25rem;
 }
 
@@ -202,4 +202,94 @@
 
 [dir="rtl"] .coming-soon-text {
     transform: translate(calc(-2 * $space), calc(2 * $space));
+}
+
+/* Mobile responsive styles */
+@media only screen and (max-width: 767px) {
+    .library-item {
+        flex-basis: calc(50% - 12px);
+        max-width: calc(50% - 12px);
+        height: 130px;
+        margin: 4px;
+        padding: 0.5rem 0.5rem 0 0.5rem;
+    }
+
+    .library-item-image-container-wrapper {
+        height: 70px;
+    }
+
+    .library-item-image-container {
+        height: 70px;
+    }
+
+    .library-item-name {
+        font-size: 0.75rem;
+        margin: 0.125rem 0;
+    }
+
+    /* Featured extension items - full width with auto height */
+    .featured-item {
+        flex-basis: calc(100% - 12px);
+        max-width: calc(100% - 12px);
+        height: auto !important;
+        min-height: auto;
+        overflow: visible;
+    }
+
+    .featured-image-container {
+        width: 100%;
+        height: auto;
+    }
+
+    .featured-image {
+        width: 100%;
+        height: auto;
+        max-height: 180px;
+        object-fit: cover;
+    }
+
+    .featured-text {
+        width: 100%;
+        font-size: 0.875rem;
+        padding: 8px;
+        height: auto;
+    }
+
+    .featured-extension-text {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    .featured-description {
+        font-size: 0.75rem;
+        line-height: 1.125rem;
+        display: block;
+    }
+
+    .featured-extension-metadata {
+        padding: 0 0.75rem 0.75rem 0.75rem;
+        font-size: 10px;
+        flex-wrap: wrap;
+    }
+
+    .featured-extension-requirement,
+    .featured-extension-collaboration {
+        width: 100%;
+        margin-bottom: 4px;
+    }
+
+    .library-item-inset-image-container {
+        width: 2.5rem;
+        height: 2.5rem;
+        margin-top: -1.5rem;
+    }
+
+    .library-item-inset-image {
+        width: 1.75rem;
+    }
+
+    .coming-soon-text {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
 }
