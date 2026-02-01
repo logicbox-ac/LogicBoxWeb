@@ -27,7 +27,7 @@
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: $menu-bar-standard-font-size;
     font-weight: bold;
-    background-color: $looks-secondary;
+    background: $logicbox-orange-gradient;
     color: $ui-white;
 }
 
@@ -45,8 +45,13 @@
 }
 
 .scratch-logo {
-    height: 1.6rem;
+    height: 1.75rem;
     vertical-align: middle;
+    transition: transform 0.2s ease;
+}
+
+.scratch-logo:hover {
+    transform: scale(1.05);
 }
 
 .scratch-logo.clickable {
@@ -72,7 +77,7 @@
 
 .menu-bar-item.active,
 .menu-bar-item.hoverable:hover {
-    background-color: $ui-black-transparent;
+    background-color: $logicbox-orange-transparent;
 }
 
 .menu-bar-item.growable {
@@ -107,7 +112,7 @@
 }
 
 .feedback-link {
-    color: $looks-secondary;
+    color: $logicbox-dark;
     text-decoration: none;
 }
 

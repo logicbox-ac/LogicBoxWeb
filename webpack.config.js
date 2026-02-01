@@ -111,6 +111,17 @@ const distConfig = baseConfig.clone()
 const buildConfig = baseConfig.clone()
     .enableDevServer(process.env.PORT || 8601)
     .merge({
+        devServer: {
+            allowedHosts: 'all', // Allow ngrok and other external hosts
+            // Uncomment below to enable HTTPS (requires valid certificates)
+            // server: {
+            //     type: 'https',
+            //     options: {
+            //         key: path.resolve(__dirname, 'localhost-key.pem'),
+            //         cert: path.resolve(__dirname, 'localhost-cert.pem')
+            //     }
+            // }
+        },
         entry: {
             gui: './src/playground/index.jsx',
             blocksonly: './src/playground/blocks-only.jsx',
