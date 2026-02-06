@@ -33,7 +33,7 @@ MenuComponent.propTypes = {
 };
 
 
-const Submenu = ({children, className, place, ...props}) => (
+const Submenu = ({ children, className, place, ...props }) => (
     <div
         className={classNames(
             styles.submenu,
@@ -63,16 +63,18 @@ const MenuItem = ({
     children,
     className,
     expanded = false,
-    onClick
+    onClick,
+    ...props
 }) => (
     <li
         className={classNames(
             styles.menuItem,
             styles.hoverable,
             className,
-            {[styles.expanded]: expanded}
+            { [styles.expanded]: expanded }
         )}
         onClick={onClick}
+        {...props}
     >
         {children}
     </li>
@@ -89,14 +91,14 @@ MenuItem.propTypes = {
 const addDividerClassToFirstChild = (child, id) => (
     child && React.cloneElement(child, {
         className: classNames(
-            child.className,
-            {[styles.menuSection]: id === 0}
+            child.props.className,
+            { [styles.menuSection]: id === 0 }
         ),
         key: id
     })
 );
 
-const MenuSection = ({children}) => (
+const MenuSection = ({ children }) => (
     <React.Fragment>{
         React.Children.map(children, addDividerClassToFirstChild)
     }</React.Fragment>

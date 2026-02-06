@@ -502,14 +502,63 @@ class MenuBar extends React.Component {
                                     )}
                                     <MenuSection>
                                         <MenuItem
-                                            onClick={this.props.onStartSelectingFileUpload}
+                                            className={classNames('auth-call-back-button')}
+                                            data-action="load"
+                                            onClick={() => {
+                                                console.log('[AUTH] Load button clicked');
+                                                console.log('[AUTH] ReactNativeWebView exists:', !!window.ReactNativeWebView);
+                                                // Check if running in React Native WebView
+                                                if (window.ReactNativeWebView) {
+                                                    console.log('[AUTH] Sending AUTH_REQUIRED for load');
+                                                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                                                        type: 'AUTH_REQUIRED',
+                                                        data: { action: 'load', projectData: null }
+                                                    }));
+                                                    this.props.onRequestCloseFile();
+                                                } else {
+                                                    console.log('[AUTH] No WebView, using native file upload');
+                                                    this.props.onStartSelectingFileUpload();
+                                                }
+                                            }}
                                         >
                                             {this.props.intl.formatMessage(sharedMessages.loadFromComputerTitle)}
                                         </MenuItem>
                                         <SB3Downloader>{(className, downloadProjectCallback) => (
                                             <MenuItem
-                                                className={className}
-                                                onClick={this.getSaveToComputerHandler(downloadProjectCallback)}
+                                                className={classNames(className, 'auth-call-back-button')}
+                                                data-action="save"
+                                                onClick={() => {
+                                                    console.log('[AUTH] Save button clicked');
+                                                    console.log('[AUTH] ReactNativeWebView exists:', !!window.ReactNativeWebView);
+                                                    // Check if running in React Native WebView
+                                                    if (window.ReactNativeWebView) {
+                                                        console.log('[AUTH] Getting project data...');
+                                                        // Get project data and send to React Native
+                                                        this.props.vm.saveProjectSb3().then(blob => {
+                                                            console.log('[AUTH] Got blob, converting to base64...');
+                                                            const reader = new FileReader();
+                                                            reader.onload = () => {
+                                                                const base64 = reader.result.split(',')[1];
+                                                                console.log('[AUTH] Sending AUTH_REQUIRED for save, data length:', base64.length);
+                                                                window.ReactNativeWebView.postMessage(JSON.stringify({
+                                                                    type: 'AUTH_REQUIRED',
+                                                                    data: { action: 'save', projectData: base64 }
+                                                                }));
+                                                            };
+                                                            reader.readAsDataURL(blob);
+                                                        }).catch(err => {
+                                                            console.error('[AUTH] Error saving project:', err);
+                                                            window.ReactNativeWebView.postMessage(JSON.stringify({
+                                                                type: 'AUTH_REQUIRED',
+                                                                data: { action: 'save', projectData: null, error: err.message }
+                                                            }));
+                                                        });
+                                                        this.props.onRequestCloseFile();
+                                                    } else {
+                                                        console.log('[AUTH] No WebView, using native save');
+                                                        this.getSaveToComputerHandler(downloadProjectCallback)();
+                                                    }
+                                                }}
                                             >
                                                 <FormattedMessage
                                                     defaultMessage="Save to your computer"
