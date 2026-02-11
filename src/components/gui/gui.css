@@ -216,6 +216,13 @@
     flex-basis: 0;
 }
 
+.stage-content-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .target-wrapper {
     display: flex;
     flex-grow: 1;
@@ -341,6 +348,7 @@ $fade-out-distance: 15px;
         flex-direction: column !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
+        height: 100% !important;
     }
 
     /* Editor wrapper takes full width */
@@ -362,15 +370,57 @@ $fade-out-distance: 15px;
        MOBILE TAB-BASED PANEL VISIBILITY
        ---------------------------------------- */
 
-    /* When code, costumes, or sounds tab is active - show editor */
-    [data-mobile-tab="code"] .editor-wrapper,
+    /* When code tab is active - show both editor and collapsible stage */
+    [data-mobile-tab="code"] .editor-wrapper {
+        display: flex !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+    }
+
+    [data-mobile-tab="code"] .stage-and-target-wrapper {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        padding: 0 !important;
+        flex: 0 0 auto !important;
+        max-height: 300px !important;
+        min-height: 48px !important;
+        overflow: visible !important;
+        transition: max-height 0.3s ease !important;
+        border-top: 1px solid $ui-black-transparent !important;
+        background-color: $ui-white !important;
+    }
+
+    [data-mobile-tab="code"] .stage-and-target-wrapper.collapsed {
+        max-height: 48px !important;
+        overflow: hidden !important;
+    }
+
+    [data-mobile-tab="code"] .target-wrapper {
+        display: none !important;
+    }
+
+    /* Stage content wrapper in code tab */
+    [data-mobile-tab="code"] .stage-content-wrapper {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 8px !important;
+        overflow: visible !important;
+        min-height: 0 !important;
+        width: 100% !important;
+    }
+
+    /* When costumes or sounds tab is active - show editor only */
     [data-mobile-tab="costumes"] .editor-wrapper,
     [data-mobile-tab="sounds"] .editor-wrapper {
         display: flex !important;
         flex: 1 !important;
     }
 
-    [data-mobile-tab="code"] .stage-and-target-wrapper,
     [data-mobile-tab="costumes"] .stage-and-target-wrapper,
     [data-mobile-tab="sounds"] .stage-and-target-wrapper {
         display: none !important;
@@ -517,6 +567,8 @@ $fade-out-distance: 15px;
         height: calc(100% - $menu-bar-height - 56px) !important;
         /* Account for mobile tab bar */
         overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     /* ----------------------------------------
@@ -641,42 +693,65 @@ $fade-out-distance: 15px;
         -webkit-overflow-scrolling: touch;
     }
 
-    /* Mode selector (Tools on left) */
+    /* Mode selector (ToolsERROR in ./src/components/controls/controls.css (./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[7].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[7].use[2]!./src/components/controls/controls.css)
+Module build failed (from ./node_modules/postcss-loader/dist/cjs.js):     
+SyntaxError
+
+(13:9) postcss-simple-vars: E:\code\Logic Box\LogicBoxWeb\src\components\controls\controls.css Undefined variable $ui-white
+
+  11 |         margin: 0 !important;
+  12 |         padding: 0.5rem !important;
+> 13 |         background-color: $ui-white !important;
+     |         ^
+  14 |         border-radius: 0.25rem !important;
+  15 |         gap: 0.5rem !important;
+ @ ./src/components/controls/controls.css 8:6-213 20:17-24 24:7-21 50:25-39 51:36-47 51:50-64 56:54-65 56:68-82 62:42-53 62:56-70 64:21-28 76:22-29 76:33-47 76:50-64 75:0-183 75:0-183 55:6-65:7 53:4-66:5
+ @ ./src/components/controls/controls.jsx 12:0-36 121:26-50
+ @ ./src/containers/controls.jsx 10:0-68 42:44-61
+ @ ./src/playground/blocks-only.jsx 4:0-50 14:44-52
+
+webpack 5.104.1 compiled with 1 error in 4649 ms
+ on left) */
     /* User suggested putting behind menu, but for now lets make it compact/absolute 
        or just small on the left site to allow canvas max width */
     :global([class*="paint-editor_mode-selector"]) {
         flex-basis: 44px !important;
         width: 44px !important;
+        min-width: 44px !important;
         overflow-y: auto !important;
+        flex-shrink: 0 !important;
     }
 
     /* Canvas Container - Force fit within viewport */
     :global([class*="paint-editor_canvas-container"]) {
         position: relative !important;
+        flex: 1 1 auto !important;
         width: 100% !important;
-        max-width: 100vw !important;
-        flex-grow: 1 !important;
-        flex-shrink: 1 !important;
-        min-height: 200px !important;
-        max-height: calc(100vh - 350px) !important;
-        overflow: hidden !important;
-        overflow-x: hidden !important;
+        min-width: 0 !important;
+        min-height: 250px !important;
+        height: auto !important;
+        overflow: visible !important;
         background-color: #f0f0f0;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
-    /* Canvas element scaling for responsive behavior */
+    /* Canvas element - let it maintain its size but scale if needed */
     :global([class*="paint-editor_canvas-container"]) canvas {
         max-width: 100% !important;
-        width: 100% !important;
-        height: auto !important;
-        object-fit: contain !important;
+        max-height: 100% !important;
         display: block !important;
+        margin: 0 auto !important;
     }
     
-    /* Additional canvas wrapper if it exists */
+    /* Paper canvas wrapper */
     :global([class*="paint-editor_canvas-container"]) > div {
         max-width: 100% !important;
-        overflow: hidden !important;
+        max-height: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     /* Zoom controls - bottom left with white background */
@@ -751,9 +826,20 @@ $fade-out-distance: 15px;
     }
 
     /* Ensure the wrapper structure allows vertical layout */
-    :global([class*="paint-editor_editor-container_"]) {
+    :global([class*="paint-editor_editor-container"]) {
         flex-direction: column !important;
         height: 100% !important;
         width: 100% !important;
+        display: flex !important;
+    }
+
+    /* The main row with tools and canvas */
+    :global([class*="paint-editor_row"]) {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        flex-direction: row !important;
+        min-height: 0 !important;
+        width: 100% !important;
+        overflow: hidden !important;
     }
 }

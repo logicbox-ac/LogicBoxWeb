@@ -12,6 +12,33 @@ import internetConnectionIconURL from './internet-connection.svg';
 
 /* eslint-disable react/prefer-stateless-function */
 class LibraryItemComponent extends React.PureComponent {
+    componentDidMount() {
+        const isMobile = window.innerWidth <= 767;
+        if (isMobile && !this.props.featured) {
+            // Log dimensions after mount
+            setTimeout(() => {
+                const element = document.querySelector(`[role="button"][tabindex="0"]`);
+                if (element) {
+                    const rect = element.getBoundingClientRect();
+                    const styles = window.getComputedStyle(element);
+                    
+                    // Only log once for the first item
+                    if (this.props.id === 'A Bass' || this.props.id === 'Alien Creak1') {
+                        console.log('[MOBILE-LIBRARY-ITEM] First item dimensions:', {
+                            id: this.props.id,
+                            width: rect.width,
+                            height: rect.height,
+                            computedWidth: styles.width,
+                            computedHeight: styles.height,
+                            flexBasis: styles.flexBasis,
+                            margin: styles.margin
+                        });
+                    }
+                }
+            }, 50);
+        }
+    }
+    
     render () {
         return this.props.featured ? (
             <div

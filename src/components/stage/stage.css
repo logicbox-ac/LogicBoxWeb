@@ -162,21 +162,23 @@ stage doesn't "spill" out from under its rounded corners. instead, shift these o
 @media (max-width: 767px) {
     .stage-wrapper {
         width: 100% !important;
+        max-width: 100% !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
+        justify-content: center !important;
     }
 
-    /* Don't override the inline dimensions - they are calculated by JS */
-    /* Just ensure the stage scales properly with transform if needed */
+    /* Scale stage to fit container while maintaining aspect ratio */
     .stage {
-        /* Allow the stage to use its calculated dimensions */
-        /* but scale down if container is narrower */
-        transform-origin: top center;
+        max-width: calc(100vw - 32px) !important;
+        width: auto !important;
+        height: auto !important;
+        transform-origin: center center;
     }
 
     .stage-overlays {
-        transform-origin: top center;
+        transform-origin: center center;
     }
 
     .stage-bottom-wrapper {
@@ -185,5 +187,13 @@ stage doesn't "spill" out from under its rounded corners. instead, shift these o
 
     .green-flag-overlay-wrapper {
         max-width: 100% !important;
+    }
+
+    /* Ensure stage canvas wrapper centers content */
+    .stage-canvas-wrapper {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
     }
 }

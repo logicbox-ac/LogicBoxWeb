@@ -1,3 +1,19 @@
 .controls-container {
     display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 767px) {
+    .controls-container {
+        justify-content: center !important;
+        margin: 0 auto !important;
+        position: relative !important;
+        z-index: 100 !important;
+        background-color: rgba(255, 255, 255, 0.95) !important;
+        padding: 0.5rem !important;
+        border-radius: 0.5rem !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
 }

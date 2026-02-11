@@ -32,6 +32,7 @@ import Alerts from '../../containers/alerts.jsx';
 import DragLayer from '../../containers/drag-layer.jsx';
 import ConnectionModal from '../../containers/connection-modal.jsx';
 import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
+import CollapsibleStageHeader from '../collapsible-stage-header/collapsible-stage-header.jsx';
 
 import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
@@ -59,6 +60,8 @@ let isRendererSupported = null;
 const GUIComponent = props => {
     // Mobile tab state for responsive layout
     const [mobileActiveTab, setMobileActiveTab] = useState('code');
+    // Collapsible stage state for code tab
+    const [isStageCollapsed, setIsStageCollapsed] = useState(false);
 
     const handleMobileTabChange = useCallback(tab => {
         setMobileActiveTab(tab);
@@ -76,6 +79,70 @@ const GUIComponent = props => {
             }, 50);
         }
     }, [props.onActivateTab, props.onActivateCostumesTab, props.onActivateSoundsTab, props.vm]);
+
+    const handleStageToggle = useCallback(() => {
+        console.log('[STAGE-COLLAPSE] Toggle clicked:', {
+            currentState: isStageCollapsed,
+            willBecome: !isStageCollapsed,
+            mobileActiveTab,
+            hasRenderer: !!(props.vm && props.vm.renderer)
+        });
+        
+        setIsStageCollapsed(prev => {
+            const newState = !prev;
+            console.log('[STAGE-COLLAPSE] State changing:', {
+                from: prev,
+                to: newState
+            });
+            
+            // Log stage dimensions after state change
+            setTimeout(() => {
+                const stageWrapper = document.querySelector('[class*="stage-and-target-wrapper"]');
+                const stageContent = document.querySelector('[class*="stage-content-wrapper"]');
+                
+                console.log('[STAGE-COLLAPSE] After toggle:', {
+                    isCollapsed: newState,
+                    stageWrapperExists: !!stageWrapper,
+                    stageContentExists: !!stageContent
+                });
+                
+                if (stageWrapper) {
+                    const rect = stageWrapper.getBoundingClientRect();
+                    const styles = window.getComputedStyle(stageWrapper);
+                    console.log('[STAGE-COLLAPSE] Stage wrapper after toggle:', {
+                        width: rect.width,
+                        height: rect.height,
+                        maxHeight: styles.maxHeight,
+                        overflow: styles.overflow,
+                        display: styles.display,
+                        hasCollapsedClass: stageWrapper.classList.contains('collapsed')
+                    });
+                }
+                
+                if (stageContent && !newState) {
+                    const rect = stageContent.getBoundingClientRect();
+                    console.log('[STAGE-COLLAPSE] Stage content visible:', {
+                        width: rect.width,
+                        height: rect.height,
+                        isVisible: rect.width > 0 && rect.height > 0
+                    });
+                }
+            }, 400); // Wait for CSS transition
+            
+            return newState;
+        });
+        
+        // Trigger renderer resize after collapse/expand
+        if (props.vm && props.vm.renderer) {
+            setTimeout(() => {
+                if (props.vm.renderer) {
+                    console.log('[STAGE-COLLAPSE] Resizing renderer after toggle');
+                    props.vm.renderer.resize(props.vm.renderer._nativeSize[0], props.vm.renderer._nativeSize[1]);
+                    props.vm.renderer.draw();
+                }
+            }, 350); // Wait for CSS transition
+        }
+    }, [props.vm, isStageCollapsed, mobileActiveTab]);
 
     const {
         accountNavOpen,
@@ -384,20 +451,42 @@ const GUIComponent = props => {
                             ) : null}
                         </Box>
 
-                        <Box className={classNames(styles.stageAndTargetWrapper, styles[stageSize])}>
-                            <StageWrapper
-                                isFullScreen={isFullScreen}
-                                isRendererSupported={isRendererSupported}
-                                isRtl={isRtl}
-                                stageSize={stageSize}
-                                vm={vm}
-                            />
-                            {/* Virtual Keyboard - shown on mobile stage tab when keyboard blocks exist */}
-                            {mobileActiveTab === 'stage' && (
-                                <VirtualKeyboard
-                                    visible
-                                    vm={vm}
+                        <Box className={classNames(styles.stageAndTargetWrapper, styles[stageSize], {
+                            [styles.collapsed]: isStageCollapsed && mobileActiveTab === 'code'
+                        })}
+                        data-stage-collapsed={isStageCollapsed}
+                        data-mobile-tab={mobileActiveTab}
+                        >
+                            {/* Collapsible header for mobile code tab */}
+                            {mobileActiveTab === 'code' && (
+                                <CollapsibleStageHeader
+                                    isCollapsed={isStageCollapsed}
+                                    onToggle={handleStageToggle}
                                 />
+                            )}
+                            {console.log('[STAGE-RENDER] Rendering stage wrapper:', {
+                                isStageCollapsed,
+                                mobileActiveTab,
+                                shouldShowStage: !(isStageCollapsed && mobileActiveTab === 'code'),
+                                hasCollapsedClass: isStageCollapsed && mobileActiveTab === 'code'
+                            })}
+                            {!(isStageCollapsed && mobileActiveTab === 'code') && (
+                                <Box className={styles.stageContentWrapper}>
+                                    <StageWrapper
+                                        isFullScreen={isFullScreen}
+                                        isRendererSupported={isRendererSupported}
+                                        isRtl={isRtl}
+                                        stageSize={stageSize}
+                                        vm={vm}
+                                    />
+                                    {/* Virtual Keyboard - shown on mobile stage tab when keyboard blocks exist */}
+                                    {mobileActiveTab === 'stage' && (
+                                        <VirtualKeyboard
+                                            visible
+                                            vm={vm}
+                                        />
+                                    )}
+                                </Box>
                             )}
                             <Box className={styles.targetWrapper}>
                                 <TargetPane

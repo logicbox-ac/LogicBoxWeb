@@ -9,6 +9,13 @@
 .stage-canvas-wrapper {
     /* Hides negative space between edge of rounded corners + container, when selected */
     user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stage-menu-wrapper {
+    width: 100%;
 }
 
 .stage-wrapper.full-screen {
@@ -27,4 +34,40 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 767px) {
+    .stage-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 0 !important;
+    }
+
+    .stage-canvas-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: hidden !important;
+        margin-top: 0 !important;
+    }
+    
+    .stage-canvas-wrapper canvas {
+        max-width: 100% !important;
+        height: auto !important;
+        object-fit: contain !important;
+    }
+
+    .stage-menu-wrapper {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+    }
 }

@@ -138,16 +138,7 @@ class SoundLibrary extends React.PureComponent {
         this.stopPlayingSound();
     }
     handleItemSelected(soundItem) {
-        console.log('[SOUND-LIBRARY] handleItemSelected called with item:', {
-            name: soundItem?.name,
-            _md5: soundItem?._md5,
-            format: soundItem?.format,
-            rate: soundItem?.rate,
-            sampleCount: soundItem?.sampleCount
-        });
-
         if (!soundItem) {
-            console.error('[SOUND-LIBRARY] ERROR: soundItem is undefined or null!');
             return;
         }
 
@@ -159,15 +150,9 @@ class SoundLibrary extends React.PureComponent {
             name: soundItem.name
         };
 
-        console.log('[SOUND-LIBRARY] Calling vm.addSound with:', vmSound);
-
         this.props.vm.addSound(vmSound)
             .then(() => {
-                console.log('[SOUND-LIBRARY] vm.addSound resolved, calling onNewSound');
                 this.props.onNewSound();
-            })
-            .catch(err => {
-                console.error('[SOUND-LIBRARY] vm.addSound rejected:', err);
             });
     }
     render() {

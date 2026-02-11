@@ -136,3 +136,42 @@
 [dir="rtl"] .filter-input::placeholder {
     padding: 0 0.25rem 0 0;
 }
+
+/* Mobile responsive styles */
+@media only screen and (max-width: 767px) {
+    .filter {
+        width: 100%;
+        height: 2.5rem;
+    }
+
+    .filter-input {
+        width: 100%;
+        height: 2.5rem;
+        font-size: 0.875rem;
+    }
+
+    .filter-input::placeholder {
+        font-size: 0.875rem;
+    }
+
+    .filter-icon {
+        height: 0.875rem;
+        width: 0.875rem;
+    }
+
+    [dir="ltr"] .filter-icon {
+        margin: 0.8125rem 0.625rem 0.8125rem 0.875rem;
+    }
+
+    [dir="rtl"] .filter-icon {
+        margin: 0.8125rem 0.875rem 0.8125rem 0.625rem;
+    }
+
+    [dir="ltr"] .filter-input {
+        padding: 0.5rem 2rem 0.5rem 2.5rem;
+    }
+
+    [dir="rtl"] .filter-input {
+        padding: 0.5rem 2.5rem 0.5rem 2rem;
+    }
+}

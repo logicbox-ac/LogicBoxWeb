@@ -78,3 +78,38 @@
 [dir="rtl"] .stage-button-icon {
     transform: scaleX(-1);
 }
+
+/* Mobile responsive styles */
+@media (max-width: 767px) {
+    .stage-menu-wrapper {
+        height: auto !important;
+        min-height: $stage-menu-height !important;
+        padding: 0.5rem !important;
+        width: 100% !important;
+        justify-content: center !important;
+        gap: 0.5rem !important;
+        background-color: $ui-white !important;
+        border-bottom: 1px solid $ui-black-transparent !important;
+        position: relative !important;
+        z-index: 10 !important;
+    }
+    
+    .stage-size-row {
+        display: flex !important;
+        gap: 0.5rem !important;
+    }
+    
+    .stage-button {
+        width: 2.5rem !important;
+        height: 2.5rem !important;
+        padding: 0.5rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .stage-button-icon {
+        width: 100% !important;
+        height: 100% !important;
+    }
+}

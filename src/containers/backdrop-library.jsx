@@ -25,15 +25,7 @@ class BackdropLibrary extends React.Component {
         ]);
     }
     handleItemSelect(item) {
-        console.log('[BACKDROP-LIBRARY] handleItemSelect called with item:', {
-            name: item?.name,
-            md5ext: item?.md5ext,
-            rotationCenterX: item?.rotationCenterX,
-            rotationCenterY: item?.rotationCenterY
-        });
-
         if (!item) {
-            console.error('[BACKDROP-LIBRARY] ERROR: item is undefined or null!');
             return;
         }
 
@@ -45,24 +37,7 @@ class BackdropLibrary extends React.Component {
             skinId: null
         };
 
-        console.log('[BACKDROP-LIBRARY] Calling vm.addBackdrop with:', {
-            md5ext: item.md5ext,
-            vmBackdrop: vmBackdrop
-        });
-
-        const result = this.props.vm.addBackdrop(item.md5ext, vmBackdrop);
-
-        console.log('[BACKDROP-LIBRARY] vm.addBackdrop returned:', result);
-
-        if (result && typeof result.then === 'function') {
-            result
-                .then(res => {
-                    console.log('[BACKDROP-LIBRARY] Promise resolved:', res);
-                })
-                .catch(err => {
-                    console.error('[BACKDROP-LIBRARY] Promise rejected:', err);
-                });
-        }
+        this.props.vm.addBackdrop(item.md5ext, vmBackdrop);
     }
     render() {
         return (

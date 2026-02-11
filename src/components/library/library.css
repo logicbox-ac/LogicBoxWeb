@@ -13,6 +13,12 @@
     height: auto;
     padding: 0.5rem;
     height: calc(100% - $library-header-height);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.library-scroll-grid > * {
+    box-sizing: border-box;
 }
 
 .library-scroll-grid.withFilterBar {
@@ -22,6 +28,8 @@
 .library-category {
     display: flex;
     flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .library-category-title {
@@ -35,6 +43,8 @@
     display: flex;
     flex-wrap: wrap;
     padding-bottom: 1rem;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .filter-bar {
@@ -90,52 +100,112 @@
 
 /* Mobile responsive styles */
 @media only screen and (max-width: 767px) {
+    /* Debug borders to visualize layout */
     .library-scroll-grid {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        padding: 0.25rem;
-        gap: 8px;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
+        align-content: flex-start !important;
+        padding: 0.5rem 0.25rem !important;
+        gap: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
     }
 
     .library-scroll-grid.withFilterBar {
-        height: calc(100% - $library-header-height - $library-filter-bar-height - 2rem);
+        height: calc(100% - $library-header-height - 10rem) !important;
+    }
+
+    .library-category {
+        width: 100% !important;
+        max-width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
     }
 
     .library-category-title {
-        font-size: 1.25rem;
-        padding-left: 0.25rem;
+        font-size: 1.125rem !important;
+        padding-left: 0.5rem !important;
+        margin-bottom: 0.25rem !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .library-category-items {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
+        gap: 0 !important;
+        padding-bottom: 0.5rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .filter-bar {
-        flex-wrap: wrap;
-        height: auto;
-        padding: 0.5rem;
-        gap: 0.5rem;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        height: auto !important;
+        min-height: auto !important;
+        padding: 0.75rem !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .filter-bar-item {
-        margin-right: 0.25rem;
+        margin-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .filter {
+        width: 100% !important;
+        flex-grow: 1 !important;
     }
 
     .filter-input {
-        width: 100%;
-        min-width: 150px;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     .filter-input:focus,
     .filter-input:not([value=""]) {
-        width: 100%;
+        width: 100% !important;
     }
 
     .divider {
-        display: none;
+        display: none !important;
     }
 
     .tag-wrapper {
-        width: 100%;
-        height: auto;
-        overflow-x: auto;
-        flex-wrap: nowrap;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        flex-wrap: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        padding-bottom: 0.25rem !important;
+        box-sizing: border-box !important;
+    }
+
+    .tag-wrapper::-webkit-scrollbar {
+        display: none !important;
+    }
+    
+    /* Make tag buttons more compact */
+    .tag-button {
+        flex-shrink: 0 !important;
+        margin-right: 0.5rem !important;
     }
 }

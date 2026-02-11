@@ -26,29 +26,16 @@ class SpriteLibrary extends React.PureComponent {
         ]);
     }
     handleItemSelect(item) {
-        console.log('[SPRITE-LIBRARY] handleItemSelect called with item:', {
-            name: item?.name,
-            md5ext: item?.md5ext,
-            costumes: item?.costumes?.length
-        });
-
         if (!item) {
-            console.error('[SPRITE-LIBRARY] ERROR: item is undefined or null!');
             return;
         }
 
         // Randomize position of library sprite
         randomizeSpritePosition(item);
 
-        console.log('[SPRITE-LIBRARY] Calling vm.addSprite with:', JSON.stringify(item).substring(0, 200));
-
         this.props.vm.addSprite(JSON.stringify(item))
             .then(() => {
-                console.log('[SPRITE-LIBRARY] vm.addSprite resolved, activating blocks tab');
                 this.props.onActivateBlocksTab();
-            })
-            .catch(err => {
-                console.error('[SPRITE-LIBRARY] vm.addSprite rejected:', err);
             });
     }
     render() {

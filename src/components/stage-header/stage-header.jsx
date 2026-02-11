@@ -61,6 +61,67 @@ const StageHeaderComponent = function (props) {
         vm
     } = props;
 
+    const isMobile = window.innerWidth <= 767;
+    
+    React.useEffect(() => {
+        if (isMobile) {
+            setTimeout(() => {
+                const stageMenuWrapper = document.querySelector('[class*="stage-menu-wrapper"]');
+                const controls = document.querySelector('[class*="controls"]');
+                const stageButtons = document.querySelectorAll('[class*="stage-button"]');
+                
+                console.log('[STAGE-HEADER] Component mounted/updated:', {
+                    isFullScreen,
+                    isPlayerOnly,
+                    stageSizeMode,
+                    isMobile,
+                    stageMenuWrapperExists: !!stageMenuWrapper,
+                    controlsExists: !!controls,
+                    stageButtonsCount: stageButtons.length
+                });
+                
+                if (stageMenuWrapper) {
+                    const rect = stageMenuWrapper.getBoundingClientRect();
+                    const styles = window.getComputedStyle(stageMenuWrapper);
+                    console.log('[STAGE-HEADER] Stage menu wrapper:', {
+                        width: rect.width,
+                        height: rect.height,
+                        top: rect.top,
+                        left: rect.left,
+                        display: styles.display,
+                        visibility: styles.visibility,
+                        opacity: styles.opacity,
+                        isVisible: rect.width > 0 && rect.height > 0
+                    });
+                }
+                
+                if (controls) {
+                    const rect = controls.getBoundingClientRect();
+                    const styles = window.getComputedStyle(controls);
+                    console.log('[STAGE-HEADER] Controls element:', {
+                        width: rect.width,
+                        height: rect.height,
+                        display: styles.display,
+                        visibility: styles.visibility,
+                        isVisible: rect.width > 0 && rect.height > 0
+                    });
+                }
+                
+                stageButtons.forEach((btn, idx) => {
+                    const rect = btn.getBoundingClientRect();
+                    const styles = window.getComputedStyle(btn);
+                    console.log(`[STAGE-HEADER] Button ${idx + 1}:`, {
+                        width: rect.width,
+                        height: rect.height,
+                        display: styles.display,
+                        visibility: styles.visibility,
+                        isVisible: rect.width > 0 && rect.height > 0
+                    });
+                });
+            }, 100);
+        }
+    }, [isFullScreen, isPlayerOnly, stageSizeMode, isMobile]);
+
     let header = null;
 
     if (isFullScreen) {

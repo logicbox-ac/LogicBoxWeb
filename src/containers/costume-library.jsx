@@ -25,15 +25,7 @@ class CostumeLibrary extends React.PureComponent {
         ]);
     }
     handleItemSelected(item) {
-        console.log('[COSTUME-LIBRARY] handleItemSelected called with item:', {
-            name: item?.name,
-            md5ext: item?.md5ext,
-            rotationCenterX: item?.rotationCenterX,
-            rotationCenterY: item?.rotationCenterY
-        });
-
         if (!item) {
-            console.error('[COSTUME-LIBRARY] ERROR: item is undefined or null!');
             return;
         }
 
@@ -45,24 +37,7 @@ class CostumeLibrary extends React.PureComponent {
             skinId: null
         };
 
-        console.log('[COSTUME-LIBRARY] Calling vm.addCostumeFromLibrary with:', {
-            md5ext: item.md5ext,
-            vmCostume: vmCostume
-        });
-
-        const result = this.props.vm.addCostumeFromLibrary(item.md5ext, vmCostume);
-
-        console.log('[COSTUME-LIBRARY] vm.addCostumeFromLibrary returned:', result);
-
-        if (result && typeof result.then === 'function') {
-            result
-                .then(res => {
-                    console.log('[COSTUME-LIBRARY] Promise resolved:', res);
-                })
-                .catch(err => {
-                    console.error('[COSTUME-LIBRARY] Promise rejected:', err);
-                });
-        }
+        this.props.vm.addCostumeFromLibrary(item.md5ext, vmCostume);
     }
     render() {
         return (
