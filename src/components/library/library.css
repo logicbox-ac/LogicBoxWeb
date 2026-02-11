@@ -91,8 +91,15 @@
 /* Mobile responsive styles */
 @media only screen and (max-width: 767px) {
     .library-scroll-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
         padding: 0.25rem;
-        justify-content: center;
+        gap: 8px;
+    }
+
+    .library-scroll-grid.withFilterBar {
+        height: calc(100% - $library-header-height - $library-filter-bar-height - 2rem);
     }
 
     .library-category-title {

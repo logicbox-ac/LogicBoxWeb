@@ -28,6 +28,8 @@ import { closeExtensionLibrary, openSoundRecorder, openConnectionModal } from '.
 import { activateCustomProcedures, deactivateCustomProcedures } from '../reducers/custom-procedures';
 import { setConnectionModalExtensionId } from '../reducers/connection-modal';
 import { updateMetrics } from '../reducers/workspace-metrics';
+
+console.log('[Blocks.jsx] Module loaded - close button feature active');
 import { isTimeTravel2020 } from '../reducers/time-travel';
 
 import {
@@ -130,9 +132,25 @@ class Blocks extends React.Component {
         const workspaceConfig = defaultsDeep({},
             Blocks.defaultOptions,
             this.props.options,
-            { rtl: this.props.isRtl, toolbox: this.props.toolboxXML, colours: getColorsForTheme(this.props.theme) }
+            { 
+                rtl: this.props.isRtl, 
+                toolbox: this.props.toolboxXML, 
+                colours: getColorsForTheme(this.props.theme),
+                closeButton: true,
+                closeButtonCallback: this.props.onCloseBlocks
+            }
         );
+        console.log('[Blocks.jsx] Workspace config:', workspaceConfig);
+        console.log('[Blocks.jsx] closeButton:', workspaceConfig.closeButton);
+        console.log('[Blocks.jsx] closeButtonCallback:', workspaceConfig.closeButtonCallback);
         this.workspace = this.ScratchBlocks.inject(this.blocks, workspaceConfig);
+        console.log('[Blocks.jsx] Workspace created:', this.workspace);
+        
+        // Add close buttons to individual blocks
+        if (workspaceConfig.closeButton) {
+            console.log('[Blocks.jsx] Setting up block close buttons');
+            this.setupBlockCloseButtons();
+        }
 
         // Register buttons under new callback keys for creating variables,
         // lists, and procedures from extensions.
@@ -264,6 +282,158 @@ class Blocks extends React.Component {
         // Clear the flyout blocks so that they can be recreated on mount.
         this.props.vm.clearFlyoutBlocks();
     }
+    
+    setupBlockCloseButtons() {
+        if (!this.workspace) return;
+        
+        // Listen for block creation events
+        this.workspace.addChangeListener((event) => {
+            // Only listen for BLOCK_CREATE events to avoid duplicates
+            if (event.type === this.ScratchBlocks.Events.BLOCK_CREATE) {
+                // Add close button to the newly created block
+                setTimeout(() => {
+                    const block = this.workspace.getBlockById(event.blockId);
+                    if (block && block.svgGroup_ && !block.closeButton_) {
+                        this.addCloseButtonToBlock(block);
+                    }
+                }, 100);
+            }
+        });
+        
+        // Add to existing blocks
+        this.addCloseButtonsToAllBlocks();
+        console.log('[Blocks.jsx] Block close buttons setup complete');
+    }
+    
+    addCloseButtonsToAllBlocks() {
+        if (!this.workspace) return;
+        
+        const blocks = this.workspace.getAllBlocks();
+        console.log('[Blocks.jsx] Found', blocks.length, 'blocks to add close buttons to');
+        blocks.forEach(block => {
+            console.log('[Blocks.jsx] Block:', block.type, 'has svgGroup:', !!block.svgGroup_, 'has closeButton:', !!block.closeButton_);
+            if (block.svgGroup_ && !block.closeButton_) {
+                this.addCloseButtonToBlock(block);
+            }
+        });
+    }
+    
+    addCloseButtonToBlock(block) {
+        // Double-check to prevent duplicates
+        if (!block.svgGroup_ || block.closeButton_) {
+            console.log('[Blocks.jsx] Skipping block - already has close button or no svgGroup');
+            return;
+        }
+        
+        // Check if a close button already exists in the DOM
+        const existingButton = block.svgGroup_.querySelector('.blocklyBlockCloseButton');
+        if (existingButton) {
+            console.log('[Blocks.jsx] Close button already exists in DOM, skipping');
+            block.closeButton_ = existingButton;
+            return;
+        }
+        
+        try {
+            // Create close button group
+            const closeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            closeGroup.setAttribute('class', 'blocklyBlockCloseButton');
+            closeGroup.setAttribute('transform', 'translate(0, 0)');
+            closeGroup.style.pointerEvents = 'all';
+            closeGroup.style.cursor = 'pointer';
+            
+            // Create circle background
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', '12');
+            circle.setAttribute('cy', '12');
+            circle.setAttribute('r', '11');
+            circle.setAttribute('fill', '#FF6680');
+            circle.setAttribute('stroke', 'white');
+            circle.setAttribute('stroke-width', '1.5');
+            circle.style.pointerEvents = 'all';
+            
+            // Create X icon
+            const xPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            xPath.setAttribute('d', 'M 7 7 L 17 17 M 17 7 L 7 17');
+            xPath.setAttribute('stroke', 'white');
+            xPath.setAttribute('stroke-width', '2.5');
+            xPath.setAttribute('stroke-linecap', 'round');
+            
+            closeGroup.appendChild(circle);
+            closeGroup.appendChild(xPath);
+            
+            // Add to block
+            block.svgGroup_.appendChild(closeGroup);
+            block.closeButton_ = closeGroup;
+            
+            // Position the button at top-right of block
+            const positionButton = () => {
+                try {
+                    const bbox = block.svgGroup_.getBBox();
+                    const x = bbox.width - 17; // 3px more to the right (was 20, now 17)
+                    const y = -6; // 3px higher (was -3, now -6)
+                    closeGroup.setAttribute('transform', `translate(${x}, ${y})`);
+                    console.log('[Blocks.jsx] Button positioned at', x, y, 'for block width', bbox.width);
+                } catch (e) {
+                    console.error('[Blocks.jsx] Error positioning button:', e);
+                }
+            };
+            
+            // Position initially and after a delay to ensure block is rendered
+            setTimeout(positionButton, 10);
+            setTimeout(positionButton, 100);
+            
+            // Add click handler - use both mousedown and click for better compatibility
+            const deleteBlock = (e) => {
+                console.log('[Blocks.jsx] Close button event triggered:', e.type);
+                e.stopPropagation();
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                
+                console.log('[Blocks.jsx] Attempting to delete block:', block.type, 'ID:', block.id);
+                
+                // Delete the block
+                try {
+                    if (block && block.workspace) {
+                        console.log('[Blocks.jsx] Block is valid, disposing...');
+                        // Simply dispose the block
+                        block.dispose(true);
+                        console.log('[Blocks.jsx] Block deleted successfully');
+                    } else {
+                        console.log('[Blocks.jsx] Block has no workspace');
+                    }
+                } catch (error) {
+                    console.error('[Blocks.jsx] Error deleting block:', error);
+                }
+                
+                return false;
+            };
+            
+            // Try multiple event types to ensure it works
+            closeGroup.addEventListener('mousedown', deleteBlock, true);
+            closeGroup.addEventListener('click', deleteBlock, true);
+            closeGroup.addEventListener('pointerdown', deleteBlock, true);
+            
+            // Make it always visible for now (for debugging)
+            closeGroup.setAttribute('opacity', '1');
+            closeGroup.style.cursor = 'pointer';
+            closeGroup.style.pointerEvents = 'all';
+            
+            // Uncomment these for hover-only visibility:
+            // block.svgGroup_.addEventListener('mouseenter', () => {
+            //     closeGroup.setAttribute('opacity', '1');
+            // });
+            // 
+            // block.svgGroup_.addEventListener('mouseleave', () => {
+            //     closeGroup.setAttribute('opacity', '0');
+            // });
+            
+            console.log('[Blocks.jsx] Close button added to block:', block.type);
+            
+        } catch (error) {
+            console.error('[Blocks.jsx] Error adding close button to block:', error);
+        }
+    }
+    
     handleToggleToolbox() {
         // No-op for now as we removed the toggle logic
     }
@@ -1118,6 +1288,7 @@ Blocks.propTypes = {
     messages: PropTypes.objectOf(PropTypes.string),
     onActivateColorPicker: PropTypes.func,
     onActivateCustomProcedures: PropTypes.func,
+    onCloseBlocks: PropTypes.func,
     onOpenConnectionModal: PropTypes.func,
     onOpenSoundRecorder: PropTypes.func,
     onRequestCloseCustomProcedures: PropTypes.func,

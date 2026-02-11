@@ -207,8 +207,9 @@
 /* Mobile responsive styles */
 @media only screen and (max-width: 767px) {
     .library-item {
-        flex-basis: calc(50% - 12px);
-        max-width: calc(50% - 12px);
+        flex-basis: calc(50% - 6px);
+        max-width: calc(50% - 6px);
+        min-width: 0;
         height: 130px;
         margin: 4px;
         padding: 0.5rem 0.5rem 0 0.5rem;
@@ -229,8 +230,8 @@
 
     /* Featured extension items - full width with auto height */
     .featured-item {
-        flex-basis: calc(100% - 12px);
-        max-width: calc(100% - 12px);
+        flex-basis: 100%;
+        max-width: 100%;
         height: auto !important;
         min-height: auto;
         overflow: visible;
