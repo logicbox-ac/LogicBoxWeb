@@ -104,17 +104,18 @@ class PaintEditorWrapper extends React.Component {
                     width: 100% !important;
                     max-width: 100% !important;
                     min-width: 0 !important;
-                    overflow-x: auto !important;
-                    overflow-y: visible !important;
+                    overflow-x: scroll !important;
+                    overflow-y: hidden !important;
                     flex-shrink: 0 !important;
                     padding: 4px 0 !important;
                     gap: 2px !important;
                     -webkit-overflow-scrolling: touch !important;
+                    touch-action: pan-x !important;
                     align-items: stretch !important;
                     align-content: flex-start !important;
                     justify-content: flex-start !important;
                     height: auto !important;
-                    max-height: 65px !important;
+                    max-height: none !important;
                     background: rgba(255,255,255,0.95) !important;
                     border-bottom: 1px solid #e0e0e0 !important;
                     z-index: 1 !important;
@@ -127,11 +128,11 @@ class PaintEditorWrapper extends React.Component {
                     flex-direction: column !important;
                     align-items: center !important;
                     justify-content: center !important;
-                    min-width: 44px !important;
-                    max-width: 52px !important;
-                    width: 48px !important;
-                    height: 56px !important;
-                    max-height: 56px !important;
+                    min-width: 50px !important;
+                    max-width: 60px !important;
+                    width: 54px !important;
+                    height: auto !important;
+                    min-height: 56px !important;
                     flex-shrink: 0 !important;
                     position: relative !important;
                     overflow: visible !important;
@@ -232,9 +233,28 @@ class PaintEditorWrapper extends React.Component {
                     box-sizing: border-box !important;
                     justify-content: space-between !important;
                     transform: none !important;
+                    align-items: center !important;
+                    overflow: visible !important;
                 }
 
-                /* ── Outer paint-editor rows (direct children of container-top): scrollable ── */
+                /* ── Bitmap/Vector toggle button ── */
+                [class*="paint-editor_bitmap-button"] {
+                    display: flex !important;
+                    align-items: center !important;
+                    padding: 4px 8px !important;
+                    font-size: 0.75rem !important;
+                    border-radius: 5px !important;
+                    white-space: nowrap !important;
+                    flex-shrink: 0 !important;
+                    min-height: 28px !important;
+                }
+                [class*="paint-editor_bitmap-button-icon"] {
+                    width: 1.25rem !important;
+                    height: 1.25rem !important;
+                    margin-right: 4px !important;
+                }
+
+                /* ── Toolbar rows: horizontal scroll on mobile ── */
                 [class*="paint-editor_editor-container-top"] > [class*="paint-editor_row"] {
                     position: relative !important;
                     left: 0 !important;
@@ -244,28 +264,33 @@ class PaintEditorWrapper extends React.Component {
                     margin-right: 0 !important;
                     width: 100% !important;
                     max-width: ${availW - 10}px !important;
-                    overflow-x: auto !important;
-                    overflow-y: visible !important;
+                    min-width: 0 !important;
+                    overflow-x: scroll !important;
+                    overflow-y: hidden !important;
                     flex-wrap: nowrap !important;
                     box-sizing: border-box !important;
-                    -webkit-overflow-scrolling: touch !important;
                     align-self: flex-start !important;
+                    align-items: center !important;
+                    -webkit-overflow-scrolling: touch !important;
+                    touch-action: pan-x !important;
                 }
 
-                /* ── All non-top-level paint-editor rows: unconstrained width ── */
-                [class*="paint-editor_row"] [class*="paint-editor_row"],
-                [class*="paint-editor_tool-row"],
-                [class*="paint-editor_options-row"] {
+                /* ── Inner fixed-tools row: unconstrained width, expands beyond parent ── */
+                [class*="fixed-tools_row"] {
                     width: max-content !important;
+                    min-width: max-content !important;
                     max-width: none !important;
                     overflow: visible !important;
                     flex-wrap: nowrap !important;
                     flex-shrink: 0 !important;
+                    gap: 4px !important;
+                    align-items: center !important;
                 }
 
-                /* ── Inner fixed-tools row: unconstrained so it can overflow parent ── */
-                [class*="fixed-tools_row"] {
+                /* ── Nested paint-editor rows (InputGroups that use .row class) ── */
+                [class*="paint-editor_row"] [class*="paint-editor_row"] {
                     width: max-content !important;
+                    min-width: max-content !important;
                     max-width: none !important;
                     overflow: visible !important;
                     flex-wrap: nowrap !important;
@@ -395,39 +420,48 @@ class PaintEditorWrapper extends React.Component {
                 editorContainer.style.cssText += ';width:100%;max-width:100%;height:auto;overflow:visible;padding:4px;';
             }
 
-            // Force OUTER paint-editor rows (direct children of container-top) to scroll horizontally
+            // Force toolbar rows to scroll horizontally with touch-action
             const maxRowW = `${availW - 10}px`;
-            const ect = document.querySelector('[class*="paint-editor_editor-container-top"]');
-            if (ect) {
-                // Only direct children rows get scroll treatment
-                Array.from(ect.children).forEach((row) => {
+            const ect2 = document.querySelector('[class*="paint-editor_editor-container-top"]');
+            if (ect2) {
+                // Direct children rows: scrollable containers
+                Array.from(ect2.children).forEach((row) => {
                     if (row.className && row.className.includes && row.className.includes('row')) {
-                        row.style.setProperty('overflow-x', 'auto', 'important');
-                        row.style.setProperty('overflow-y', 'visible', 'important');
+                        row.style.setProperty('overflow-x', 'scroll', 'important');
+                        row.style.setProperty('overflow-y', 'hidden', 'important');
                         row.style.setProperty('width', '100%', 'important');
                         row.style.setProperty('max-width', maxRowW, 'important');
+                        row.style.setProperty('min-width', '0', 'important');
                         row.style.setProperty('flex-wrap', 'nowrap', 'important');
                         row.style.setProperty('align-self', 'flex-start', 'important');
+                        row.style.setProperty('align-items', 'center', 'important');
                         row.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
-                        this.logDebug(`TopRow scrollable: ${row.className.substring(0, 30)} maxW=${maxRowW}`);
-
-                        // Make nested rows inside this one unconstrained
-                        row.querySelectorAll('[class*="paint-editor_row"], [class*="fixed-tools_row"]').forEach((inner) => {
-                            inner.style.setProperty('width', 'max-content', 'important');
-                            inner.style.setProperty('max-width', 'none', 'important');
-                            inner.style.setProperty('overflow', 'visible', 'important');
-                            inner.style.setProperty('flex-shrink', '0', 'important');
-                        });
+                        row.style.setProperty('touch-action', 'pan-x', 'important');
+                        this.logDebug(`TopRow scroll: ${row.className.substring(0, 30)} maxW=${maxRowW}`);
                     }
                 });
             }
 
-            // INNER fixed-tools rows: unconstrained width so they overflow the outer row
+            // Inner fixed-tools rows: unconstrained width (must be wider than parent to create scroll)
             document.querySelectorAll('[class*="fixed-tools_row"]').forEach((row) => {
                 row.style.setProperty('width', 'max-content', 'important');
+                row.style.setProperty('min-width', 'max-content', 'important');
                 row.style.setProperty('max-width', 'none', 'important');
                 row.style.setProperty('overflow', 'visible', 'important');
                 row.style.setProperty('flex-shrink', '0', 'important');
+                row.style.setProperty('flex-wrap', 'nowrap', 'important');
+                row.style.setProperty('gap', '4px', 'important');
+                row.style.setProperty('align-items', 'center', 'important');
+            });
+
+            // Nested paint-editor rows (inner InputGroups): also unconstrained
+            document.querySelectorAll('[class*="paint-editor_row"] [class*="paint-editor_row"]').forEach((row) => {
+                row.style.setProperty('width', 'max-content', 'important');
+                row.style.setProperty('min-width', 'max-content', 'important');
+                row.style.setProperty('max-width', 'none', 'important');
+                row.style.setProperty('overflow', 'visible', 'important');
+                row.style.setProperty('flex-shrink', '0', 'important');
+                row.style.setProperty('flex-wrap', 'nowrap', 'important');
             });
 
             // Force display:block on ALL labeled-icon-button title spans
@@ -438,7 +472,7 @@ class PaintEditorWrapper extends React.Component {
                 titleEl.style.setProperty('margin-top', '0.1rem', 'important');
                 titleEl.style.setProperty('white-space', 'nowrap', 'important');
                 titleEl.style.setProperty('text-align', 'center', 'important');
-                this.logDebug(`Forced title${idx} display:block text="${titleEl.textContent}"`);
+
             });
 
             // Force labeled-icon-button layout: vertical (icon on top, label below)
@@ -468,7 +502,10 @@ class PaintEditorWrapper extends React.Component {
             const modeSelector = document.querySelector('[class*="paint-editor_mode-selector"]');
             if (modeSelector) {
                 modeSelector.scrollLeft = 0;
-                this.logDebug(`ModeSelector scrollLeft reset to 0`);
+                modeSelector.style.setProperty('touch-action', 'pan-x', 'important');
+                modeSelector.style.setProperty('overflow-x', 'scroll', 'important');
+                modeSelector.style.setProperty('overflow-y', 'hidden', 'important');
+                this.logDebug(`ModeSelector scrollLeft reset to 0, touch-action=pan-x`);
             }
 
             const controlsContainer = document.querySelector('[class*="paint-editor_controls-container"]');
@@ -495,7 +532,7 @@ class PaintEditorWrapper extends React.Component {
                 canvasContainer.style.setProperty('box-sizing', 'border-box', 'important');
             }
 
-            // Fix CanvasControls - was rendering at x=-140 off-screen
+            // Fix CanvasControls - was rendering at x=-5 off-screen
             const canvasControls = document.querySelector('[class*="paint-editor_canvas-controls"]');
             if (canvasControls) {
                 canvasControls.style.setProperty('display', 'flex', 'important');
@@ -507,11 +544,14 @@ class PaintEditorWrapper extends React.Component {
                 canvasControls.style.setProperty('height', 'auto', 'important');
                 canvasControls.style.setProperty('min-height', '36px', 'important');
                 canvasControls.style.setProperty('flex-shrink', '0', 'important');
-                canvasControls.style.setProperty('margin-top', '4px', 'important');
+                canvasControls.style.setProperty('margin', '4px 0 0 0', 'important');
+                canvasControls.style.setProperty('padding', '0', 'important');
                 canvasControls.style.setProperty('transform', 'none', 'important');
                 canvasControls.style.setProperty('box-sizing', 'border-box', 'important');
                 canvasControls.style.setProperty('justify-content', 'space-between', 'important');
-                this.logDebug(`CanvasControls inline fix applied`);
+                canvasControls.style.setProperty('align-items', 'center', 'important');
+                canvasControls.style.setProperty('flex-wrap', 'wrap', 'important');
+                canvasControls.style.setProperty('gap', '4px', 'important');
             }
 
             // ─── Hide scrollable-canvas scrollbar overlays on mobile ───
@@ -521,12 +561,11 @@ class PaintEditorWrapper extends React.Component {
                 el.style.setProperty('visibility', 'hidden', 'important');
                 el.style.setProperty('width', '0', 'important');
                 el.style.setProperty('height', '0', 'important');
-                this.logDebug(`Hidden scrollbar overlay: ${el.className.substring(0, 50)}`);
+
             });
 
             document.querySelectorAll('[class*="paint-editor_mode-selector"] [role="button"]').forEach((btn, idx) => {
                 const title = btn.getAttribute('title');
-                this.logDebug(`Adding label to Btn${idx}: title="${title}"`);
 
                 if (title) {
                     let labelSpan = btn.querySelector('.mode-label');
@@ -534,7 +573,6 @@ class PaintEditorWrapper extends React.Component {
                         labelSpan = document.createElement('span');
                         labelSpan.className = 'mode-label';
                         btn.appendChild(labelSpan);
-                        this.logDebug(`Created span for Btn${idx}`);
                     }
                     labelSpan.textContent = title;
 
@@ -560,9 +598,11 @@ class PaintEditorWrapper extends React.Component {
                     btn.style.setProperty('flex-direction', 'column', 'important');
                     btn.style.setProperty('align-items', 'center', 'important');
                     btn.style.setProperty('justify-content', 'center', 'important');
-                    btn.style.setProperty('height', '56px', 'important');
-                    btn.style.setProperty('max-height', '56px', 'important');
+                    btn.style.setProperty('height', 'auto', 'important');
+                    btn.style.setProperty('min-height', '48px', 'important');
+                    btn.style.setProperty('max-height', 'none', 'important');
                     btn.style.setProperty('overflow', 'visible', 'important');
+                    btn.style.setProperty('padding', '4px 2px 2px', 'important');
 
                     // Force icon size
                     const icon = btn.querySelector('img');
@@ -574,151 +614,97 @@ class PaintEditorWrapper extends React.Component {
                         icon.style.setProperty('flex-shrink', '0', 'important');
                     }
 
-                    // Check what's inside the button
-                    const childClasses = Array.from(btn.children).map(c => c.className || c.tagName);
-                    this.logDebug(`Btn${idx} children: ${childClasses.join(',')}`);
                 }
             });
 
-            // ─── Comprehensive debug logging after a beat ───
+            // ─── TARGETED DEBUG: Scroll, Bitmap, Rectangle ───
             setTimeout(() => {
-                this.logDebug('=== MOBILE PAINT DEBUG ===');
-                this.logDebug(`Viewport: ${window.innerWidth}x${window.innerHeight}, canvasH target=${canvasH}`);
+                this.logDebug('=== SCROLL DEBUG ===');
+                // Check each direct-child row of editor-container-top
+                const ect3 = document.querySelector('[class*="paint-editor_editor-container-top"]');
+                if (ect3) {
+                    const ectR = ect3.getBoundingClientRect();
+                    const ectS = window.getComputedStyle(ect3);
+                    this.logDebug(`ECT: ${ectR.width.toFixed(0)}x${ectR.height.toFixed(0)} display=${ectS.display} overflow=${ectS.overflow} width=${ectS.width} maxW=${ectS.maxWidth} minW=${ectS.minWidth}`);
 
-                // Editor container
-                const ec = document.querySelector('[class*="paint-editor_editor-container"]');
-                if (ec) {
-                    const r = ec.getBoundingClientRect();
-                    const s = window.getComputedStyle(ec);
-                    this.logDebug(`EditorContainer: ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}] display=${s.display} flexDir=${s.flexDirection} overflow=${s.overflow}`);
+                    Array.from(ect3.children).forEach((row, i) => {
+                        const r = row.getBoundingClientRect();
+                        const s = window.getComputedStyle(row);
+                        this.logDebug(`OuterRow${i}: renderedW=${r.width.toFixed(0)} renderedH=${r.height.toFixed(0)}`);
+                        this.logDebug(`  CSS: width=${s.width} maxW=${s.maxWidth} minW=${s.minWidth}`);
+                        this.logDebug(`  overflow: x=${s.overflowX} y=${s.overflowY} touchAction=${s.touchAction}`);
+                        this.logDebug(`  scroll: scrollW=${row.scrollWidth} clientW=${row.clientWidth} canScroll=${row.scrollWidth > row.clientWidth}`);
+                        this.logDebug(`  flex: wrap=${s.flexWrap} shrink=${s.flexShrink} grow=${s.flexGrow} display=${s.display}`);
+                        this.logDebug(`  class: ${row.className.substring(0, 60)}`);
+
+                        // Check each child of this row
+                        Array.from(row.children).forEach((child, j) => {
+                            const cr = child.getBoundingClientRect();
+                            const cs = window.getComputedStyle(child);
+                            this.logDebug(`  Child${j}: ${cr.width.toFixed(0)}x${cr.height.toFixed(0)} width=${cs.width} minW=${cs.minWidth} maxW=${cs.maxWidth} flex-shrink=${cs.flexShrink} class=${child.className.substring(0, 50)}`);
+                        });
+                    });
                 }
 
-                // Top align row
-                const tar = document.querySelector('[class*="paint-editor_top-align-row"]');
-                if (tar) {
-                    const r = tar.getBoundingClientRect();
-                    const s = window.getComputedStyle(tar);
-                    this.logDebug(`TopAlignRow: ${r.width.toFixed(0)}x${r.height.toFixed(0)} display=${s.display} flexDir=${s.flexDirection} minW=${s.minWidth} overflow=${s.overflow} overflowX=${s.overflowX} overflowY=${s.overflowY}`);
+                this.logDebug('=== BITMAP BUTTON DEBUG ===');
+                const bitmapBtn = document.querySelector('[class*="paint-editor_bitmap-button"]');
+                if (bitmapBtn) {
+                    const r = bitmapBtn.getBoundingClientRect();
+                    const s = window.getComputedStyle(bitmapBtn);
+                    this.logDebug(`BitmapBtn: ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}]`);
+                    this.logDebug(`  display=${s.display} visibility=${s.visibility} opacity=${s.opacity}`);
+                    this.logDebug(`  padding=${s.padding} fontSize=${s.fontSize} color=${s.color} bg=${s.backgroundColor}`);
+                    this.logDebug(`  text="${bitmapBtn.textContent.trim().substring(0, 30)}"`);
+                    // Check parent chain
+                    let parent = bitmapBtn.parentElement;
+                    let depth = 0;
+                    while (parent && depth < 3) {
+                        const pr = parent.getBoundingClientRect();
+                        const ps = window.getComputedStyle(parent);
+                        this.logDebug(`  Parent${depth}: ${pr.width.toFixed(0)}x${pr.height.toFixed(0)} pos=[${pr.left.toFixed(0)},${pr.top.toFixed(0)}] overflow=${ps.overflow} display=${ps.display} class=${parent.className.substring(0, 40)}`);
+                        parent = parent.parentElement;
+                        depth++;
+                    }
+                } else {
+                    this.logDebug(`BitmapBtn: NOT FOUND! Searching for any button with "bitmap" or "Convert"...`);
+                    document.querySelectorAll('button, [role="button"], span, div').forEach(el => {
+                        const text = el.textContent.trim();
+                        if (text.includes('Convert') || text.includes('bitmap') || text.includes('vector')) {
+                            const r = el.getBoundingClientRect();
+                            const s = window.getComputedStyle(el);
+                            this.logDebug(`  Found: "${text.substring(0, 30)}" ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}] display=${s.display} vis=${s.visibility} class=${el.className.substring(0, 40)}`);
+                        }
+                    });
                 }
 
-                // Editor container top
-                const ect = document.querySelector('[class*="paint-editor_editor-container-top"]');
-                if (ect) {
-                    const r = ect.getBoundingClientRect();
-                    const s = window.getComputedStyle(ect);
-                    this.logDebug(`EditorContainerTop: ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}] overflow=${s.overflow} childCount=${ect.children.length}`);
-                }
-
-                // Toolbar rows
-                const rows = document.querySelectorAll('[class*="paint-editor_row"], [class*="fixed-tools_row"]');
-                rows.forEach((row, idx) => {
-                    const r = row.getBoundingClientRect();
-                    const s = window.getComputedStyle(row);
-                    const cls = row.className.substring(0, 40);
-                    this.logDebug(`ToolbarRow${idx}: ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}] flexWrap=${s.flexWrap} overflow=${s.overflow} children=${row.children.length} class="${cls}"`);
-                });
-
-                // Labeled icon buttons (Group, Ungroup, Forward, Backward)
-                const libBtns = document.querySelectorAll('[class*="labeled-icon-button_mod-edit-field"]');
-                this.logDebug(`LabeledIconButtons found: ${libBtns.length}`);
-                libBtns.forEach((btn, idx) => {
-                    const r = btn.getBoundingClientRect();
-                    const iconEl = btn.querySelector('img');
-                    const titleEl = btn.querySelector('[class*="labeled-icon-button_edit-field-title"]');
-                    this.logDebug(`  LIB${idx}: ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}] icon=${iconEl ? `${iconEl.getBoundingClientRect().width.toFixed(0)}x${iconEl.getBoundingClientRect().height.toFixed(0)}` : 'NONE'} title="${titleEl ? titleEl.textContent : 'NONE'}" titleDisplay=${titleEl ? window.getComputedStyle(titleEl).display : 'N/A'}`);
-                });
-
-                // Input groups
-                const inputGroups = document.querySelectorAll('[class*="input-group_input-group"]');
-                this.logDebug(`InputGroups found: ${inputGroups.length}`);
-
-
-                // Mode selector
-                const ms = document.querySelector('[class*="paint-editor_mode-selector"]');
-                if (ms) {
-                    const r = ms.getBoundingClientRect();
-                    const s = window.getComputedStyle(ms);
-                    this.logDebug(`ModeSelector: ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}] display=${s.display} flexDir=${s.flexDirection} maxW=${s.maxWidth} overflowX=${s.overflowX} flexWrap=${s.flexWrap}`);
-                    this.logDebug(`ModeSelector scrollW=${ms.scrollWidth} clientW=${ms.clientWidth} childCount=${ms.children.length}`);
-                }
-
-                // Individual buttons
-                document.querySelectorAll('[class*="paint-editor_mode-selector"] [role="button"]').forEach((btn, idx) => {
-                    const r = btn.getBoundingClientRect();
-                    const s = window.getComputedStyle(btn);
-                    this.logDebug(`Btn${idx}: ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}] display=${s.display} flexDir=${s.flexDirection} overflow=${s.overflow} padding=${s.padding}`);
-
-                    // Check label
-                    const label = btn.querySelector('.mode-label');
+                this.logDebug('=== RECTANGLE BUTTON DEBUG ===');
+                const allBtns = document.querySelectorAll('[class*="paint-editor_mode-selector"] [role="button"]');
+                const rectBtn = allBtns[allBtns.length - 1]; // Last button = Rectangle
+                if (rectBtn) {
+                    const r = rectBtn.getBoundingClientRect();
+                    const s = window.getComputedStyle(rectBtn);
+                    this.logDebug(`RectBtn: ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}]`);
+                    this.logDebug(`  height=${s.height} minH=${s.minHeight} maxH=${s.maxHeight} padding=${s.padding}`);
+                    const label = rectBtn.querySelector('.mode-label');
                     if (label) {
                         const lr = label.getBoundingClientRect();
                         const ls = window.getComputedStyle(label);
-                        this.logDebug(`  Label${idx}: ${lr.width.toFixed(0)}x${lr.height.toFixed(0)} pos=[${lr.left.toFixed(0)},${lr.top.toFixed(0)}] display=${ls.display} position=${ls.position} visibility=${ls.visibility} opacity=${ls.opacity} color=${ls.color} text="${label.textContent}"`);
-                    } else {
-                        this.logDebug(`  Label${idx}: NOT FOUND`);
+                        this.logDebug(`  Label: ${lr.width.toFixed(0)}x${lr.height.toFixed(0)} fontSize=${ls.fontSize} lineHeight=${ls.lineHeight} overflow=${ls.overflow} textOverflow=${ls.textOverflow} whiteSpace=${ls.whiteSpace}`);
+                        this.logDebug(`  Label text="${label.textContent}" display=${ls.display}`);
                     }
-
-                    // Check icon
-                    const icon = btn.querySelector('img');
+                    const icon = rectBtn.querySelector('img');
                     if (icon) {
                         const ir = icon.getBoundingClientRect();
-                        this.logDebug(`  Icon${idx}: ${ir.width.toFixed(0)}x${ir.height.toFixed(0)} pos=[${ir.left.toFixed(0)},${ir.top.toFixed(0)}]`);
+                        this.logDebug(`  Icon: ${ir.width.toFixed(0)}x${ir.height.toFixed(0)}`);
                     }
-                });
-
-                // Controls container
-                const cc = document.querySelector('[class*="paint-editor_controls-container"]');
-                if (cc) {
-                    const r = cc.getBoundingClientRect();
-                    const s = window.getComputedStyle(cc);
-                    this.logDebug(`ControlsContainer: ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}] display=${s.display} minW=${s.minWidth} margin=${s.margin}`);
-                }
-
-                // Canvas container
-                const cv = document.querySelector('[class*="paint-editor_canvas-container"]');
-                if (cv) {
-                    const r = cv.getBoundingClientRect();
-                    const s = window.getComputedStyle(cv);
-                    this.logDebug(`CanvasContainer: ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}] display=${s.display} h=${s.height} maxH=${s.maxHeight} minW=${s.minWidth} flex=${s.flex} overflow=${s.overflow}`);
-                }
-
-                // Actual canvas element
-                const acv = cv && cv.querySelector('canvas');
-                if (acv) {
-                    const r = acv.getBoundingClientRect();
-                    this.logDebug(`CanvasElement: ${r.width.toFixed(0)}x${r.height.toFixed(0)} htmlW=${acv.width} htmlH=${acv.height}`);
-                }
-
-                // Canvas controls
-                const cctl = document.querySelector('[class*="paint-editor_canvas-controls"]');
-                if (cctl) {
-                    const r = cctl.getBoundingClientRect();
-                    this.logDebug(`CanvasControls: ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}]`);
-                }
-
-                // Check if anything is clipped / off-viewport
-                this.logDebug('=== OVERFLOW CHECK ===');
-                const elements = {
-                    EditorContainer: document.querySelector('[class*="paint-editor_editor-container"]'),
-                    TopAlignRow: document.querySelector('[class*="paint-editor_top-align-row"]'),
-                    ModeSelector: document.querySelector('[class*="paint-editor_mode-selector"]'),
-                    ControlsContainer: document.querySelector('[class*="paint-editor_controls-container"]'),
-                    CanvasContainer: document.querySelector('[class*="paint-editor_canvas-container"]')
-                };
-                Object.entries(elements).forEach(([name, el]) => {
-                    if (el) {
-                        const r = el.getBoundingClientRect();
-                        const offLeft = r.left < 0;
-                        const offRight = r.right > availW;
-                        const scrollOverflow = el.scrollWidth > el.clientWidth;
-                        if (offLeft || offRight || scrollOverflow) {
-                            this.logDebug(`⚠️ ${name}: offLeft=${offLeft}(${r.left.toFixed(0)}) offRight=${offRight}(${r.right.toFixed(0)}) scrollOverflow=${scrollOverflow}(scrollW=${el.scrollWidth} clientW=${el.clientWidth})`);
-                        } else {
-                            this.logDebug(`✓ ${name}: fits OK (left=${r.left.toFixed(0)}, right=${r.right.toFixed(0)})`);
-                        }
+                    // Check mode-selector container height
+                    const ms = rectBtn.closest('[class*="paint-editor_mode-selector"]');
+                    if (ms) {
+                        const mr = ms.getBoundingClientRect();
+                        const mss = window.getComputedStyle(ms);
+                        this.logDebug(`  ModeSelector: ${mr.width.toFixed(0)}x${mr.height.toFixed(0)} maxH=${mss.maxHeight} overflowY=${mss.overflowY} alignItems=${mss.alignItems}`);
                     }
-                });
-
+                }
                 this.logDebug('=== END DEBUG ===');
             }, 200);
         }, 100);
