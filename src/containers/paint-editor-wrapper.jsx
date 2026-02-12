@@ -679,7 +679,6 @@ class PaintEditorWrapper extends React.Component {
                     labelSpan.style.setProperty('text-align', 'center', 'important');
                     labelSpan.style.setProperty('width', '100%', 'important');
                     labelSpan.style.setProperty('margin-top', '2px', 'important');
-                    labelSpan.style.setProperty('z-index', '3', 'important');
                     labelSpan.style.setProperty('white-space', 'nowrap', 'important');
                     labelSpan.style.setProperty('overflow', 'hidden', 'important');
                     labelSpan.style.setProperty('text-overflow', 'ellipsis', 'important');
