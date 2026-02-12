@@ -237,7 +237,7 @@ class PaintEditorWrapper extends React.Component {
 
                 /* ── Bitmap/Vector toggle button ── */
                 [class*="paint-editor_bitmap-button"] {
-                    display: flex !important;
+                    display: none !important;
                     align-items: center !important;
                     padding: 4px 8px !important;
                     font-size: 0.75rem !important;
@@ -785,36 +785,7 @@ class PaintEditorWrapper extends React.Component {
                     });
                 }
 
-                this.logDebug('=== BITMAP BUTTON DEBUG ===');
-                const bitmapBtn = document.querySelector('[class*="paint-editor_bitmap-button"]');
-                if (bitmapBtn) {
-                    const r = bitmapBtn.getBoundingClientRect();
-                    const s = window.getComputedStyle(bitmapBtn);
-                    this.logDebug(`BitmapBtn: ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}]`);
-                    this.logDebug(`  display=${s.display} visibility=${s.visibility} opacity=${s.opacity}`);
-                    this.logDebug(`  padding=${s.padding} fontSize=${s.fontSize} color=${s.color} bg=${s.backgroundColor}`);
-                    this.logDebug(`  text="${bitmapBtn.textContent.trim().substring(0, 30)}"`);
-                    // Check parent chain
-                    let parent = bitmapBtn.parentElement;
-                    let depth = 0;
-                    while (parent && depth < 3) {
-                        const pr = parent.getBoundingClientRect();
-                        const ps = window.getComputedStyle(parent);
-                        this.logDebug(`  Parent${depth}: ${pr.width.toFixed(0)}x${pr.height.toFixed(0)} pos=[${pr.left.toFixed(0)},${pr.top.toFixed(0)}] overflow=${ps.overflow} display=${ps.display} class=${parent.className.substring(0, 40)}`);
-                        parent = parent.parentElement;
-                        depth++;
-                    }
-                } else {
-                    this.logDebug(`BitmapBtn: NOT FOUND! Searching for any button with "bitmap" or "Convert"...`);
-                    document.querySelectorAll('button, [role="button"], span, div').forEach(el => {
-                        const text = el.textContent.trim();
-                        if (text.includes('Convert') || text.includes('bitmap') || text.includes('vector')) {
-                            const r = el.getBoundingClientRect();
-                            const s = window.getComputedStyle(el);
-                            this.logDebug(`  Found: "${text.substring(0, 30)}" ${r.width.toFixed(0)}x${r.height.toFixed(0)} pos=[${r.left.toFixed(0)},${r.top.toFixed(0)}] display=${s.display} vis=${s.visibility} class=${el.className.substring(0, 40)}`);
-                        }
-                    });
-                }
+
 
                 this.logDebug('=== RECTANGLE BUTTON DEBUG ===');
                 const allBtns = document.querySelectorAll('[class*="paint-editor_mode-selector"] [role="button"]');

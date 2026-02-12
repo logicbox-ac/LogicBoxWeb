@@ -1362,3 +1362,15 @@ $fade-out-distance: 15px;
         overflow: visible !important;
     }
 }
+
+/* ----------------------------------------
+   GLOBAL OVERRIDES (Added to remove bitmap button)
+   ---------------------------------------- */
+
+:global([class*="paint-editor_bitmap-button"]) {
+    display: none !important;
+}
+
+:global([class*="button_button"][class*="paint-editor_bitmap-button"]) {
+    display: none !important;
+}
