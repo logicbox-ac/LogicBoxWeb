@@ -621,6 +621,7 @@ $fade-out-distance: 15px;
    PAINT EDITOR TABLET/MID-SIZE FIXES (750px - 1095px)
    ============================================ */
 @media (max-width: 1095px) and (min-width: 750px) {
+
     /* Ensure paint editor toolbar is visible and scrollable at mid-sizes */
     :global([class*="paint-editor_editor-container-top"]) {
         display: flex !important;
@@ -639,7 +640,7 @@ $fade-out-distance: 15px;
         max-height: none !important;
         /* Make scrollbar always visible */
         scrollbar-width: thin !important;
-        scrollbar-color: rgba(0,0,0,0.3) transparent !important;
+        scrollbar-color: rgba(0, 0, 0, 0.3) transparent !important;
     }
 
     /* Webkit scrollbar styling */
@@ -653,12 +654,12 @@ $fade-out-distance: 15px;
     }
 
     :global([class*="paint-editor_editor-container-top"])::-webkit-scrollbar-thumb {
-        background-color: rgba(0,0,0,0.3) !important;
+        background-color: rgba(0, 0, 0, 0.3) !important;
         border-radius: 3px !important;
     }
 
     /* Ensure button groups don't shrink */
-    :global([class*="paint-editor_editor-container-top"]) > * {
+    :global([class*="paint-editor_editor-container-top"])>* {
         flex-shrink: 0 !important;
     }
 
@@ -758,7 +759,7 @@ $fade-out-distance: 15px;
         text-indent: -9999px !important;
         overflow: hidden !important;
     }
-    
+
     /* But show the icons */
     :global([class*="paint-editor"] button img),
     :global([class*="paint-editor"] [role="button"] img) {
@@ -849,7 +850,7 @@ $fade-out-distance: 15px;
         min-height: 60px !important;
         /* Make scrollbar always visible on mobile */
         scrollbar-width: thin !important;
-        scrollbar-color: rgba(0,0,0,0.3) transparent !important;
+        scrollbar-color: rgba(0, 0, 0, 0.3) transparent !important;
     }
 
     /* Webkit scrollbar styling */
@@ -863,7 +864,7 @@ $fade-out-distance: 15px;
     }
 
     :global([class*="paint-editor_editor-container-top"])::-webkit-scrollbar-thumb {
-        background-color: rgba(0,0,0,0.3) !important;
+        background-color: rgba(0, 0, 0, 0.3) !important;
         border-radius: 3px !important;
     }
 
@@ -873,7 +874,7 @@ $fade-out-distance: 15px;
     :global([class*="paint-editor"]) [class*="edit-field-title"] {
         display: none !important;
     }
-    
+
     /* Ultra-aggressive hide for any text in toolbar buttons */
     :global([class*="paint-editor"]) span[class*="title"],
     :global([class*="paint-editor"]) div[class*="title"] {
@@ -898,7 +899,7 @@ $fade-out-distance: 15px;
     }
 
     /* Ensure button groups don't shrink */
-    :global([class*="paint-editor_editor-container-top"]) > * {
+    :global([class*="paint-editor_editor-container-top"])>* {
         flex-shrink: 0 !important;
     }
 
@@ -929,15 +930,12 @@ $fade-out-distance: 15px;
     }
 
     /* Ensure all toolbar buttons are visible and scrollable */
-    :global([class*="paint-editor_editor-container-top"]) > * {
+    :global([class*="paint-editor_editor-container-top"])>* {
         flex-shrink: 0 !important;
         margin-right: 4px !important;
     }
 
-    /* Last button needs extra margin to be visible past gradient */
-    :global([class*="paint-editor_editor-container-top"]) > *:last-child {
-        margin-right: 50px !important;
-    }
+
     :global([class*="paint-editor_editor-container-top"]) {
         position: relative !important;
     }
@@ -986,12 +984,11 @@ $fade-out-distance: 15px;
     /* Hide text content in buttons to prevent overflow */
     :global([class*="paint-editor"] button),
     :global([class*="paint-editor"] [role="button"]) {
-        font-size: 0 !important;
         line-height: 0 !important;
         overflow: hidden !important;
         white-space: nowrap !important;
     }
-    
+
     /* But show the icons */
     :global([class*="paint-editor"] button img),
     :global([class*="paint-editor"] [role="button"] img) {
@@ -1068,7 +1065,7 @@ $fade-out-distance: 15px;
     }
 
     /* Remove the forced width on children - let them be natural size */
-    :global([class*="paint-editor_mode-selector"]) > * {
+    :global([class*="paint-editor_mode-selector"])>* {
         display: block !important;
         margin-bottom: 8px !important;
     }
@@ -1114,7 +1111,7 @@ $fade-out-distance: 15px;
     }
 
     /* Ensure color/fill controls at bottom are visible */
-    :global([class*="paint-editor_mode-selector"]) > div {
+    :global([class*="paint-editor_mode-selector"])>div {
         width: 100% !important;
         overflow: visible !important;
     }
@@ -1148,8 +1145,8 @@ $fade-out-distance: 15px;
     }
 
     /* Force children to also take full width */
-    :global(.label_input-group_CBlDy) > *,
-    :global(.label_input-group_RurlE) > * {
+    :global(.label_input-group_CBlDy)>*,
+    :global(.label_input-group_RurlE)>* {
         max-width: 100% !important;
         width: auto !important;
     }
@@ -1162,7 +1159,7 @@ $fade-out-distance: 15px;
     }
 
     /* Specifically ensure Fill and Outline are at the top and full width */
-    :global([class*="paint-editor_mode-selector"]) > :global(.label_input-group_CBlDy):first-of-type {
+    :global([class*="paint-editor_mode-selector"])> :global(.label_input-group_CBlDy):first-of-type {
         margin-top: 0 !important;
         order: -2 !important;
         width: 100% !important;
@@ -1171,7 +1168,7 @@ $fade-out-distance: 15px;
         top: 0 !important;
     }
 
-    :global([class*="paint-editor_mode-selector"]) > :global(.label_input-group_CBlDy):nth-of-type(2) {
+    :global([class*="paint-editor_mode-selector"])> :global(.label_input-group_CBlDy):nth-of-type(2) {
         order: -1 !important;
         width: 100% !important;
         max-width: 100% !important;
@@ -1185,8 +1182,8 @@ $fade-out-distance: 15px;
     }
 
     /* Force children of label groups to be visible */
-    :global(.label_input-group_RurlE) > *,
-    :global(.label_input-group_CBlDy) > * {
+    :global(.label_input-group_RurlE)>*,
+    :global(.label_input-group_CBlDy)>* {
         display: flex !important;
         min-height: 32px !important;
         opacity: 1 !important;
@@ -1203,8 +1200,8 @@ $fade-out-distance: 15px;
     }
 
     /* Specifically target the mode selector's bottom section */
-    :global([class*="paint-editor_mode-selector"]) > span:last-child,
-    :global([class*="paint-editor_mode-selector"]) > div:last-child {
+    :global([class*="paint-editor_mode-selector"])>span:last-child,
+    :global([class*="paint-editor_mode-selector"])>div:last-child {
         padding-bottom: 20px !important;
     }
 
@@ -1238,13 +1235,13 @@ $fade-out-distance: 15px;
     }
 
     /* Paper canvas wrapper - allow scrolling */
-    :global([class*="paint-editor_canvas-container"]) > div {
+    :global([class*="paint-editor_canvas-container"])>div {
         display: block !important;
         /* Changed from flex to block */
     }
-    
+
     /* Paper canvas wrapper */
-    :global([class*="paint-editor_canvas-container"]) > div {
+    :global([class*="paint-editor_canvas-container"])>div {
         max-width: 100% !important;
         max-height: 100% !important;
         display: flex !important;

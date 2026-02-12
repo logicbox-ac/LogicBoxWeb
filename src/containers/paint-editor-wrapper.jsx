@@ -446,6 +446,55 @@ class PaintEditorWrapper extends React.Component {
                 }
             `;
 
+            // ─── Font Dropdown scrolling fix ───
+            const fontDropdownStyles = `
+                /* Enable scrolling for the font dropdown list container */
+                .Popover .Popover-body {
+                    max-height: 60vh !important;
+                    height: auto !important;
+                    min-height: 150px !important;
+                    display: block !important;
+                    overflow-y: auto !important;
+                    overflow-x: hidden !important;
+                    -webkit-overflow-scrolling: touch !important;
+                    touch-action: pan-y !important;
+                    overscroll-behavior: contain !important;
+                    pointer-events: auto !important;
+                    background: white !important;
+                    border-radius: 4px !important;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+                    z-index: 3 !important;
+                }
+
+                .Popover [class*="input-group_mod-context-menu"],
+                .Popover [class*="font-dropdown_mod-context-menu"],
+                [class*="font-dropdown_font-dropdown"] [class*="input-group_mod-context-menu"] {
+                    height: auto !important;
+                    max-height: none !important;
+                    overflow: visible !important;
+                    display: block !important;
+                    width: 100% !important;
+                }
+                
+                /* Ensure the Popover itself doesn't block interactions */
+                .Popover {
+                    pointer-events: auto !important;
+                    z-index: 5000 !important; /* Ensure it's above other elements */
+                }
+
+                /* Make font items touch-friendly */
+                .Popover [class*="font-dropdown_mod-menu-item"],
+                .Popover button[class*="font-dropdown"] {
+                    min-height: 44px !important;
+                    padding: 8px 12px !important;
+                    touch-action: manipulation !important;
+                    cursor: pointer !important;
+                    display: flex !important;
+                    align-items: center !important;
+                }
+            `;
+            styleEl.textContent += fontDropdownStyles;
+
             // ─── Apply inline styles for elements that need them ───
             const topAlignRow = document.querySelector('[class*="paint-editor_top-align-row"]');
             if (topAlignRow) {
