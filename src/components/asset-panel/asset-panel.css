@@ -49,5 +49,18 @@
         border-left: none !important;
         border-right: none !important;
         border-bottom: none !important;
+        overflow: visible !important;
+    }
+}
+
+/* Additional fixes for mid-range widths (750px - 1023px) */
+@media (max-width: 1023px) and (min-width: 750px) {
+    .wrapper {
+        min-width: 100px !important;
+    }
+
+    .detail-area {
+        overflow: visible !important;
+        min-width: 0 !important;
     }
 }

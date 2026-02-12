@@ -1,0 +1,57 @@
+@import "../../css/colors.css";
+@import "../../css/units.css";
+
+.header {
+    display: none;
+    position: fixed;
+    left: 60px;
+    bottom: 20px;
+    z-index: 501;
+    background-color: rgba(255, 255, 255, 0.98);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.toggleButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: $text-primary;
+    transition: background-color 0.2s ease;
+    gap: 6px;
+    user-select: none;
+    min-height: 44px;
+}
+
+.toggleButton:hover {
+    background-color: $ui-primary;
+}
+
+.toggleButton:active {
+    background-color: $ui-tertiary;
+}
+
+.icon {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+}
+
+.label {
+    font-size: 12px;
+    pointer-events: none;
+}
+
+/* Show only on mobile in costume/backdrop tab */
+@media (max-width: 767px) {
+    .header {
+        display: block;
+    }
+}

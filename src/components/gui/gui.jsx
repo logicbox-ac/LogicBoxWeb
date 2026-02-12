@@ -33,6 +33,7 @@ import DragLayer from '../../containers/drag-layer.jsx';
 import ConnectionModal from '../../containers/connection-modal.jsx';
 import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
 import CollapsibleStageHeader from '../collapsible-stage-header/collapsible-stage-header.jsx';
+import CollapsiblePaintControls from '../collapsible-paint-controls/collapsible-paint-controls.jsx';
 
 import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
@@ -62,6 +63,8 @@ const GUIComponent = props => {
     const [mobileActiveTab, setMobileActiveTab] = useState('code');
     // Collapsible stage state for code tab
     const [isStageCollapsed, setIsStageCollapsed] = useState(false);
+    // Collapsible paint controls state for costume tab - default to collapsed
+    const [isPaintControlsCollapsed, setIsPaintControlsCollapsed] = useState(true);
 
     const handleMobileTabChange = useCallback(tab => {
         setMobileActiveTab(tab);
@@ -81,68 +84,22 @@ const GUIComponent = props => {
     }, [props.onActivateTab, props.onActivateCostumesTab, props.onActivateSoundsTab, props.vm]);
 
     const handleStageToggle = useCallback(() => {
-        console.log('[STAGE-COLLAPSE] Toggle clicked:', {
-            currentState: isStageCollapsed,
-            willBecome: !isStageCollapsed,
-            mobileActiveTab,
-            hasRenderer: !!(props.vm && props.vm.renderer)
-        });
-        
-        setIsStageCollapsed(prev => {
-            const newState = !prev;
-            console.log('[STAGE-COLLAPSE] State changing:', {
-                from: prev,
-                to: newState
-            });
-            
-            // Log stage dimensions after state change
-            setTimeout(() => {
-                const stageWrapper = document.querySelector('[class*="stage-and-target-wrapper"]');
-                const stageContent = document.querySelector('[class*="stage-content-wrapper"]');
-                
-                console.log('[STAGE-COLLAPSE] After toggle:', {
-                    isCollapsed: newState,
-                    stageWrapperExists: !!stageWrapper,
-                    stageContentExists: !!stageContent
-                });
-                
-                if (stageWrapper) {
-                    const rect = stageWrapper.getBoundingClientRect();
-                    const styles = window.getComputedStyle(stageWrapper);
-                    console.log('[STAGE-COLLAPSE] Stage wrapper after toggle:', {
-                        width: rect.width,
-                        height: rect.height,
-                        maxHeight: styles.maxHeight,
-                        overflow: styles.overflow,
-                        display: styles.display,
-                        hasCollapsedClass: stageWrapper.classList.contains('collapsed')
-                    });
-                }
-                
-                if (stageContent && !newState) {
-                    const rect = stageContent.getBoundingClientRect();
-                    console.log('[STAGE-COLLAPSE] Stage content visible:', {
-                        width: rect.width,
-                        height: rect.height,
-                        isVisible: rect.width > 0 && rect.height > 0
-                    });
-                }
-            }, 400); // Wait for CSS transition
-            
-            return newState;
-        });
+        setIsStageCollapsed(prev => !prev);
         
         // Trigger renderer resize after collapse/expand
         if (props.vm && props.vm.renderer) {
             setTimeout(() => {
                 if (props.vm.renderer) {
-                    console.log('[STAGE-COLLAPSE] Resizing renderer after toggle');
                     props.vm.renderer.resize(props.vm.renderer._nativeSize[0], props.vm.renderer._nativeSize[1]);
                     props.vm.renderer.draw();
                 }
-            }, 350); // Wait for CSS transition
+            }, 350);
         }
-    }, [props.vm, isStageCollapsed, mobileActiveTab]);
+    }, [props.vm]);
+
+    const handlePaintControlsToggle = useCallback(() => {
+        setIsPaintControlsCollapsed(prev => !prev);
+    }, []);
 
     const {
         accountNavOpen,
@@ -347,7 +304,10 @@ const GUIComponent = props => {
                     onTabChange={handleMobileTabChange}
                 />
                 <Box className={styles.bodyWrapper}>
-                    <Box className={styles.flexWrapper}>
+                    <Box 
+                        className={styles.flexWrapper}
+                        data-paint-controls-collapsed={isPaintControlsCollapsed}
+                    >
                         <Box className={styles.editorWrapper}>
                             <Tabs
                                 forceRenderTabPanel
@@ -446,6 +406,13 @@ const GUIComponent = props => {
                                     {soundsTabVisible ? <SoundTab vm={vm} /> : null}
                                 </TabPanel>
                             </Tabs>
+                            {/* Collapsible paint controls for mobile costume/backdrop tab */}
+                            {(mobileActiveTab === 'costumes' || (mobileActiveTab === 'code' && costumesTabVisible)) && (
+                                <CollapsiblePaintControls
+                                    isCollapsed={isPaintControlsCollapsed}
+                                    onToggle={handlePaintControlsToggle}
+                                />
+                            )}
                             {backpackVisible ? (
                                 <Backpack host={backpackHost} />
                             ) : null}
@@ -466,9 +433,7 @@ const GUIComponent = props => {
                             )}
                             {console.log('[STAGE-RENDER] Rendering stage wrapper:', {
                                 isStageCollapsed,
-                                mobileActiveTab,
-                                shouldShowStage: !(isStageCollapsed && mobileActiveTab === 'code'),
-                                hasCollapsedClass: isStageCollapsed && mobileActiveTab === 'code'
+                                mobileActiveTab
                             })}
                             {!(isStageCollapsed && mobileActiveTab === 'code') && (
                                 <Box className={styles.stageContentWrapper}>

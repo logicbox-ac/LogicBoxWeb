@@ -95,7 +95,7 @@
 .delete-button {
     position: absolute;
     top: -.625rem;
-    z-index: auto;
+    z-index: 10;
 }
 
 [dir="ltr"] .delete-button {
@@ -104,6 +104,22 @@
 
 [dir="rtl"] .delete-button {
     left: -.625rem;
+}
+
+/* Ensure delete button is visible at smaller widths */
+@media only screen and (max-width: 1249px) {
+    .delete-button {
+        top: -0.4rem;
+        z-index: 10;
+    }
+
+    [dir="ltr"] .delete-button {
+        right: -0.4rem;
+    }
+
+    [dir="rtl"] .delete-button {
+        left: -0.4rem;
+    }
 }
 
 .number {

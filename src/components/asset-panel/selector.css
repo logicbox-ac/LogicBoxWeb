@@ -70,11 +70,34 @@ $fade-out-distance: 100px;
 
 @media only screen and (max-width: $full-size-paint) {
     .wrapper {
-        width: 80px;
+        width: 100px;
+        padding-right: 10px;
+        box-sizing: content-box;
+    }
+
+    .list-area {
+        overflow-x: visible;
+        padding-right: 5px;
     }
 
     .list-item {
         width: 4rem;
+        margin: 0.5rem auto;
+    }
+}
+
+/* Extra narrow selector at 750px-900px to give paint editor more space */
+@media only screen and (max-width: 900px) and (min-width: 750px) {
+    .wrapper {
+        width: 80px !important;
+        min-width: 80px !important;
+        padding-right: 5px !important;
+    }
+
+    .list-item {
+        width: 3.5rem !important;
+        height: 3.5rem !important;
+        margin: 0.25rem auto !important;
     }
 }
 
