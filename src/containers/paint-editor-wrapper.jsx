@@ -118,7 +118,7 @@ class PaintEditorWrapper extends React.Component {
                     max-height: none !important;
                     background: rgba(255,255,255,0.95) !important;
                     border-bottom: 1px solid #e0e0e0 !important;
-                    z-index: 1 !important;
+
                 }
 
                 /* ── Tool buttons inside mode-selector ── */
@@ -138,7 +138,6 @@ class PaintEditorWrapper extends React.Component {
                     overflow: visible !important;
                     padding: 4px 2px 2px !important;
                     box-sizing: border-box !important;
-                    z-index: 2 !important;
                 }
 
                 /* ── Tool icons inside buttons ── */
@@ -172,7 +171,6 @@ class PaintEditorWrapper extends React.Component {
                     overflow: hidden !important;
                     text-overflow: ellipsis !important;
                     pointer-events: none !important;
-                    z-index: 3 !important;
                     letter-spacing: -0.3px !important;
                 }
 
@@ -392,6 +390,60 @@ class PaintEditorWrapper extends React.Component {
                     display: none !important;
                     pointer-events: none !important;
                 }
+
+                /* ── Collapsible toolbar ── */
+                .toolbar-collapse-wrapper {
+                    width: 100% !important;
+                    overflow: hidden !important;
+                    transition: max-height 0.3s ease, opacity 0.2s ease !important;
+                    will-change: max-height, opacity !important;
+                }
+                .toolbar-collapse-wrapper.collapsed {
+                    max-height: 0 !important;
+                    opacity: 0 !important;
+                    pointer-events: none !important;
+                }
+                .toolbar-collapse-wrapper.expanded {
+                    max-height: 300px !important;
+                    opacity: 1 !important;
+                }
+                .toolbar-toggle-btn {
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    width: calc(100% + 8px) !important;
+                    margin-left: -4px !important;
+                    margin-right: -4px !important;
+                    height: 36px !important;
+                    border: none !important;
+                    background: linear-gradient(180deg, #ff8c1a, #e67300) !important;
+                    border-radius: 0 !important;
+                    cursor: pointer !important;
+                    font-size: 13px !important;
+                    font-weight: 700 !important;
+                    color: #fff !important;
+                    letter-spacing: 0.5px !important;
+                    gap: 8px !important;
+                    touch-action: manipulation !important;
+                    -webkit-tap-highlight-color: transparent !important;
+                    user-select: none !important;
+                    flex-shrink: 0 !important;
+                    position: relative !important;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
+                    text-shadow: 0 1px 1px rgba(0,0,0,0.2) !important;
+                }
+                .toolbar-toggle-btn:active {
+                    background: linear-gradient(180deg, #e67300, #cc6600) !important;
+                }
+                .toolbar-toggle-chevron {
+                    display: inline-block !important;
+                    transition: transform 0.3s ease !important;
+                    font-size: 12px !important;
+                    color: #fff !important;
+                }
+                .toolbar-toggle-chevron.open {
+                    transform: rotate(180deg) !important;
+                }
             `;
 
             // ─── Apply inline styles for elements that need them ───
@@ -440,6 +492,45 @@ class PaintEditorWrapper extends React.Component {
                         this.logDebug(`TopRow scroll: ${row.className.substring(0, 30)} maxW=${maxRowW}`);
                     }
                 });
+
+                // ── Collapsible toolbar wrapper ──
+                if (!document.querySelector('.toolbar-collapse-wrapper')) {
+                    const collapseWrapper = document.createElement('div');
+                    collapseWrapper.className = 'toolbar-collapse-wrapper collapsed';
+
+                    // Move all row children into the wrapper
+                    const rowsToWrap = Array.from(ect2.children).filter(
+                        el => el.className && el.className.includes && el.className.includes('row')
+                    );
+                    rowsToWrap.forEach(row => collapseWrapper.appendChild(row));
+                    ect2.insertBefore(collapseWrapper, ect2.firstChild);
+
+                    // Create toggle button
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.className = 'toolbar-toggle-btn';
+                    toggleBtn.innerHTML = '<span class="toolbar-toggle-chevron">▼</span> Edit Tools';
+
+                    toggleBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const wrapper = document.querySelector('.toolbar-collapse-wrapper');
+                        const chevron = toggleBtn.querySelector('.toolbar-toggle-chevron');
+                        if (wrapper.classList.contains('collapsed')) {
+                            wrapper.classList.remove('collapsed');
+                            wrapper.classList.add('expanded');
+                            chevron.classList.add('open');
+                            toggleBtn.innerHTML = '<span class="toolbar-toggle-chevron open">▲</span> Hide Tools';
+                        } else {
+                            wrapper.classList.remove('expanded');
+                            wrapper.classList.add('collapsed');
+                            chevron.classList.remove('open');
+                            toggleBtn.innerHTML = '<span class="toolbar-toggle-chevron">▼</span> Edit Tools';
+                        }
+                    });
+
+                    ect2.appendChild(toggleBtn);
+                    this.logDebug('Collapsible toolbar created');
+                }
             }
 
             // Inner fixed-tools rows: unconstrained width (must be wider than parent to create scroll)
