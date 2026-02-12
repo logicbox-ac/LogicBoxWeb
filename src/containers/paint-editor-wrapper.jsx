@@ -234,11 +234,8 @@ class PaintEditorWrapper extends React.Component {
                     transform: none !important;
                 }
 
-                /* ── Fix paint rows: horizontal scroll on mobile ── */
-                [class*="paint-editor_row"],
-                [class*="fixed-tools_row"],
-                [class*="paint-editor_tool-row"],
-                [class*="paint-editor_options-row"] {
+                /* ── Outer paint-editor rows (direct children of container-top): scrollable ── */
+                [class*="paint-editor_editor-container-top"] > [class*="paint-editor_row"] {
                     position: relative !important;
                     left: 0 !important;
                     right: 0 !important;
@@ -255,6 +252,26 @@ class PaintEditorWrapper extends React.Component {
                     align-self: flex-start !important;
                 }
 
+                /* ── All non-top-level paint-editor rows: unconstrained width ── */
+                [class*="paint-editor_row"] [class*="paint-editor_row"],
+                [class*="paint-editor_tool-row"],
+                [class*="paint-editor_options-row"] {
+                    width: max-content !important;
+                    max-width: none !important;
+                    overflow: visible !important;
+                    flex-wrap: nowrap !important;
+                    flex-shrink: 0 !important;
+                }
+
+                /* ── Inner fixed-tools row: unconstrained so it can overflow parent ── */
+                [class*="fixed-tools_row"] {
+                    width: max-content !important;
+                    max-width: none !important;
+                    overflow: visible !important;
+                    flex-wrap: nowrap !important;
+                    flex-shrink: 0 !important;
+                }
+
                 /* ── Zoom controls ── */
                 [class*="paint-editor_zoom-controls"] {
                     flex-shrink: 0 !important;
@@ -266,6 +283,16 @@ class PaintEditorWrapper extends React.Component {
                     flex-wrap: nowrap !important;
                 }
 
+                /* ── Reduce gap between fill/stroke and mode-tools ── */
+                [class*="paint-editor_mod-mode-tools"] {
+                    margin-left: 4px !important;
+                    margin-right: 0 !important;
+                }
+                [class*="input-group_input-group"] + [class*="input-group_input-group"] {
+                    margin-left: 4px !important;
+                    margin-right: 0 !important;
+                }
+
                 /* ── Shrink costume name input on mobile ── */
                 [class*="fixed-tools_costume-input"],
                 input[class*="fixed-tools_costume-input"] {
@@ -275,31 +302,46 @@ class PaintEditorWrapper extends React.Component {
                     font-size: 12px !important;
                 }
 
-                /* ── Toolbar icon buttons: keep original sizes ── */
+                /* ── Toolbar undo/redo icon buttons ── */
                 [class*="fixed-tools_button-group-button"] {
                     padding: 0.3rem !important;
                 }
                 [class*="fixed-tools_button-group-button-icon"] {
-                    width: 1.25rem !important;
-                    height: 1.25rem !important;
+                    width: 2rem !important;
+                    height: 2rem !important;
                 }
 
-                /* ── Labeled icon buttons (Group, Ungroup, Forward, Backward) ── */
+                /* ── Labeled icon buttons: vertical layout (icon top, label bottom) ── */
                 [class*="labeled-icon-button_mod-edit-field"] {
-                    flex-shrink: 1 !important;
+                    display: inline-flex !important;
+                    flex-direction: column !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    flex-shrink: 0 !important;
                     min-width: 2.5rem !important;
                     padding: 0.2rem 0.3rem !important;
                 }
                 [class*="labeled-icon-button_edit-field-icon"] {
-                    width: 1.25rem !important;
-                    height: 1.25rem !important;
+                    width: 2rem !important;
+                    height: 2rem !important;
                     flex-grow: 0 !important;
+                    flex-shrink: 0 !important;
                 }
                 [class*="labeled-icon-button_edit-field-title"] {
                     display: block !important;
                     font-size: 0.55rem !important;
                     margin-top: 0.1rem !important;
                     white-space: nowrap !important;
+                    text-align: center !important;
+                }
+
+                /* ── Toolbar row scrollbar styling ── */
+                [class*="paint-editor_row"]::-webkit-scrollbar {
+                    height: 3px !important;
+                }
+                [class*="paint-editor_row"]::-webkit-scrollbar-thumb {
+                    background: rgba(0,0,0,0.15) !important;
+                    border-radius: 2px !important;
                 }
 
                 /* ── Hide scrollbars nicely ── */
@@ -353,15 +395,39 @@ class PaintEditorWrapper extends React.Component {
                 editorContainer.style.cssText += ';width:100%;max-width:100%;height:auto;overflow:visible;padding:4px;';
             }
 
-            // Force all toolbar rows to horizontal scroll
+            // Force OUTER paint-editor rows (direct children of container-top) to scroll horizontally
             const maxRowW = `${availW - 10}px`;
-            document.querySelectorAll('[class*="paint-editor_row"], [class*="fixed-tools_row"]').forEach((row) => {
-                row.style.setProperty('overflow-x', 'auto', 'important');
-                row.style.setProperty('overflow-y', 'visible', 'important');
-                row.style.setProperty('width', '100%', 'important');
-                row.style.setProperty('max-width', maxRowW, 'important');
-                row.style.setProperty('flex-wrap', 'nowrap', 'important');
-                row.style.setProperty('align-self', 'flex-start', 'important');
+            const ect = document.querySelector('[class*="paint-editor_editor-container-top"]');
+            if (ect) {
+                // Only direct children rows get scroll treatment
+                Array.from(ect.children).forEach((row) => {
+                    if (row.className && row.className.includes && row.className.includes('row')) {
+                        row.style.setProperty('overflow-x', 'auto', 'important');
+                        row.style.setProperty('overflow-y', 'visible', 'important');
+                        row.style.setProperty('width', '100%', 'important');
+                        row.style.setProperty('max-width', maxRowW, 'important');
+                        row.style.setProperty('flex-wrap', 'nowrap', 'important');
+                        row.style.setProperty('align-self', 'flex-start', 'important');
+                        row.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
+                        this.logDebug(`TopRow scrollable: ${row.className.substring(0, 30)} maxW=${maxRowW}`);
+
+                        // Make nested rows inside this one unconstrained
+                        row.querySelectorAll('[class*="paint-editor_row"], [class*="fixed-tools_row"]').forEach((inner) => {
+                            inner.style.setProperty('width', 'max-content', 'important');
+                            inner.style.setProperty('max-width', 'none', 'important');
+                            inner.style.setProperty('overflow', 'visible', 'important');
+                            inner.style.setProperty('flex-shrink', '0', 'important');
+                        });
+                    }
+                });
+            }
+
+            // INNER fixed-tools rows: unconstrained width so they overflow the outer row
+            document.querySelectorAll('[class*="fixed-tools_row"]').forEach((row) => {
+                row.style.setProperty('width', 'max-content', 'important');
+                row.style.setProperty('max-width', 'none', 'important');
+                row.style.setProperty('overflow', 'visible', 'important');
+                row.style.setProperty('flex-shrink', '0', 'important');
             });
 
             // Force display:block on ALL labeled-icon-button title spans
@@ -371,14 +437,31 @@ class PaintEditorWrapper extends React.Component {
                 titleEl.style.setProperty('font-size', '0.55rem', 'important');
                 titleEl.style.setProperty('margin-top', '0.1rem', 'important');
                 titleEl.style.setProperty('white-space', 'nowrap', 'important');
+                titleEl.style.setProperty('text-align', 'center', 'important');
                 this.logDebug(`Forced title${idx} display:block text="${titleEl.textContent}"`);
             });
 
-            // Force labeled-icon-button icon sizes
+            // Force labeled-icon-button layout: vertical (icon on top, label below)
+            document.querySelectorAll('[class*="labeled-icon-button_mod-edit-field"]').forEach((btn) => {
+                btn.style.setProperty('display', 'inline-flex', 'important');
+                btn.style.setProperty('flex-direction', 'column', 'important');
+                btn.style.setProperty('align-items', 'center', 'important');
+                btn.style.setProperty('justify-content', 'center', 'important');
+                btn.style.setProperty('flex-shrink', '0', 'important');
+            });
+
+            // Force labeled-icon-button icon sizes (bigger)
             document.querySelectorAll('[class*="labeled-icon-button_edit-field-icon"]').forEach((iconEl) => {
-                iconEl.style.setProperty('width', '1.25rem', 'important');
-                iconEl.style.setProperty('height', '1.25rem', 'important');
+                iconEl.style.setProperty('width', '2rem', 'important');
+                iconEl.style.setProperty('height', '2rem', 'important');
                 iconEl.style.setProperty('flex-grow', '0', 'important');
+                iconEl.style.setProperty('flex-shrink', '0', 'important');
+            });
+
+            // Force fixed-tools button group icon sizes (bigger)
+            document.querySelectorAll('[class*="fixed-tools_button-group-button-icon"]').forEach((iconEl) => {
+                iconEl.style.setProperty('width', '2rem', 'important');
+                iconEl.style.setProperty('height', '2rem', 'important');
             });
 
             // Reset mode selector scroll to show first button ("Select")
