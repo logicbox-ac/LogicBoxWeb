@@ -70,13 +70,14 @@ class PaintEditorWrapper extends React.Component {
                 [class*="paint-editor_editor-container-top"] {
                     width: 100% !important;
                     height: auto !important;
-                    overflow: visible !important;
                 }
                 [class*="paint-editor_mode-selector"] {
                     display: flex !important;
                     flex-direction: row !important;
                     flex-wrap: nowrap !important;
                     width: 100% !important;
+                    max-width: 100% !important;
+                    min-width: 100% !important;
                     overflow-x: auto !important;
                     overflow-y: hidden !important;
                     flex-shrink: 0 !important;
@@ -94,24 +95,33 @@ class PaintEditorWrapper extends React.Component {
                 [class*="paint-editor_mode-selector"] [role="button"] {
                     display: flex !important;
                     flex-direction: column !important;
-                    min-width: 45px !important;
+                    min-width: 50px !important;
+                    max-width: 60px !important;
                     flex-shrink: 0 !important;
+                    position: relative !important;
                 }
-                /* Show labels on mode selector buttons */
-                [class*="paint-editor_mode-selector"] [role="button"] span {
+                /* Add labels from title attribute */
+                [class*="paint-editor_mode-selector"] [role="button"]:after {
+                    content: attr(title) !important;
                     display: block !important;
                     font-size: 8px !important;
                     visibility: visible !important;
                     opacity: 1 !important;
+                    text-align: center !important;
+                    margin-top: 2px !important;
                 }
-                /* Fix paint rows - was at negative x */
+                /* Fix paint rows - negative x positions */
                 [class*="paint-editor_row"] {
                     position: relative !important;
                     left: 0 !important;
+                    transform: none !important;
+                    margin-left: 0 !important;
                 }
                 [class*="fixed-tools_row"] {
                     position: relative !important;
                     left: 0 !important;
+                    transform: none !important;
+                    margin-left: 0 !important;
                 }
             `;
 
@@ -131,7 +141,10 @@ class PaintEditorWrapper extends React.Component {
                 modeSelector.style.flexDirection = 'row';
                 modeSelector.style.flexWrap = 'nowrap';
                 modeSelector.style.width = '100%';
+                modeSelector.style.maxWidth = '100%';
+                modeSelector.style.minWidth = '100%';
                 modeSelector.style.overflowX = 'auto';
+                modeSelector.style.flexShrink = '0';
             }
 
             if (canvas) {
@@ -140,6 +153,20 @@ class PaintEditorWrapper extends React.Component {
                 canvas.style.maxHeight = '200px';
                 canvas.style.flex = 'none';
             }
+
+            // Fix paint rows with negative positioning
+            document.querySelectorAll('[class*="paint-editor_row"]').forEach(el => {
+                el.style.position = 'relative';
+                el.style.left = '0';
+                el.style.transform = 'none';
+                el.style.marginLeft = '0';
+            });
+            document.querySelectorAll('[class*="fixed-tools_row"]').forEach(el => {
+                el.style.position = 'relative';
+                el.style.left = '0';
+                el.style.transform = 'none';
+                el.style.marginLeft = '0';
+            });
 
             // Fix paint rows - was at negative x
             document.querySelectorAll('[class*="paint-editor_row"]').forEach(el => {
@@ -160,34 +187,69 @@ class PaintEditorWrapper extends React.Component {
             });
 
             setTimeout(() => {
+                // Detailed debug
+                this.logDebug('=== MODE SELECTOR WIDTH DEBUG ===');
+
                 const ms = document.querySelector('[class*="paint-editor_mode-selector"]');
-                const cv = document.querySelector('[class*="paint-editor_canvas-container"]');
+                const topAlign = document.querySelector('[class*="paint-editor_top-align-row"]');
 
-                this.logDebug('=== LAYOUT ===');
                 if (ms) {
-                    const r = ms.getBoundingClientRect();
-                    this.logDebug(`ModeSel: ${r.width}x${r.height} pos=[${r.left},${r.top}]`);
-                }
-                if (cv) {
-                    const r = cv.getBoundingClientRect();
-                    this.logDebug(`Canvas: ${r.width}x${r.height} pos=[${r.left},${r.top}]`);
+                    const msRect = ms.getBoundingClientRect();
+                    const msStyle = window.getComputedStyle(ms);
+                    const msParent = ms.parentElement;
+                    const msParentRect = msParent?.getBoundingClientRect();
+
+                    const info1 = `ModeSelector: ${msRect.width}x${msRect.height} pos=[${msRect.left},${msRect.top}]`;
+                    const info2 = `MS style: w=${msStyle.width} maxW=${msStyle.maxWidth} disp=${msStyle.display}`;
+                    const msParentInfo = `MS Parent: ${msParent?.className?.slice(0, 20)} ` +
+                        `rect=${msParentRect?.width}x${msParentRect?.height}`;
+                    this.logDebug(info1);
+                    this.logDebug(info2);
+                    this.logDebug(msParentInfo);
                 }
 
-                // Check button labels
+                if (topAlign) {
+                    const taRect = topAlign.getBoundingClientRect();
+                    this.logDebug(`TopAlignRow: ${taRect.width}x${taRect.height}`);
+                }
+
+                // Check buttons on left side - paint rows
+                this.logDebug('=== PAINT ROWS DEBUG ===');
+                const paintRows = document.querySelectorAll('[class*="paint-editor_row"]');
+                paintRows.forEach((row, i) => {
+                    const rect = row.getBoundingClientRect();
+                    this.logDebug(`Row${i}: ${rect.width}x${rect.height} pos=[${rect.left},${rect.top}]`);
+                });
+
+                // Check fixed-tools row
+                const fixedToolsRow = document.querySelector('[class*="fixed-tools_row"]');
+                if (fixedToolsRow) {
+                    const ftRect = fixedToolsRow.getBoundingClientRect();
+                    this.logDebug(`FixedToolsRow: ${ftRect.width}x${ftRect.height} pos=[${ftRect.left},${ftRect.top}]`);
+                }
+
+                // Button labels
                 this.logDebug('=== BUTTON LABELS ===');
-                document.querySelectorAll('[class*="paint-editor_mode-selector"] [role="button"]').forEach((btn, i) => {
-                    const spans = btn.querySelectorAll('span');
-                    const txt = Array.from(spans)
-                        .map(s => s.textContent)
-                        .join(',');
+                const buttons = document.querySelectorAll('[class*="paint-editor_mode-selector"] [role="button"]');
+                buttons.forEach((btn, i) => {
+                    const allText = btn.textContent?.trim() || '';
                     const ariaLabel = btn.getAttribute('aria-label') || '';
                     const title = btn.getAttribute('title') || '';
-                    const svgTitleEl = btn.querySelector('svg title');
-                    const svgTitle = svgTitleEl ? svgTitleEl.textContent : '';
-                    const info = `Btn${i}: span="${txt}" aria="${ariaLabel}" ` +
-                        `title="${title}" svgTitle="${svgTitle}"`;
-                    this.logDebug(info);
+                    const svg = btn.querySelector('svg');
+                    const svgTitle = svg ? svg.querySelector('title')?.textContent : '';
+                    this.logDebug(`Btn${i}: text="${allText}" aria="${ariaLabel}" title="${title}" svg="${svgTitle}"`);
                 });
+
+                // Canvas
+                this.logDebug('=== CANVAS DEBUG ===');
+                const cv = document.querySelector('[class*="paint-editor_canvas-container"]');
+                if (cv) {
+                    const cvRect = cv.getBoundingClientRect();
+                    const cvStyle = window.getComputedStyle(cv);
+                    const cvInfo = `Canvas: ${cvRect.width}x${cvRect.height} ` +
+                        `pos=[${cvRect.left},${cvRect.top}] style.w=${cvStyle.width}`;
+                    this.logDebug(cvInfo);
+                }
             }, 100);
         }, 100);
     }
