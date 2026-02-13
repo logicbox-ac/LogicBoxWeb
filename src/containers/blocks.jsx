@@ -294,22 +294,14 @@ class Blocks extends React.Component {
                 // Try multiple delays to ensure svgGroup_ is ready
                 setTimeout(() => this._ensureCloseButtonForBlock(event.blockId), 100);
                 setTimeout(() => this._ensureCloseButtonForBlock(event.blockId), 300);
-                // Also scan all top blocks in case the created block triggered changes
+                // Also scan all blocks in case the created block triggered changes
                 setTimeout(() => this.addCloseButtonsToAllBlocks(), 500);
             }
-            // Reposition close buttons and manage top-level status on move/change
+            // Reposition close buttons on move/change
             if (event.type === this.ScratchBlocks.Events.BLOCK_CHANGE ||
                 event.type === this.ScratchBlocks.Events.BLOCK_MOVE) {
                 setTimeout(() => {
                     this.addCloseButtonsToAllBlocks();
-                    // Remove close buttons from blocks that are no longer top-level
-                    const allBlocks = this.workspace.getAllBlocks();
-                    allBlocks.forEach(block => {
-                        if (block.closeButton_ && block.getParent()) {
-                            block.closeButton_.remove();
-                            block.closeButton_ = null;
-                        }
-                    });
                 }, 50);
             }
         });
@@ -317,8 +309,7 @@ class Blocks extends React.Component {
         // Initial scan
         this.addCloseButtonsToAllBlocks();
 
-        // Periodic scan to ensure all top-level blocks always have close buttons
-        // This catches any blocks that were missed by event listeners
+        // Periodic scan to ensure all blocks always have close buttons
         this._closeButtonInterval = setInterval(() => {
             if (this.workspace) {
                 this.addCloseButtonsToAllBlocks();
@@ -326,10 +317,21 @@ class Blocks extends React.Component {
         }, 2000);
     }
 
+    _isStatementBlock(block) {
+        // Only statement blocks (stackable blocks) and hat blocks should get X buttons.
+        // Filter out:
+        // - Shadow blocks (default values in inputs like dropdowns)
+        // - Reporter/value blocks with outputConnection (blocks that sit inside other blocks)
+        if (!block) return false;
+        if (typeof block.isShadow === 'function' && block.isShadow()) return false;
+        if (block.outputConnection) return false;
+        return true;
+    }
+
     _ensureCloseButtonForBlock(blockId) {
         if (!this.workspace) return;
         const block = this.workspace.getBlockById(blockId);
-        if (block && block.svgGroup_ && !block.closeButton_ && !block.getParent()) {
+        if (block && block.svgGroup_ && !block.closeButton_ && this._isStatementBlock(block)) {
             this.addCloseButtonToBlock(block);
         }
     }
@@ -337,8 +339,17 @@ class Blocks extends React.Component {
     addCloseButtonsToAllBlocks() {
         if (!this.workspace) return;
 
-        const blocks = this.workspace.getTopBlocks(false);
-        blocks.forEach(block => {
+        // Add close buttons to all statement blocks (not input/value blocks)
+        const allBlocks = this.workspace.getAllBlocks();
+        allBlocks.forEach(block => {
+            if (!this._isStatementBlock(block)) {
+                // Remove any close button that was wrongly added to an input block
+                if (block.closeButton_) {
+                    block.closeButton_.remove();
+                    block.closeButton_ = null;
+                }
+                return;
+            }
             if (block.closeButton_) {
                 // Reposition existing close button
                 this._positionCloseButton(block);
@@ -348,11 +359,34 @@ class Blocks extends React.Component {
         });
     }
 
+    _getBlockOwnWidth(block) {
+        // Get the individual block's width (not including children stacked below)
+        // block.svgPath_ is the SVG path element for just this block's shape
+        try {
+            if (block.svgPath_) {
+                return block.svgPath_.getBBox().width;
+            }
+        } catch (e) {
+            // svgPath_ may not be available
+        }
+        // Fallback: use block.width which is set during rendering
+        // (but note: getHeightWidth() includes children, so avoid that)
+        if (block.width && block.width > 0) {
+            return block.width;
+        }
+        // Last resort: use svgGroup_ bbox (may include children)
+        try {
+            return block.svgGroup_.getBBox().width;
+        } catch (e) {
+            return 100; // safe default
+        }
+    }
+
     _positionCloseButton(block) {
         if (!block.closeButton_ || !block.svgGroup_) return;
         try {
-            const bbox = block.svgGroup_.getBBox();
-            const x = bbox.width - 17;
+            const blockWidth = this._getBlockOwnWidth(block);
+            const x = blockWidth - 17;
             const y = -6;
             block.closeButton_.setAttribute('transform', `translate(${x}, ${y})`);
         } catch (e) {
@@ -361,15 +395,18 @@ class Blocks extends React.Component {
     }
 
     addCloseButtonToBlock(block) {
-        // Only add to top-level blocks (no parent)
-        if (!block.svgGroup_ || block.closeButton_ || block.getParent()) {
+        // Add to statement blocks only (not shadow/input/value blocks)
+        if (!block.svgGroup_ || block.closeButton_ || !this._isStatementBlock(block)) {
             return;
         }
 
-        const existingButton = block.svgGroup_.querySelector('.blocklyBlockCloseButton');
-        if (existingButton) {
-            block.closeButton_ = existingButton;
-            return;
+        // Check if a close button already exists as a direct child of this block's svgGroup
+        const children = block.svgGroup_.children;
+        for (let i = 0; i < children.length; i++) {
+            if (children[i].classList && children[i].classList.contains('blocklyBlockCloseButton')) {
+                block.closeButton_ = children[i];
+                return;
+            }
         }
 
         try {
@@ -404,6 +441,7 @@ class Blocks extends React.Component {
             setTimeout(() => this._positionCloseButton(block), 10);
             setTimeout(() => this._positionCloseButton(block), 100);
 
+            const self = this;
             const deleteBlock = (e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -411,11 +449,17 @@ class Blocks extends React.Component {
 
                 try {
                     if (block && block.workspace) {
+                        // dispose(true) heals the stack:
+                        // - removes this block
+                        // - reconnects the block above to the block below
                         block.dispose(true);
                     }
                 } catch (error) {
                     // Block may have already been disposed
                 }
+
+                // Rescan remaining blocks after deletion
+                setTimeout(() => self.addCloseButtonsToAllBlocks(), 100);
 
                 return false;
             };
