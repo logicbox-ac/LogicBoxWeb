@@ -6,10 +6,10 @@ const blockColors = {
         quaternary: '#3373CC'
     },
     looks: {
-        primary: '#FBB042',
-        secondary: '#F89521',
-        tertiary: '#E88518',
-        quaternary: '#E88518'
+        primary: '#9966FF',
+        secondary: '#855CD6',
+        tertiary: '#774DCB',
+        quaternary: '#774DCB'
     },
     sounds: {
         primary: '#CF63CF',
@@ -69,7 +69,7 @@ const blockColors = {
     },
     text: '#FFFFFF',
     workspace: '#F9F9F9',
-    toolboxHover: '#F89521',
+    toolboxHover: '#855CD6',
     toolboxSelected: '#E9EEF2',
     toolboxText: '#575E75',
     toolbox: '#FFFFFF',

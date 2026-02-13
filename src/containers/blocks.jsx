@@ -132,9 +132,9 @@ class Blocks extends React.Component {
         const workspaceConfig = defaultsDeep({},
             Blocks.defaultOptions,
             this.props.options,
-            { 
-                rtl: this.props.isRtl, 
-                toolbox: this.props.toolboxXML, 
+            {
+                rtl: this.props.isRtl,
+                toolbox: this.props.toolboxXML,
                 colours: getColorsForTheme(this.props.theme),
                 closeButton: true,
                 closeButtonCallback: this.props.onCloseBlocks
@@ -145,7 +145,7 @@ class Blocks extends React.Component {
         console.log('[Blocks.jsx] closeButtonCallback:', workspaceConfig.closeButtonCallback);
         this.workspace = this.ScratchBlocks.inject(this.blocks, workspaceConfig);
         console.log('[Blocks.jsx] Workspace created:', this.workspace);
-        
+
         // Add close buttons to individual blocks
         if (workspaceConfig.closeButton) {
             console.log('[Blocks.jsx] Setting up block close buttons');
@@ -278,70 +278,107 @@ class Blocks extends React.Component {
         this.detachVM();
         this.workspace.dispose();
         clearTimeout(this.toolboxUpdateTimeout);
+        if (this._closeButtonInterval) {
+            clearInterval(this._closeButtonInterval);
+        }
 
         // Clear the flyout blocks so that they can be recreated on mount.
         this.props.vm.clearFlyoutBlocks();
     }
-    
+
     setupBlockCloseButtons() {
         if (!this.workspace) return;
-        
-        // Listen for block creation events
+
         this.workspace.addChangeListener((event) => {
-            // Only listen for BLOCK_CREATE events to avoid duplicates
             if (event.type === this.ScratchBlocks.Events.BLOCK_CREATE) {
-                // Add close button to the newly created block
+                // Try multiple delays to ensure svgGroup_ is ready
+                setTimeout(() => this._ensureCloseButtonForBlock(event.blockId), 100);
+                setTimeout(() => this._ensureCloseButtonForBlock(event.blockId), 300);
+                // Also scan all top blocks in case the created block triggered changes
+                setTimeout(() => this.addCloseButtonsToAllBlocks(), 500);
+            }
+            // Reposition close buttons and manage top-level status on move/change
+            if (event.type === this.ScratchBlocks.Events.BLOCK_CHANGE ||
+                event.type === this.ScratchBlocks.Events.BLOCK_MOVE) {
                 setTimeout(() => {
-                    const block = this.workspace.getBlockById(event.blockId);
-                    if (block && block.svgGroup_ && !block.closeButton_) {
-                        this.addCloseButtonToBlock(block);
-                    }
-                }, 100);
+                    this.addCloseButtonsToAllBlocks();
+                    // Remove close buttons from blocks that are no longer top-level
+                    const allBlocks = this.workspace.getAllBlocks();
+                    allBlocks.forEach(block => {
+                        if (block.closeButton_ && block.getParent()) {
+                            block.closeButton_.remove();
+                            block.closeButton_ = null;
+                        }
+                    });
+                }, 50);
             }
         });
-        
-        // Add to existing blocks
+
+        // Initial scan
         this.addCloseButtonsToAllBlocks();
-        console.log('[Blocks.jsx] Block close buttons setup complete');
+
+        // Periodic scan to ensure all top-level blocks always have close buttons
+        // This catches any blocks that were missed by event listeners
+        this._closeButtonInterval = setInterval(() => {
+            if (this.workspace) {
+                this.addCloseButtonsToAllBlocks();
+            }
+        }, 2000);
     }
-    
+
+    _ensureCloseButtonForBlock(blockId) {
+        if (!this.workspace) return;
+        const block = this.workspace.getBlockById(blockId);
+        if (block && block.svgGroup_ && !block.closeButton_ && !block.getParent()) {
+            this.addCloseButtonToBlock(block);
+        }
+    }
+
     addCloseButtonsToAllBlocks() {
         if (!this.workspace) return;
-        
-        const blocks = this.workspace.getAllBlocks();
-        console.log('[Blocks.jsx] Found', blocks.length, 'blocks to add close buttons to');
+
+        const blocks = this.workspace.getTopBlocks(false);
         blocks.forEach(block => {
-            console.log('[Blocks.jsx] Block:', block.type, 'has svgGroup:', !!block.svgGroup_, 'has closeButton:', !!block.closeButton_);
-            if (block.svgGroup_ && !block.closeButton_) {
+            if (block.closeButton_) {
+                // Reposition existing close button
+                this._positionCloseButton(block);
+            } else if (block.svgGroup_ && !block.closeButton_) {
                 this.addCloseButtonToBlock(block);
             }
         });
     }
-    
+
+    _positionCloseButton(block) {
+        if (!block.closeButton_ || !block.svgGroup_) return;
+        try {
+            const bbox = block.svgGroup_.getBBox();
+            const x = bbox.width - 17;
+            const y = -6;
+            block.closeButton_.setAttribute('transform', `translate(${x}, ${y})`);
+        } catch (e) {
+            // Block may have been disposed
+        }
+    }
+
     addCloseButtonToBlock(block) {
-        // Double-check to prevent duplicates
-        if (!block.svgGroup_ || block.closeButton_) {
-            console.log('[Blocks.jsx] Skipping block - already has close button or no svgGroup');
+        // Only add to top-level blocks (no parent)
+        if (!block.svgGroup_ || block.closeButton_ || block.getParent()) {
             return;
         }
-        
-        // Check if a close button already exists in the DOM
+
         const existingButton = block.svgGroup_.querySelector('.blocklyBlockCloseButton');
         if (existingButton) {
-            console.log('[Blocks.jsx] Close button already exists in DOM, skipping');
             block.closeButton_ = existingButton;
             return;
         }
-        
+
         try {
-            // Create close button group
             const closeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             closeGroup.setAttribute('class', 'blocklyBlockCloseButton');
             closeGroup.setAttribute('transform', 'translate(0, 0)');
             closeGroup.style.pointerEvents = 'all';
             closeGroup.style.cursor = 'pointer';
-            
-            // Create circle background
+
             const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             circle.setAttribute('cx', '12');
             circle.setAttribute('cy', '12');
@@ -350,90 +387,50 @@ class Blocks extends React.Component {
             circle.setAttribute('stroke', 'white');
             circle.setAttribute('stroke-width', '1.5');
             circle.style.pointerEvents = 'all';
-            
-            // Create X icon
+
             const xPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             xPath.setAttribute('d', 'M 7 7 L 17 17 M 17 7 L 7 17');
             xPath.setAttribute('stroke', 'white');
             xPath.setAttribute('stroke-width', '2.5');
             xPath.setAttribute('stroke-linecap', 'round');
-            
+
             closeGroup.appendChild(circle);
             closeGroup.appendChild(xPath);
-            
-            // Add to block
+
             block.svgGroup_.appendChild(closeGroup);
             block.closeButton_ = closeGroup;
-            
-            // Position the button at top-right of block
-            const positionButton = () => {
-                try {
-                    const bbox = block.svgGroup_.getBBox();
-                    const x = bbox.width - 17; // 3px more to the right (was 20, now 17)
-                    const y = -6; // 3px higher (was -3, now -6)
-                    closeGroup.setAttribute('transform', `translate(${x}, ${y})`);
-                    console.log('[Blocks.jsx] Button positioned at', x, y, 'for block width', bbox.width);
-                } catch (e) {
-                    console.error('[Blocks.jsx] Error positioning button:', e);
-                }
-            };
-            
-            // Position initially and after a delay to ensure block is rendered
-            setTimeout(positionButton, 10);
-            setTimeout(positionButton, 100);
-            
-            // Add click handler - use both mousedown and click for better compatibility
+
+            // Position initially and after a delay
+            setTimeout(() => this._positionCloseButton(block), 10);
+            setTimeout(() => this._positionCloseButton(block), 100);
+
             const deleteBlock = (e) => {
-                console.log('[Blocks.jsx] Close button event triggered:', e.type);
                 e.stopPropagation();
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                
-                console.log('[Blocks.jsx] Attempting to delete block:', block.type, 'ID:', block.id);
-                
-                // Delete the block
+
                 try {
                     if (block && block.workspace) {
-                        console.log('[Blocks.jsx] Block is valid, disposing...');
-                        // Simply dispose the block
                         block.dispose(true);
-                        console.log('[Blocks.jsx] Block deleted successfully');
-                    } else {
-                        console.log('[Blocks.jsx] Block has no workspace');
                     }
                 } catch (error) {
-                    console.error('[Blocks.jsx] Error deleting block:', error);
+                    // Block may have already been disposed
                 }
-                
+
                 return false;
             };
-            
-            // Try multiple event types to ensure it works
+
             closeGroup.addEventListener('mousedown', deleteBlock, true);
             closeGroup.addEventListener('click', deleteBlock, true);
             closeGroup.addEventListener('pointerdown', deleteBlock, true);
-            
-            // Make it always visible for now (for debugging)
+
             closeGroup.setAttribute('opacity', '1');
-            closeGroup.style.cursor = 'pointer';
-            closeGroup.style.pointerEvents = 'all';
-            
-            // Uncomment these for hover-only visibility:
-            // block.svgGroup_.addEventListener('mouseenter', () => {
-            //     closeGroup.setAttribute('opacity', '1');
-            // });
-            // 
-            // block.svgGroup_.addEventListener('mouseleave', () => {
-            //     closeGroup.setAttribute('opacity', '0');
-            // });
-            
-            console.log('[Blocks.jsx] Close button added to block:', block.type);
-            
+
         } catch (error) {
-            console.error('[Blocks.jsx] Error adding close button to block:', error);
+            // Failed to add close button
         }
     }
-    
+
     handleToggleToolbox() {
         // No-op for now as we removed the toggle logic
     }
@@ -663,7 +660,47 @@ class Blocks extends React.Component {
             const isTap = dx < TAP_THRESHOLD && dy < TAP_THRESHOLD && duration < TAP_DURATION;
 
             if (isTap) {
-                let target = pointerStartPos.target;
+                const tapTarget = pointerStartPos.target;
+
+                // Check if user tapped on a checkbox element
+                let checkboxGroup = null;
+                let checkTarget = tapTarget;
+                while (checkTarget && checkTarget !== flyoutSvgGroup) {
+                    if (checkTarget.classList &&
+                        (checkTarget.classList.contains('blocklyFlyoutCheckbox') ||
+                            checkTarget.classList.contains('blocklyFlyoutCheckboxPath') ||
+                            checkTarget.classList.contains('blocklyTouchTargetBackground'))) {
+                        // Walk up to the <g> parent that holds the checkbox
+                        checkboxGroup = checkTarget.closest('g');
+                        break;
+                    }
+                    if (checkTarget.tagName === 'g' && checkTarget.querySelector('.blocklyFlyoutCheckbox')) {
+                        checkboxGroup = checkTarget;
+                        break;
+                    }
+                    checkTarget = checkTarget.parentNode;
+                }
+
+                if (checkboxGroup) {
+                    // Find the corresponding block for this checkbox
+                    const checkboxes = flyout.checkboxes_;
+                    if (checkboxes) {
+                        for (const blockId in checkboxes) {
+                            if (checkboxes[blockId].svgRoot === checkboxGroup) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                e.stopImmediatePropagation();
+                                flyout.setCheckboxState(blockId, !checkboxes[blockId].clicked);
+                                break;
+                            }
+                        }
+                    }
+                    pointerStartPos = null;
+                    return;
+                }
+
+                // Find the block that was tapped
+                let target = tapTarget;
                 let blockId = null;
 
                 while (target && target !== flyoutSvgGroup) {
@@ -675,16 +712,23 @@ class Blocks extends React.Component {
                 }
 
                 if (blockId && flyoutWorkspace) {
-                    const block = flyoutWorkspace.getBlockById(blockId);
+                    let block = flyoutWorkspace.getBlockById(blockId);
                     if (block) {
+                        // Walk up to the topmost parent block in the flyout
+                        // This ensures that tapping an inner dropdown/argument
+                        // creates the full parent block, not just the inner piece
+                        while (block.getParent()) {
+                            block = block.getParent();
+                        }
                         e.preventDefault();
                         e.stopPropagation();
                         e.stopImmediatePropagation();
                         flyout.createBlock(block);
+                        // Ensure close buttons are added to the newly created block
+                        setTimeout(() => this.addCloseButtonsToAllBlocks(), 200);
+                        setTimeout(() => this.addCloseButtonsToAllBlocks(), 500);
                     }
                 }
-            } else {
-                // Interaction rejected
             }
             pointerStartPos = null;
         }, { passive: false });

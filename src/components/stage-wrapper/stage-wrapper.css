@@ -57,7 +57,7 @@
         overflow: hidden !important;
         margin-top: 0 !important;
     }
-    
+
     .stage-canvas-wrapper canvas {
         max-width: 100% !important;
         height: auto !important;
@@ -69,5 +69,22 @@
         display: flex !important;
         justify-content: center !important;
         flex-shrink: 0 !important;
+    }
+
+    .stage-wrapper.full-screen {
+        top: 0 !important;
+        padding-top: env(safe-area-inset-top, 0) !important;
+        overflow: visible !important;
+    }
+
+    .stage-wrapper.full-screen .stage-menu-wrapper {
+        position: relative !important;
+        z-index: 10 !important;
+    }
+
+    .stage-wrapper.full-screen .stage-canvas-wrapper {
+        flex: 1 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
     }
 }

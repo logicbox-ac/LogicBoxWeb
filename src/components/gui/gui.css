@@ -414,6 +414,7 @@ $fade-out-distance: 15px;
         width: 100% !important;
     }
 
+
     /* Hide stage in code tab on mobile */
     [data-mobile-tab="code"] .stage-and-target-wrapper {
         display: none !important;

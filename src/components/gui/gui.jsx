@@ -1,11 +1,11 @@
 import classNames from 'classnames';
 import omit from 'lodash.omit';
 import PropTypes from 'prop-types';
-import React, {useState, useCallback} from 'react';
-import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-intl';
-import {connect} from 'react-redux';
+import React, { useState, useCallback } from 'react';
+import { defineMessages, FormattedMessage, injectIntl, intlShape } from 'react-intl';
+import { connect } from 'react-redux';
 import MediaQuery from 'react-responsive';
-import {Tab, Tabs, TabList, TabPanel} from 'react-tabs';
+import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import tabStyles from 'react-tabs/style/react-tabs.css';
 import VM from 'scratch-vm';
 import Renderer from 'scratch-render';
@@ -35,9 +35,9 @@ import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
 import CollapsibleStageHeader from '../collapsible-stage-header/collapsible-stage-header.jsx';
 // CollapsiblePaintControls removed - zoom controls are always visible on canvas
 
-import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
-import {resolveStageSize} from '../../lib/screen-utils';
-import {themeMap} from '../../lib/themes';
+import layout, { STAGE_SIZE_MODES } from '../../lib/layout-constants';
+import { resolveStageSize } from '../../lib/screen-utils';
+import { themeMap } from '../../lib/themes';
 
 import styles from './gui.css';
 import addExtensionIcon from './icon--extensions.svg';
@@ -85,7 +85,7 @@ const GUIComponent = props => {
 
     const handleStageToggle = useCallback(() => {
         setIsStageCollapsed(prev => !prev);
-        
+
         // Trigger renderer resize after collapse/expand
         if (props.vm && props.vm.renderer) {
             setTimeout(() => {
@@ -96,7 +96,6 @@ const GUIComponent = props => {
             }, 350);
         }
     }, [props.vm]);
-
 
 
     const {
@@ -302,7 +301,7 @@ const GUIComponent = props => {
                     onTabChange={handleMobileTabChange}
                 />
                 <Box className={styles.bodyWrapper}>
-                    <Box 
+                    <Box
                         className={styles.flexWrapper}
 
                     >
@@ -413,8 +412,8 @@ const GUIComponent = props => {
                         <Box className={classNames(styles.stageAndTargetWrapper, styles[stageSize], {
                             [styles.collapsed]: isStageCollapsed && mobileActiveTab === 'code'
                         })}
-                        data-stage-collapsed={isStageCollapsed}
-                        data-mobile-tab={mobileActiveTab}
+                            data-stage-collapsed={isStageCollapsed}
+                            data-mobile-tab={mobileActiveTab}
                         >
                             {/* Collapsible header for mobile code tab */}
                             {mobileActiveTab === 'code' && (
@@ -423,10 +422,6 @@ const GUIComponent = props => {
                                     onToggle={handleStageToggle}
                                 />
                             )}
-                            {console.log('[STAGE-RENDER] Rendering stage wrapper:', {
-                                isStageCollapsed,
-                                mobileActiveTab
-                            })}
                             {!(isStageCollapsed && mobileActiveTab === 'code') && (
                                 <Box className={styles.stageContentWrapper}>
                                     <StageWrapper
