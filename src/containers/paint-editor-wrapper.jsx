@@ -76,13 +76,17 @@ class PaintEditorWrapper extends React.Component {
                     flex-direction: column !important;
                 }
 
-                /* ── Editor container top (toolbar rows) ── */
+                /* ── Editor container top (single scrollable toolbar area) ── */
                 [class*="paint-editor_editor-container-top"] {
                     width: 100% !important;
                     max-width: 100% !important;
                     height: auto !important;
-                    overflow: visible !important;
+                    overflow-x: scroll !important;
+                    overflow-y: hidden !important;
                     box-sizing: border-box !important;
+                    -webkit-overflow-scrolling: touch !important;
+                    touch-action: pan-x !important;
+                    flex-shrink: 0 !important;
                 }
 
                 /* ── Top-align-row: column direction on mobile, fill remaining height ── */
@@ -257,7 +261,7 @@ class PaintEditorWrapper extends React.Component {
                     margin-right: 4px !important;
                 }
 
-                /* ── Toolbar rows: horizontal scroll on mobile ── */
+                /* ── Toolbar rows: no individual scroll, expand to content ── */
                 [class*="paint-editor_editor-container-top"] > [class*="paint-editor_row"] {
                     position: relative !important;
                     left: 0 !important;
@@ -265,17 +269,14 @@ class PaintEditorWrapper extends React.Component {
                     transform: none !important;
                     margin-left: 0 !important;
                     margin-right: 0 !important;
-                    width: 100% !important;
-                    max-width: ${availW - 10}px !important;
-                    min-width: 0 !important;
-                    overflow-x: scroll !important;
-                    overflow-y: hidden !important;
+                    width: max-content !important;
+                    min-width: max-content !important;
+                    max-width: none !important;
+                    overflow: visible !important;
                     flex-wrap: nowrap !important;
                     box-sizing: border-box !important;
                     align-self: flex-start !important;
                     align-items: center !important;
-                    -webkit-overflow-scrolling: touch !important;
-                    touch-action: pan-x !important;
                 }
 
                 /* ── Inner fixed-tools row: unconstrained width, expands beyond parent ── */
@@ -363,20 +364,11 @@ class PaintEditorWrapper extends React.Component {
                     text-align: center !important;
                 }
 
-                /* ── Toolbar row scrollbar styling ── */
-                [class*="paint-editor_row"]::-webkit-scrollbar {
+                /* ── Toolbar scrollbar styling (on the container) ── */
+                [class*="paint-editor_editor-container-top"]::-webkit-scrollbar {
                     height: 3px !important;
                 }
-                [class*="paint-editor_row"]::-webkit-scrollbar-thumb {
-                    background: rgba(0,0,0,0.15) !important;
-                    border-radius: 2px !important;
-                }
-
-                /* ── Hide scrollbars nicely ── */
-                [class*="paint-editor_mode-selector"]::-webkit-scrollbar {
-                    height: 3px !important;
-                }
-                [class*="paint-editor_mode-selector"]::-webkit-scrollbar-thumb {
+                [class*="paint-editor_editor-container-top"]::-webkit-scrollbar-thumb {
                     background: rgba(0,0,0,0.15) !important;
                     border-radius: 2px !important;
                 }
@@ -470,7 +462,7 @@ class PaintEditorWrapper extends React.Component {
 
             const editorContainerTop = document.querySelector('[class*="paint-editor_editor-container-top"]');
             if (editorContainerTop) {
-                editorContainerTop.style.cssText += ';width:100%;max-width:100%;height:auto;overflow:visible;flex-shrink:0;';
+                editorContainerTop.style.cssText += ';width:100%;max-width:100%;height:auto;overflow-x:scroll;overflow-y:hidden;flex-shrink:0;-webkit-overflow-scrolling:touch;touch-action:pan-x;';
             }
 
             const editorContainer = document.querySelector('[class*="paint-editor_editor-container"]');
@@ -478,28 +470,31 @@ class PaintEditorWrapper extends React.Component {
                 editorContainer.style.cssText += ';width:100%;max-width:100%;height:100%;overflow:hidden;padding:4px;display:flex;flex-direction:column;min-height:0;';
             }
 
-            // Force toolbar rows to scroll horizontally with touch-action
+            // Force toolbar rows to expand within single scrollable container
             const maxRowW = `${availW - 10}px`;
             const ect2 = document.querySelector('[class*="paint-editor_editor-container-top"]');
             if (ect2) {
-                // Direct children rows: scrollable containers
+                // Make the container itself the single scroll area
+                ect2.style.setProperty('overflow-x', 'scroll', 'important');
+                ect2.style.setProperty('overflow-y', 'hidden', 'important');
+                ect2.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
+                ect2.style.setProperty('touch-action', 'pan-x', 'important');
+                ect2.style.setProperty('width', '100%', 'important');
+                ect2.style.setProperty('max-width', maxRowW, 'important');
+                ect2.style.setProperty('flex-shrink', '0', 'important');
+
+                // Child rows: expand to content, no individual scroll
                 Array.from(ect2.children).forEach((row) => {
                     if (row.className && row.className.includes && row.className.includes('row')) {
-                        row.style.setProperty('overflow-x', 'scroll', 'important');
-                        row.style.setProperty('overflow-y', 'hidden', 'important');
-                        row.style.setProperty('width', '100%', 'important');
-                        row.style.setProperty('max-width', maxRowW, 'important');
-                        row.style.setProperty('min-width', '0', 'important');
+                        row.style.setProperty('overflow', 'visible', 'important');
+                        row.style.setProperty('width', 'max-content', 'important');
+                        row.style.setProperty('min-width', 'max-content', 'important');
+                        row.style.setProperty('max-width', 'none', 'important');
                         row.style.setProperty('flex-wrap', 'nowrap', 'important');
                         row.style.setProperty('align-self', 'flex-start', 'important');
                         row.style.setProperty('align-items', 'center', 'important');
-                        row.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
-                        row.style.setProperty('touch-action', 'pan-x', 'important');
-                        this.logDebug(`TopRow scroll: ${row.className.substring(0, 30)} maxW=${maxRowW}`);
                     }
                 });
-
-                // (Collapsible toolbar removed - tools are always visible)
             }
 
             // Inner fixed-tools rows: unconstrained width (must be wider than parent to create scroll)
