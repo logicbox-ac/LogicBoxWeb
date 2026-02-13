@@ -33,8 +33,9 @@
     background: $ui-white;
 }
 
-.sprite-selector-item:hover .sprite-image, .is-selected .sprite-image {
-    filter: drop-shadow(0px 0px 2px  $ui-black-transparent);
+.sprite-selector-item:hover .sprite-image,
+.is-selected .sprite-image {
+    filter: drop-shadow(0px 0px 2px $ui-black-transparent);
 }
 
 /* Outer/Inner chicanery is to prevent layouts when sprite image changes */
@@ -71,7 +72,8 @@
     user-select: none;
 }
 
-.sprite-name, .sprite-details {
+.sprite-name,
+.sprite-details {
     /*
         For truncating overflowing text gracefully
         Min-width is for a bug: https://css-tricks.com/flexbox-truncated-text
@@ -136,4 +138,11 @@
 
 [dir="rtl"] .number {
     right: 0.15rem;
+}
+
+/* Mobile: ensure delete button isn't clipped */
+@media (max-width: 767px) {
+    .sprite-selector-item {
+        overflow: visible !important;
+    }
 }

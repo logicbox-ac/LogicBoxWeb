@@ -72,3 +72,46 @@
     width: 1.5rem;
 }
 
+/* Mobile-friendly styles */
+@media (max-width: 767px) {
+    .modal-container {
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .body {
+        padding: 1.25rem 1.5rem;
+        border-radius: 1rem;
+        width: 100%;
+        max-width: 300px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    }
+
+    .label {
+        font-size: 1.1rem;
+        text-align: center;
+        margin: 0.75rem 0 1.25rem;
+    }
+
+    .button-row {
+        flex-direction: row;
+        gap: 0.75rem;
+    }
+
+    .button-row button {
+        width: 48% !important;
+        padding: 0.85rem 1rem;
+        font-size: 0.9rem;
+        min-height: 48px;
+        border-radius: 2rem;
+    }
+
+    .button-row button.ok-button {
+        margin-left: 0;
+    }
+
+    .button-row button.cancel-button {
+        margin-right: 0;
+    }
+}

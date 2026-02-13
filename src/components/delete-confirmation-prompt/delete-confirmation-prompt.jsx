@@ -1,4 +1,4 @@
-import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-intl';
+import { defineMessages, FormattedMessage, injectIntl, intlShape } from 'react-intl';
 import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
@@ -47,7 +47,19 @@ const messages = defineMessages({
 });
 
 const modalWidth = 300;
+const isMobile = () => typeof window !== 'undefined' && window.innerWidth < 768;
+
 const calculateModalPosition = (relativeElemRef, modalPosition) => {
+    // On mobile, center the modal on screen
+    if (isMobile()) {
+        return {
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)'
+        };
+    }
+
     const refPosition = relativeElemRef.getBoundingClientRect();
 
     if (modalPosition === 'left') {
@@ -87,6 +99,7 @@ const DeleteConfirmationPrompt = ({
     entityType,
     relativeElemRef
 }) => {
+    const mobile = isMobile();
     const modalPositionValues = calculateModalPosition(relativeElemRef, modalPosition);
 
     return (<ReactModal
@@ -94,7 +107,22 @@ const DeleteConfirmationPrompt = ({
         // We have to inline the styles, since a part
         // of them are dynamically generated
         style={{
-            content: {
+            content: mobile ? {
+                position: 'fixed',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: Math.min(modalWidth, window.innerWidth - 32),
+                border: 'none',
+                height: 'fit-content',
+                backgroundColor: 'transparent',
+                padding: 0,
+                margin: 0,
+                overflowX: 'hidden',
+                zIndex: 1000,
+                right: 'auto',
+                bottom: 'auto'
+            } : {
                 ...modalPositionValues,
                 width: modalWidth,
                 border: 'none',
@@ -113,20 +141,20 @@ const DeleteConfirmationPrompt = ({
                 right: 0,
                 bottom: 0,
                 zIndex: 510,
-                backgroundColor: 'transparent'
+                backgroundColor: mobile ? 'rgba(0, 0, 0, 0.4)' : 'transparent'
             }
         }}
         contentLabel={intl.formatMessage(messages.confirmDeletionHeading)}
         onRequestClose={onCancel}
     >
         <Box className={styles.modalContainer}>
-            { modalPosition === 'right' ?
+            {!mobile && modalPosition === 'right' ?
                 <Box className={classNames(styles.arrowContainer, styles.arrowContainerLeft)}>
                     <img
                         className={styles.deleteIcon}
                         src={arrowLeftIcon}
                     />
-                </Box> : null }
+                </Box> : null}
             <Box className={styles.body}>
                 <Box className={styles.label}>
                     <FormattedMessage {...getMessage(entityType)} />
@@ -160,13 +188,13 @@ const DeleteConfirmationPrompt = ({
                     </button>
                 </Box>
             </Box>
-            {modalPosition === 'left' ?
+            {!mobile && modalPosition === 'left' ?
                 <Box className={classNames(styles.arrowContainer, styles.arrowContainerRight)}>
                     <img
                         className={styles.deleteIcon}
                         src={arrowRightIcon}
                     />
-                </Box> : null }
+                </Box> : null}
         </Box>
     </ReactModal>);
 };

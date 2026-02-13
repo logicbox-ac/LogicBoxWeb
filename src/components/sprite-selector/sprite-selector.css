@@ -93,6 +93,13 @@
     overflow-x: hidden;
 }
 
+@media (max-width: 767px) {
+    .items-wrapper {
+        overflow: visible !important;
+        padding-top: 0.75rem;
+    }
+}
+
 .add-button {
     position: absolute;
     bottom: 0.75rem;

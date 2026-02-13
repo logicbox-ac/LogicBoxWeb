@@ -567,6 +567,13 @@ $fade-out-distance: 15px;
         min-width: 44px !important;
     }
 
+    /* Exception: don't inflate the small delete button on sprite items */
+    :global([class*="delete-button"]) [role="button"],
+    :global([class*="delete-button_delete"]) {
+        min-height: unset !important;
+        min-width: unset !important;
+    }
+
     /* Prevent iOS auto-zoom on input focus */
     input,
     textarea,
