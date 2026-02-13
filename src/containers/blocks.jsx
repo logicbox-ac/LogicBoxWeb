@@ -706,39 +706,28 @@ class Blocks extends React.Component {
             if (isTap) {
                 const tapTarget = pointerStartPos.target;
 
-                // Check if user tapped on a checkbox element
-                let checkboxGroup = null;
+                // Check if user tapped on a checkbox element.
+                // Blockly's native mousedown handler already toggles the checkbox,
+                // so we just detect checkbox taps and return early to prevent
+                // the tap from also creating a new block.
                 let checkTarget = tapTarget;
+                let isCheckboxTap = false;
                 while (checkTarget && checkTarget !== flyoutSvgGroup) {
                     if (checkTarget.classList &&
                         (checkTarget.classList.contains('blocklyFlyoutCheckbox') ||
                             checkTarget.classList.contains('blocklyFlyoutCheckboxPath') ||
                             checkTarget.classList.contains('blocklyTouchTargetBackground'))) {
-                        // Walk up to the <g> parent that holds the checkbox
-                        checkboxGroup = checkTarget.closest('g');
+                        isCheckboxTap = true;
                         break;
                     }
                     if (checkTarget.tagName === 'g' && checkTarget.querySelector('.blocklyFlyoutCheckbox')) {
-                        checkboxGroup = checkTarget;
+                        isCheckboxTap = true;
                         break;
                     }
                     checkTarget = checkTarget.parentNode;
                 }
 
-                if (checkboxGroup) {
-                    // Find the corresponding block for this checkbox
-                    const checkboxes = flyout.checkboxes_;
-                    if (checkboxes) {
-                        for (const blockId in checkboxes) {
-                            if (checkboxes[blockId].svgRoot === checkboxGroup) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                e.stopImmediatePropagation();
-                                flyout.setCheckboxState(blockId, !checkboxes[blockId].clicked);
-                                break;
-                            }
-                        }
-                    }
+                if (isCheckboxTap) {
                     pointerStartPos = null;
                     return;
                 }
@@ -785,6 +774,8 @@ class Blocks extends React.Component {
                 e.stopImmediatePropagation();
             }
         }, { passive: false });
+
+
     }
 
     attachVM() {
