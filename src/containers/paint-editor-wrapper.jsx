@@ -15,6 +15,7 @@ class PaintEditorWrapper extends React.Component {
             'handleUpdateName'
         ]);
         this.styleObserver = null;
+        this.canvasResizeObserver = null;
         this.logCounter = 0;
     }
 
@@ -29,6 +30,9 @@ class PaintEditorWrapper extends React.Component {
     componentWillUnmount() {
         if (this.styleObserver) {
             this.styleObserver.disconnect();
+        }
+        if (this.canvasResizeObserver) {
+            this.canvasResizeObserver.disconnect();
         }
     }
 
@@ -57,20 +61,19 @@ class PaintEditorWrapper extends React.Component {
             }
 
             const availW = window.innerWidth;
-            // Calculate available canvas height: viewport minus estimated overhead
-            // menu-bar ~48px, tab-bar ~48px, toolbar rows ~90px, mode-selector ~60px, canvas-controls ~50px, padding ~30px
-            const estimatedOverhead = 370;
-            const canvasH = Math.max(120, Math.min(250, window.innerHeight - estimatedOverhead));
 
             styleEl.textContent = `
-                /* ── Editor container: full width, vertical flow ── */
+                /* ── Editor container: full width, vertical flow, fill height ── */
                 [class*="paint-editor_editor-container"] {
                     width: 100% !important;
                     max-width: 100% !important;
-                    height: auto !important;
-                    overflow: visible !important;
+                    height: 100% !important;
+                    min-height: 0 !important;
+                    overflow: hidden !important;
                     padding: 4px !important;
                     box-sizing: border-box !important;
+                    display: flex !important;
+                    flex-direction: column !important;
                 }
 
                 /* ── Editor container top (toolbar rows) ── */
@@ -82,17 +85,16 @@ class PaintEditorWrapper extends React.Component {
                     box-sizing: border-box !important;
                 }
 
-                /* ── Top-align-row: column direction on mobile ── */
+                /* ── Top-align-row: column direction on mobile, fill remaining height ── */
                 [class*="paint-editor_top-align-row"] {
                     display: flex !important;
                     flex-direction: column !important;
                     width: 100% !important;
                     max-width: 100% !important;
-                    height: auto !important;
+                    flex: 1 1 0 !important;
+                    min-height: 0 !important;
                     min-width: 0 !important;
-                    overflow: visible !important;
-                    overflow-x: visible !important;
-                    overflow-y: visible !important;
+                    overflow: hidden !important;
                     padding-top: 4px !important;
                 }
 
@@ -179,23 +181,24 @@ class PaintEditorWrapper extends React.Component {
                     width: 100% !important;
                     max-width: 100% !important;
                     min-width: 0 !important;
-                    flex-grow: 1 !important;
+                    flex: 1 1 0 !important;
+                    min-height: 0 !important;
                     margin: 0 !important;
                     box-sizing: border-box !important;
                     display: flex !important;
                     flex-direction: column !important;
-                    overflow: visible !important;
+                    overflow: hidden !important;
+                    position: relative !important;
                 }
 
-                /* ── Canvas container ── */
+                /* ── Canvas container: fill all remaining space ── */
                 [class*="paint-editor_canvas-container"],
                 div[class*="paint-editor_canvas-container"] {
                     width: 100% !important;
                     max-width: 100% !important;
                     min-width: 0 !important;
-                    height: ${canvasH}px !important;
-                    max-height: ${canvasH}px !important;
-                    flex: 0 0 ${canvasH}px !important;
+                    flex: 1 1 0 !important;
+                    min-height: 0 !important;
                     position: relative !important;
                     overflow: hidden !important;
                     box-sizing: border-box !important;
@@ -204,35 +207,37 @@ class PaintEditorWrapper extends React.Component {
                 /* ── Paper canvas wrapper / layer ── */
                 [class*="paper-canvas_paper-canvas"] {
                     width: 100% !important;
-                    height: ${canvasH}px !important;
+                    height: 100% !important;
                 }
                 
                 /* ── Scrollable canvas inner wrappers ── */
                 [class*="scrollable-canvas"] > div,
                 [class*="paint-editor_canvas-container"] > div {
                     width: 100% !important;
+                    height: 100% !important;
                     max-width: 100% !important;
                     min-width: 0 !important;
                 }
 
-                /* ── Canvas controls (bitmap/vector toggle + zoom) ── */
+                /* ── Canvas controls: overlay at bottom of canvas ── */
                 [class*="paint-editor_canvas-controls"] {
                     display: flex !important;
-                    position: relative !important;
+                    position: absolute !important;
+                    bottom: 0 !important;
                     left: 0 !important;
                     right: 0 !important;
                     width: 100% !important;
-                    max-width: 100% !important;
                     height: auto !important;
-                    min-height: 36px !important;
+                    min-height: 0 !important;
                     flex-shrink: 0 !important;
-                    flex-wrap: wrap !important;
-                    margin-top: 4px !important;
                     box-sizing: border-box !important;
-                    justify-content: space-between !important;
-                    transform: none !important;
+                    justify-content: flex-end !important;
                     align-items: center !important;
-                    overflow: visible !important;
+                    pointer-events: none !important;
+                    z-index: 500 !important;
+                    padding: 8px !important;
+                    background: transparent !important;
+                    transform: none !important;
                 }
 
                 /* ── Bitmap/Vector toggle button ── */
@@ -391,58 +396,11 @@ class PaintEditorWrapper extends React.Component {
                     pointer-events: none !important;
                 }
 
-                /* ── Collapsible toolbar ── */
-                .toolbar-collapse-wrapper {
-                    width: 100% !important;
-                    overflow: hidden !important;
-                    transition: max-height 0.3s ease, opacity 0.2s ease !important;
-                    will-change: max-height, opacity !important;
-                }
-                .toolbar-collapse-wrapper.collapsed {
-                    max-height: 0 !important;
-                    opacity: 0 !important;
-                    pointer-events: none !important;
-                }
-                .toolbar-collapse-wrapper.expanded {
-                    max-height: 300px !important;
-                    opacity: 1 !important;
-                }
-                .toolbar-toggle-btn {
-                    display: flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    width: calc(100% + 8px) !important;
-                    margin-left: -4px !important;
-                    margin-right: -4px !important;
-                    height: 36px !important;
-                    border: none !important;
-                    background: linear-gradient(180deg, #ff8c1a, #e67300) !important;
-                    border-radius: 0 !important;
-                    cursor: pointer !important;
-                    font-size: 13px !important;
-                    font-weight: 700 !important;
-                    color: #fff !important;
-                    letter-spacing: 0.5px !important;
-                    gap: 8px !important;
-                    touch-action: manipulation !important;
-                    -webkit-tap-highlight-color: transparent !important;
-                    user-select: none !important;
-                    flex-shrink: 0 !important;
-                    position: relative !important;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
-                    text-shadow: 0 1px 1px rgba(0,0,0,0.2) !important;
-                }
-                .toolbar-toggle-btn:active {
-                    background: linear-gradient(180deg, #e67300, #cc6600) !important;
-                }
+                /* ── Collapsible toolbar removed — tools always visible ── */
+                .toolbar-collapse-wrapper,
+                .toolbar-toggle-btn,
                 .toolbar-toggle-chevron {
-                    display: inline-block !important;
-                    transition: transform 0.3s ease !important;
-                    font-size: 12px !important;
-                    color: #fff !important;
-                }
-                .toolbar-toggle-chevron.open {
-                    transform: rotate(180deg) !important;
+                    display: none !important;
                 }
             `;
 
@@ -502,23 +460,22 @@ class PaintEditorWrapper extends React.Component {
                 topAlignRow.style.setProperty('flex-direction', 'column', 'important');
                 topAlignRow.style.setProperty('width', '100%', 'important');
                 topAlignRow.style.setProperty('max-width', '100%', 'important');
-                topAlignRow.style.setProperty('height', 'auto', 'important');
+                topAlignRow.style.setProperty('flex', '1 1 0', 'important');
+                topAlignRow.style.setProperty('min-height', '0', 'important');
                 topAlignRow.style.setProperty('min-width', '0', 'important');
-                topAlignRow.style.setProperty('overflow', 'visible', 'important');
-                topAlignRow.style.setProperty('overflow-x', 'visible', 'important');
-                topAlignRow.style.setProperty('overflow-y', 'visible', 'important');
+                topAlignRow.style.setProperty('overflow', 'hidden', 'important');
                 topAlignRow.style.setProperty('padding-top', '4px', 'important');
                 this.logDebug(`TopAlignRow inline fix applied`);
             }
 
             const editorContainerTop = document.querySelector('[class*="paint-editor_editor-container-top"]');
             if (editorContainerTop) {
-                editorContainerTop.style.cssText += ';width:100%;max-width:100%;height:auto;overflow:visible;';
+                editorContainerTop.style.cssText += ';width:100%;max-width:100%;height:auto;overflow:visible;flex-shrink:0;';
             }
 
             const editorContainer = document.querySelector('[class*="paint-editor_editor-container"]');
             if (editorContainer) {
-                editorContainer.style.cssText += ';width:100%;max-width:100%;height:auto;overflow:visible;padding:4px;';
+                editorContainer.style.cssText += ';width:100%;max-width:100%;height:100%;overflow:hidden;padding:4px;display:flex;flex-direction:column;min-height:0;';
             }
 
             // Force toolbar rows to scroll horizontally with touch-action
@@ -542,44 +499,7 @@ class PaintEditorWrapper extends React.Component {
                     }
                 });
 
-                // ── Collapsible toolbar wrapper ──
-                if (!document.querySelector('.toolbar-collapse-wrapper')) {
-                    const collapseWrapper = document.createElement('div');
-                    collapseWrapper.className = 'toolbar-collapse-wrapper collapsed';
-
-                    // Move all row children into the wrapper
-                    const rowsToWrap = Array.from(ect2.children).filter(
-                        el => el.className && el.className.includes && el.className.includes('row')
-                    );
-                    rowsToWrap.forEach(row => collapseWrapper.appendChild(row));
-                    ect2.insertBefore(collapseWrapper, ect2.firstChild);
-
-                    // Create toggle button
-                    const toggleBtn = document.createElement('button');
-                    toggleBtn.className = 'toolbar-toggle-btn';
-                    toggleBtn.innerHTML = '<span class="toolbar-toggle-chevron">▼</span> Edit Tools';
-
-                    toggleBtn.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const wrapper = document.querySelector('.toolbar-collapse-wrapper');
-                        const chevron = toggleBtn.querySelector('.toolbar-toggle-chevron');
-                        if (wrapper.classList.contains('collapsed')) {
-                            wrapper.classList.remove('collapsed');
-                            wrapper.classList.add('expanded');
-                            chevron.classList.add('open');
-                            toggleBtn.innerHTML = '<span class="toolbar-toggle-chevron open">▲</span> Hide Tools';
-                        } else {
-                            wrapper.classList.remove('expanded');
-                            wrapper.classList.add('collapsed');
-                            chevron.classList.remove('open');
-                            toggleBtn.innerHTML = '<span class="toolbar-toggle-chevron">▼</span> Edit Tools';
-                        }
-                    });
-
-                    ect2.appendChild(toggleBtn);
-                    this.logDebug('Collapsible toolbar created');
-                }
+                // (Collapsible toolbar removed - tools are always visible)
             }
 
             // Inner fixed-tools rows: unconstrained width (must be wider than parent to create scroll)
@@ -656,7 +576,10 @@ class PaintEditorWrapper extends React.Component {
                 controlsContainer.style.setProperty('margin', '0', 'important');
                 controlsContainer.style.setProperty('display', 'flex', 'important');
                 controlsContainer.style.setProperty('flex-direction', 'column', 'important');
-                controlsContainer.style.setProperty('overflow', 'visible', 'important');
+                controlsContainer.style.setProperty('overflow', 'hidden', 'important');
+                controlsContainer.style.setProperty('flex', '1 1 0', 'important');
+                controlsContainer.style.setProperty('min-height', '0', 'important');
+                controlsContainer.style.setProperty('position', 'relative', 'important');
             }
 
             const canvasContainer = document.querySelector('[class*="paint-editor_canvas-container"]');
@@ -664,34 +587,99 @@ class PaintEditorWrapper extends React.Component {
                 canvasContainer.style.setProperty('width', '100%', 'important');
                 canvasContainer.style.setProperty('max-width', '100%', 'important');
                 canvasContainer.style.setProperty('min-width', '0', 'important');
-                canvasContainer.style.setProperty('height', `${canvasH}px`, 'important');
-                canvasContainer.style.setProperty('max-height', `${canvasH}px`, 'important');
-                canvasContainer.style.setProperty('flex', `0 0 ${canvasH}px`, 'important');
+                canvasContainer.style.setProperty('flex', '1 1 0', 'important');
+                canvasContainer.style.setProperty('min-height', '0', 'important');
                 canvasContainer.style.setProperty('overflow', 'hidden', 'important');
                 canvasContainer.style.setProperty('position', 'relative', 'important');
                 canvasContainer.style.setProperty('box-sizing', 'border-box', 'important');
+                // Remove any previously set fixed height
+                canvasContainer.style.removeProperty('height');
+                canvasContainer.style.removeProperty('max-height');
             }
 
-            // Fix CanvasControls - was rendering at x=-5 off-screen
+            // Canvas controls overlay at bottom of canvas
             const canvasControls = document.querySelector('[class*="paint-editor_canvas-controls"]');
             if (canvasControls) {
                 canvasControls.style.setProperty('display', 'flex', 'important');
-                canvasControls.style.setProperty('position', 'relative', 'important');
+                canvasControls.style.setProperty('position', 'absolute', 'important');
+                canvasControls.style.setProperty('bottom', '0', 'important');
                 canvasControls.style.setProperty('left', '0', 'important');
                 canvasControls.style.setProperty('right', '0', 'important');
                 canvasControls.style.setProperty('width', '100%', 'important');
-                canvasControls.style.setProperty('max-width', '100%', 'important');
                 canvasControls.style.setProperty('height', 'auto', 'important');
-                canvasControls.style.setProperty('min-height', '36px', 'important');
-                canvasControls.style.setProperty('flex-shrink', '0', 'important');
-                canvasControls.style.setProperty('margin', '4px 0 0 0', 'important');
-                canvasControls.style.setProperty('padding', '0', 'important');
+                canvasControls.style.setProperty('min-height', '0', 'important');
+                canvasControls.style.setProperty('padding', '8px', 'important');
                 canvasControls.style.setProperty('transform', 'none', 'important');
                 canvasControls.style.setProperty('box-sizing', 'border-box', 'important');
-                canvasControls.style.setProperty('justify-content', 'space-between', 'important');
+                canvasControls.style.setProperty('justify-content', 'flex-end', 'important');
                 canvasControls.style.setProperty('align-items', 'center', 'important');
-                canvasControls.style.setProperty('flex-wrap', 'wrap', 'important');
-                canvasControls.style.setProperty('gap', '4px', 'important');
+                canvasControls.style.setProperty('pointer-events', 'none', 'important');
+                canvasControls.style.setProperty('z-index', '500', 'important');
+                canvasControls.style.setProperty('background', 'transparent', 'important');
+
+                // Hide bitmap/convert button inside canvas controls
+                const bitmapBtn = canvasControls.querySelector('[class*="paint-editor_bitmap-button"]');
+                if (bitmapBtn) {
+                    bitmapBtn.style.setProperty('display', 'none', 'important');
+                }
+            }
+
+            // Zoom controls: sticky overlay on canvas
+            const zoomControls = document.querySelector('[class*="paint-editor_zoom-controls"]');
+            if (zoomControls) {
+                zoomControls.style.setProperty('position', 'absolute', 'important');
+                zoomControls.style.setProperty('bottom', '12px', 'important');
+                zoomControls.style.setProperty('left', '12px', 'important');
+                zoomControls.style.setProperty('display', 'flex', 'important');
+                zoomControls.style.setProperty('flex-direction', 'row', 'important');
+                zoomControls.style.setProperty('align-items', 'center', 'important');
+                zoomControls.style.setProperty('gap', '4px', 'important');
+                zoomControls.style.setProperty('background', 'rgba(255,255,255,0.95)', 'important');
+                zoomControls.style.setProperty('border-radius', '10px', 'important');
+                zoomControls.style.setProperty('padding', '4px 8px', 'important');
+                zoomControls.style.setProperty('box-shadow', '0 2px 10px rgba(0,0,0,0.18)', 'important');
+                zoomControls.style.setProperty('z-index', '501', 'important');
+                zoomControls.style.setProperty('pointer-events', 'auto', 'important');
+            }
+
+            // ─── Fix touch/click offset: trigger Paper.js recalibration ───
+            // Accounts for devicePixelRatio to correctly map CSS pixels to canvas pixels
+            // This fixes the mismatch between CSS canvas size and Paper's internal view size
+            const triggerRecalibrate = () => {
+                // Find the paper canvas element
+                const paperCanvas = document.querySelector('[class*="paper-canvas_paper-canvas"] canvas, canvas[resize="true"]');
+                if (paperCanvas) {
+                    // Force the canvas dimensions to match its CSS layout size
+                    // accounting for devicePixelRatio
+                    const rect = paperCanvas.getBoundingClientRect();
+                    const dpr = window.devicePixelRatio || 1;
+                    const w = Math.round(rect.width * dpr);
+                    const h = Math.round(rect.height * dpr);
+                    if (w > 0 && h > 0 && (paperCanvas.width !== w || paperCanvas.height !== h)) {
+                        paperCanvas.width = w;
+                        paperCanvas.height = h;
+                        this.logDebug(`Recalibrated canvas: ${w}x${h} (dpr=${dpr}, css=${Math.round(rect.width)}x${Math.round(rect.height)})`);
+                    }
+                }
+                // Also trigger resize event for Paper.js onViewResize handler
+                window.dispatchEvent(new Event('resize'));
+            };
+            setTimeout(triggerRecalibrate, 200);
+            setTimeout(triggerRecalibrate, 600);
+            setTimeout(triggerRecalibrate, 1200);
+
+            // ─── Set up ResizeObserver for continuous canvas recalibration ───
+            if (!this.canvasResizeObserver) {
+                const canvasEl = document.querySelector('[class*="paint-editor_canvas-container"]');
+                if (canvasEl && typeof ResizeObserver !== 'undefined') {
+                    this.canvasResizeObserver = new ResizeObserver(() => {
+                        // Debounce recalibration on resize
+                        clearTimeout(this._recalTimer);
+                        this._recalTimer = setTimeout(triggerRecalibrate, 100);
+                    });
+                    this.canvasResizeObserver.observe(canvasEl);
+                    this.logDebug('ResizeObserver attached to canvas container');
+                }
             }
 
             // ─── Hide scrollable-canvas scrollbar overlays on mobile ───
@@ -701,7 +689,6 @@ class PaintEditorWrapper extends React.Component {
                 el.style.setProperty('visibility', 'hidden', 'important');
                 el.style.setProperty('width', '0', 'important');
                 el.style.setProperty('height', '0', 'important');
-
             });
 
             document.querySelectorAll('[class*="paint-editor_mode-selector"] [role="button"]').forEach((btn, idx) => {

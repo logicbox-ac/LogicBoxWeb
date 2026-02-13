@@ -33,7 +33,7 @@ import DragLayer from '../../containers/drag-layer.jsx';
 import ConnectionModal from '../../containers/connection-modal.jsx';
 import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
 import CollapsibleStageHeader from '../collapsible-stage-header/collapsible-stage-header.jsx';
-import CollapsiblePaintControls from '../collapsible-paint-controls/collapsible-paint-controls.jsx';
+// CollapsiblePaintControls removed - zoom controls are always visible on canvas
 
 import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
@@ -64,7 +64,7 @@ const GUIComponent = props => {
     // Collapsible stage state for code tab
     const [isStageCollapsed, setIsStageCollapsed] = useState(false);
     // Collapsible paint controls state for costume tab - default to collapsed
-    const [isPaintControlsCollapsed, setIsPaintControlsCollapsed] = useState(true);
+
 
     const handleMobileTabChange = useCallback(tab => {
         setMobileActiveTab(tab);
@@ -97,9 +97,7 @@ const GUIComponent = props => {
         }
     }, [props.vm]);
 
-    const handlePaintControlsToggle = useCallback(() => {
-        setIsPaintControlsCollapsed(prev => !prev);
-    }, []);
+
 
     const {
         accountNavOpen,
@@ -306,7 +304,7 @@ const GUIComponent = props => {
                 <Box className={styles.bodyWrapper}>
                     <Box 
                         className={styles.flexWrapper}
-                        data-paint-controls-collapsed={isPaintControlsCollapsed}
+
                     >
                         <Box className={styles.editorWrapper}>
                             <Tabs
@@ -406,13 +404,7 @@ const GUIComponent = props => {
                                     {soundsTabVisible ? <SoundTab vm={vm} /> : null}
                                 </TabPanel>
                             </Tabs>
-                            {/* Collapsible paint controls for mobile costume/backdrop tab */}
-                            {(mobileActiveTab === 'costumes' || (mobileActiveTab === 'code' && costumesTabVisible)) && (
-                                <CollapsiblePaintControls
-                                    isCollapsed={isPaintControlsCollapsed}
-                                    onToggle={handlePaintControlsToggle}
-                                />
-                            )}
+
                             {backpackVisible ? (
                                 <Backpack host={backpackHost} />
                             ) : null}

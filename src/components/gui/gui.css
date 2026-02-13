@@ -419,11 +419,37 @@ $fade-out-distance: 15px;
         display: none !important;
     }
 
-    /* When costumes or sounds tab is active - show editor only */
+    /* When costumes or sounds tab is active - show editor only, fill full height */
     [data-mobile-tab="costumes"] .editor-wrapper,
     [data-mobile-tab="sounds"] .editor-wrapper {
         display: flex !important;
-        flex: 1 !important;
+        flex: 1 1 0 !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        flex-direction: column !important;
+    }
+
+    /* Ensure costume tab panel fills entire editor height */
+    [data-mobile-tab="costumes"] .tab-panel.is-selected,
+    [data-mobile-tab="sounds"] .tab-panel.is-selected {
+        flex: 1 1 0 !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Ensure tabs container also fills height when on costumes/sounds */
+    [data-mobile-tab="costumes"] .tabs,
+    [data-mobile-tab="sounds"] .tabs {
+        flex: 1 1 0 !important;
+        height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     [data-mobile-tab="costumes"] .stage-and-target-wrapper,
@@ -1205,73 +1231,57 @@ $fade-out-distance: 15px;
         padding-bottom: 20px !important;
     }
 
-    /* Canvas Container - Force fit within viewport */
+    /* Canvas Container - fill all remaining space */
     :global([class*="paint-editor_canvas-container"]) {
         position: relative !important;
-        flex: 1 1 auto !important;
+        flex: 1 1 0 !important;
         width: 100% !important;
         min-width: 0 !important;
-        min-height: 250px !important;
-        height: auto !important;
-        overflow: auto !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         background-color: #f0f0f0;
-        display: block !important;
-        /* Changed from flex to block for better scrolling */
+        display: flex !important;
+        flex-direction: column !important;
     }
 
-    /* Smaller min-height on very small screens */
-    @media (max-width: 400px) {
-        :global([class*="paint-editor_canvas-container"]) {
-            min-height: 200px !important;
-        }
-    }
-
-    /* Canvas element - allow full size */
+    /* Canvas element - fill container, no stretching */
     :global([class*="paint-editor_canvas-container"]) canvas {
         display: block !important;
         margin: 0 !important;
-        /* Remove auto margin that centers it */
+        width: 100% !important;
+        height: 100% !important;
     }
 
-    /* Paper canvas wrapper - allow scrolling */
+    /* Paper canvas wrapper - fill container */
     :global([class*="paint-editor_canvas-container"])>div {
-        display: block !important;
-        /* Changed from flex to block */
-    }
-
-    /* Paper canvas wrapper */
-    :global([class*="paint-editor_canvas-container"])>div {
-        max-width: 100% !important;
-        max-height: 100% !important;
+        width: 100% !important;
+        height: 100% !important;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
         display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        align-items: stretch !important;
+        justify-content: stretch !important;
     }
 
-    /* Zoom controls - bottom left with white background */
+    /* Zoom controls - sticky bottom-left over the canvas */
     :global([class*="paint-editor_zoom-controls"]) {
-        position: fixed !important;
-        bottom: 60px !important;
-        left: 60px !important;
+        position: absolute !important;
+        bottom: 12px !important;
+        left: 12px !important;
         display: flex !important;
         flex-direction: row !important;
         align-items: center !important;
-        gap: 5px !important;
-        background: rgba(255, 255, 255, 0.98) !important;
-        border-radius: 8px !important;
-        padding: 5px 8px !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-        z-index: 500 !important;
+        gap: 4px !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-radius: 10px !important;
+        padding: 4px 8px !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18) !important;
+        z-index: 501 !important;
         pointer-events: auto !important;
-        transition: transform 0.3s ease, opacity 0.3s ease !important;
-    }
-
-    /* Hide zoom controls when paint controls are collapsed */
-    [data-paint-controls-collapsed="true"] :global([class*="paint-editor_zoom-controls"]) {
-        transform: translateX(-200px) !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
     }
 
     :global([class*="paint-editor_zoom-controls"]) button {
@@ -1279,6 +1289,14 @@ $fade-out-distance: 15px;
         background: transparent !important;
         border: none !important;
         cursor: pointer !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        padding: 4px !important;
+        border-radius: 6px !important;
+    }
+
+    :global([class*="paint-editor_zoom-controls"]) button:active {
+        background: rgba(0, 0, 0, 0.08) !important;
     }
 
     /* Undo/Redo Group */
@@ -1292,61 +1310,63 @@ $fade-out-distance: 15px;
         align-items: center !important;
     }
 
-    /* Canvas Controls (Convert to Bitmap/Vector) - bottom left above zoom controls */
+    /* Canvas Controls - positioned absolute, holds zoom controls */
     :global([class*="paint-editor_canvas-controls"]) {
-        position: fixed !important;
-        bottom: 120px !important;
-        left: 60px !important;
-        width: auto !important;
+        position: absolute !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
         height: auto !important;
         background: transparent !important;
         border: none !important;
-        pointer-events: auto !important;
+        pointer-events: none !important;
         z-index: 500 !important;
         display: flex !important;
         flex-direction: row !important;
-        gap: 8px !important;
-        transition: transform 0.3s ease, opacity 0.3s ease !important;
+        justify-content: flex-end !important;
+        padding: 8px !important;
+        box-sizing: border-box !important;
     }
 
-    /* Hide canvas controls when paint controls are collapsed */
-    [data-paint-controls-collapsed="true"] :global([class*="paint-editor_canvas-controls"]) {
-        transform: translateX(-200px) !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
+    /* Hide the bitmap/convert button in canvas-controls */
+    :global([class*="paint-editor_bitmap-button"]),
+    :global([class*="button_button"][class*="paint-editor_bitmap-button"]) {
+        display: none !important;
     }
 
-    :global([class*="paint-editor_canvas-controls"])>span[class*="button"],
-    :global([class*="paint-editor_canvas-controls"])>span[role="button"] {
-        pointer-events: auto !important;
-        background: rgba(255, 255, 255, 0.95) !important;
-        border: 1px solid rgba(0, 0, 0, 0.2) !important;
-        border-radius: 1rem !important;
-        padding: 6px 14px !important;
-        font-size: 0.75rem !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        cursor: pointer !important;
-        color: #333 !important;
-    }
-
-    :global([class*="paint-editor_canvas-controls"]) span[class*="button-text"] {
-        color: #333 !important;
-    }
-
-    /* Ensure the wrapper structure allows vertical layout */
+    /* Ensure the wrapper structure allows vertical layout and fills height */
     :global([class*="paint-editor_editor-container"]) {
         flex-direction: column !important;
         height: 100% !important;
         width: 100% !important;
         display: flex !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
     }
 
-    /* The main row with tools and canvas */
-    :global([class*="paint-editor_row"]) {
-        flex: 1 1 auto !important;
+    /* The top-align-row should fill remaining height */
+    :global([class*="paint-editor_top-align-row"]) {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Controls container (canvas + controls) fills remaining space */
+    :global([class*="paint-editor_controls-container"]) {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* The main row with tools and canvas — this row contains mode-selector + controls-container */
+    :global([class*="paint-editor_top-align-row"])> :global([class*="paint-editor_row"]) {
+        flex: 1 1 0 !important;
         display: flex !important;
         flex-direction: row !important;
         min-height: 0 !important;

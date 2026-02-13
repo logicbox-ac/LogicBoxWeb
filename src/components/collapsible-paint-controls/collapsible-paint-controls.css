@@ -2,14 +2,8 @@
 @import "../../css/units.css";
 
 .header {
-    display: none;
-    position: fixed;
-    left: 60px;
-    bottom: 20px;
-    z-index: 501;
-    background-color: rgba(255, 255, 255, 0.98);
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    display: none !important;
+    /* Tools toggle removed - zoom controls are sticky on canvas, tools always visible */
 }
 
 .toggleButton {
@@ -44,14 +38,20 @@
     pointer-events: none;
 }
 
+.icon {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+}
+
 .label {
     font-size: 12px;
     pointer-events: none;
 }
 
-/* Show only on mobile in costume/backdrop tab */
+/* Tools toggle removed - tools are always visible, zoom is sticky */
 @media (max-width: 767px) {
     .header {
-        display: block;
+        display: none !important;
     }
 }

@@ -40,16 +40,22 @@
         flex-direction: column;
         height: 100%;
         width: 100%;
+        min-height: 0;
+        overflow: hidden;
     }
 
     .detail-area {
         width: 100% !important;
-        height: auto;
-        flex-grow: 1;
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        height: 0 !important;
+        /* must be 0 so flex-grow takes over properly */
         border-left: none !important;
         border-right: none !important;
         border-bottom: none !important;
-        overflow: visible !important;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 }
 
