@@ -81,11 +81,11 @@ class PaintEditorWrapper extends React.Component {
                     width: 100% !important;
                     max-width: 100% !important;
                     height: auto !important;
-                    overflow-x: scroll !important;
+                    overflow-x: auto !important;
                     overflow-y: hidden !important;
                     box-sizing: border-box !important;
                     -webkit-overflow-scrolling: touch !important;
-                    touch-action: pan-x !important;
+                    touch-action: none !important;
                     flex-shrink: 0 !important;
                 }
 
@@ -110,13 +110,13 @@ class PaintEditorWrapper extends React.Component {
                     width: 100% !important;
                     max-width: 100% !important;
                     min-width: 0 !important;
-                    overflow-x: scroll !important;
+                    overflow-x: auto !important;
                     overflow-y: hidden !important;
                     flex-shrink: 0 !important;
                     padding: 4px 0 !important;
                     gap: 2px !important;
                     -webkit-overflow-scrolling: touch !important;
-                    touch-action: pan-x !important;
+                    touch-action: none !important;
                     align-items: stretch !important;
                     align-content: flex-start !important;
                     justify-content: flex-start !important;
@@ -462,7 +462,9 @@ class PaintEditorWrapper extends React.Component {
 
             const editorContainerTop = document.querySelector('[class*="paint-editor_editor-container-top"]');
             if (editorContainerTop) {
-                editorContainerTop.style.cssText += ';width:100%;max-width:100%;height:auto;overflow-x:scroll;overflow-y:hidden;flex-shrink:0;-webkit-overflow-scrolling:touch;touch-action:pan-x;';
+                editorContainerTop.style.cssText += ';width:100%;max-width:100%;height:auto;overflow-x:auto;overflow-y:hidden;flex-shrink:0;-webkit-overflow-scrolling:touch;';
+                // Use touch-action:none so WebView doesn't steal touch events
+                editorContainerTop.style.setProperty('touch-action', 'none', 'important');
             }
 
             const editorContainer = document.querySelector('[class*="paint-editor_editor-container"]');
@@ -475,10 +477,10 @@ class PaintEditorWrapper extends React.Component {
             const ect2 = document.querySelector('[class*="paint-editor_editor-container-top"]');
             if (ect2) {
                 // Make the container itself the single scroll area
-                ect2.style.setProperty('overflow-x', 'scroll', 'important');
+                ect2.style.setProperty('overflow-x', 'auto', 'important');
                 ect2.style.setProperty('overflow-y', 'hidden', 'important');
                 ect2.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
-                ect2.style.setProperty('touch-action', 'pan-x', 'important');
+                ect2.style.setProperty('touch-action', 'none', 'important');
                 ect2.style.setProperty('width', '100%', 'important');
                 ect2.style.setProperty('max-width', maxRowW, 'important');
                 ect2.style.setProperty('flex-shrink', '0', 'important');
@@ -493,8 +495,66 @@ class PaintEditorWrapper extends React.Component {
                         row.style.setProperty('flex-wrap', 'nowrap', 'important');
                         row.style.setProperty('align-self', 'flex-start', 'important');
                         row.style.setProperty('align-items', 'center', 'important');
+                        row.style.setProperty('touch-action', 'none', 'important');
+                        row.style.setProperty('pointer-events', 'auto', 'important');
                     }
                 });
+
+                // ─── JS-driven touch scroll for Android WebView ───
+                if (!ect2._touchScrollAttached) {
+                    ect2._touchScrollAttached = true;
+                    let startX = 0;
+                    let scrollLeft = 0;
+                    let isDragging = false;
+                    let startY = 0;
+                    let isHorizontal = null;
+
+                    ect2.addEventListener('touchstart', (e) => {
+                        const touch = e.touches[0];
+                        startX = touch.clientX;
+                        startY = touch.clientY;
+                        scrollLeft = ect2.scrollLeft;
+                        isDragging = true;
+                        isHorizontal = null; // undetermined
+                    }, { passive: true });
+
+                    ect2.addEventListener('touchmove', (e) => {
+                        if (!isDragging) return;
+                        const touch = e.touches[0];
+                        const dx = touch.clientX - startX;
+                        const dy = touch.clientY - startY;
+
+                        // Determine scroll direction on first significant movement
+                        if (isHorizontal === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+                            isHorizontal = Math.abs(dx) > Math.abs(dy);
+                        }
+
+                        if (isHorizontal) {
+                            e.preventDefault();
+                            ect2.scrollLeft = scrollLeft - dx;
+                        }
+                    }, { passive: false });
+
+                    ect2.addEventListener('touchend', () => {
+                        isDragging = false;
+                        isHorizontal = null;
+                    }, { passive: true });
+
+                    ect2.addEventListener('touchcancel', () => {
+                        isDragging = false;
+                        isHorizontal = null;
+                    }, { passive: true });
+
+                    // ─── Mouse wheel → horizontal scroll conversion ───
+                    ect2.addEventListener('wheel', (e) => {
+                        if (e.deltaY !== 0 && ect2.scrollWidth > ect2.clientWidth) {
+                            e.preventDefault();
+                            ect2.scrollLeft += e.deltaY;
+                        }
+                    }, { passive: false });
+
+                    this.logDebug('Touch/wheel scroll handlers attached to toolbar container');
+                }
             }
 
             // Inner fixed-tools rows: unconstrained width (must be wider than parent to create scroll)
@@ -553,14 +613,67 @@ class PaintEditorWrapper extends React.Component {
                 iconEl.style.setProperty('height', '2rem', 'important');
             });
 
-            // Reset mode selector scroll to show first button ("Select")
+            // Reset mode selector scroll and attach JS-driven touch/wheel handlers
             const modeSelector = document.querySelector('[class*="paint-editor_mode-selector"]');
             if (modeSelector) {
                 modeSelector.scrollLeft = 0;
-                modeSelector.style.setProperty('touch-action', 'pan-x', 'important');
-                modeSelector.style.setProperty('overflow-x', 'scroll', 'important');
+                modeSelector.style.setProperty('touch-action', 'none', 'important');
+                modeSelector.style.setProperty('overflow-x', 'auto', 'important');
                 modeSelector.style.setProperty('overflow-y', 'hidden', 'important');
-                this.logDebug(`ModeSelector scrollLeft reset to 0, touch-action=pan-x`);
+
+                // ─── JS-driven touch scroll for mode-selector (Android WebView fix) ───
+                if (!modeSelector._touchScrollAttached) {
+                    modeSelector._touchScrollAttached = true;
+                    let msStartX = 0;
+                    let msScrollLeft = 0;
+                    let msDragging = false;
+                    let msStartY = 0;
+                    let msIsHorizontal = null;
+
+                    modeSelector.addEventListener('touchstart', (e) => {
+                        const touch = e.touches[0];
+                        msStartX = touch.clientX;
+                        msStartY = touch.clientY;
+                        msScrollLeft = modeSelector.scrollLeft;
+                        msDragging = true;
+                        msIsHorizontal = null;
+                    }, { passive: true });
+
+                    modeSelector.addEventListener('touchmove', (e) => {
+                        if (!msDragging) return;
+                        const touch = e.touches[0];
+                        const dx = touch.clientX - msStartX;
+                        const dy = touch.clientY - msStartY;
+
+                        if (msIsHorizontal === null && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+                            msIsHorizontal = Math.abs(dx) > Math.abs(dy);
+                        }
+
+                        if (msIsHorizontal) {
+                            e.preventDefault();
+                            modeSelector.scrollLeft = msScrollLeft - dx;
+                        }
+                    }, { passive: false });
+
+                    modeSelector.addEventListener('touchend', () => {
+                        msDragging = false;
+                        msIsHorizontal = null;
+                    }, { passive: true });
+
+                    modeSelector.addEventListener('touchcancel', () => {
+                        msDragging = false;
+                        msIsHorizontal = null;
+                    }, { passive: true });
+
+                    modeSelector.addEventListener('wheel', (e) => {
+                        if (e.deltaY !== 0 && modeSelector.scrollWidth > modeSelector.clientWidth) {
+                            e.preventDefault();
+                            modeSelector.scrollLeft += e.deltaY;
+                        }
+                    }, { passive: false });
+
+                    this.logDebug('Touch/wheel scroll handlers attached to mode-selector');
+                }
             }
 
             const controlsContainer = document.querySelector('[class*="paint-editor_controls-container"]');
