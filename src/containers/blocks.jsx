@@ -769,6 +769,7 @@ class Blocks extends React.Component {
         this.detachFlyoutListeners();
         this._connectedFlyoutSvg = flyoutSvgGroup;
         const flyoutWorkspace = flyout.getWorkspace();
+        const ownerDocument = flyoutSvgGroup.ownerDocument || document;
 
         let pointerStartPos = null;
         // Relaxed thresholds for mobile headers/fingers
@@ -778,6 +779,17 @@ class Blocks extends React.Component {
         // Live Drag State
         let draggedBlock = null;
         let lastDragEndTime = 0;
+        const clearPointerState = () => {
+            pointerStartPos = null;
+            draggedBlock = null;
+        };
+        const matchesActivePointer = event => {
+            if (!pointerStartPos) return false;
+            if (typeof event.pointerId === 'number') {
+                return event.pointerId === pointerStartPos.pointerId;
+            }
+            return pointerStartPos.pointerType === 'mouse';
+        };
 
         const onPointerDown = e => {
             const pointerType = e.pointerType || 'unknown';
@@ -893,8 +905,8 @@ class Blocks extends React.Component {
             }
         };
 
-        const onPointerUp = e => {
-            if (!pointerStartPos || e.pointerId !== pointerStartPos.pointerId) return;
+        const finishPointerInteraction = (e, isCanceled = false) => {
+            if (!matchesActivePointer(e)) return;
 
             // Let native Blockly complete mouse interactions when mousedown fired.
             if (pointerStartPos.pointerType === 'mouse' && pointerStartPos.nativeMouseDownSeen) {
@@ -902,7 +914,7 @@ class Blocks extends React.Component {
                 return;
             }
 
-            // If we were dragging, just finish
+            // If we were dragging, just finish.
             if (draggedBlock) {
                 // CRITICAL FIX: Stop event propagation so Native Blockly doesn't interpret this as a Click/Tap
                 e.preventDefault();
@@ -911,18 +923,24 @@ class Blocks extends React.Component {
 
                 if (this.isBlockInteractionDebugEnabled()) {
                     console.log('[BLOCK-DBG] Fallback drag end', {
-                        pointerType: pointerStartPos.pointerType
+                        pointerType: pointerStartPos.pointerType,
+                        canceled: isCanceled
                     });
                 }
 
-                draggedBlock = null;
+                clearPointerState();
                 lastDragEndTime = Date.now();
-                pointerStartPos = null;
+                return;
+            }
+
+            if (isCanceled) {
+                clearPointerState();
                 return;
             }
 
             // Otherwise, check for Tap
             if (!flyout.isVisible()) {
+                clearPointerState();
                 return;
             }
 
@@ -992,7 +1010,24 @@ class Blocks extends React.Component {
                     }
                 }
             }
-            pointerStartPos = null;
+            clearPointerState();
+        };
+
+        const onPointerUp = e => {
+            finishPointerInteraction(e, false);
+        };
+
+        const onPointerCancel = e => {
+            finishPointerInteraction(e, true);
+        };
+
+        const onMouseUp = e => {
+            if (!pointerStartPos || pointerStartPos.pointerType !== 'mouse') return;
+            finishPointerInteraction(e, false);
+        };
+
+        const onWindowBlur = () => {
+            clearPointerState();
         };
 
         // Suppress native touch interactions if we just finished a drag
@@ -1006,18 +1041,23 @@ class Blocks extends React.Component {
 
         flyoutSvgGroup.addEventListener('pointerdown', onPointerDown, {passive: true});
         flyoutSvgGroup.addEventListener('mousedown', onMouseDown, {passive: true});
-        flyoutSvgGroup.addEventListener('pointermove', onPointerMove, {passive: false});
-        flyoutSvgGroup.addEventListener('pointerup', onPointerUp, {passive: false});
         flyoutSvgGroup.addEventListener('touchend', onTouchEnd, {passive: false});
+        ownerDocument.addEventListener('pointermove', onPointerMove, true);
+        ownerDocument.addEventListener('pointerup', onPointerUp, true);
+        ownerDocument.addEventListener('pointercancel', onPointerCancel, true);
+        ownerDocument.addEventListener('mouseup', onMouseUp, true);
+        window.addEventListener('blur', onWindowBlur);
 
         this._detachFlyoutListeners = () => {
             flyoutSvgGroup.removeEventListener('pointerdown', onPointerDown);
             flyoutSvgGroup.removeEventListener('mousedown', onMouseDown);
-            flyoutSvgGroup.removeEventListener('pointermove', onPointerMove);
-            flyoutSvgGroup.removeEventListener('pointerup', onPointerUp);
             flyoutSvgGroup.removeEventListener('touchend', onTouchEnd);
-            pointerStartPos = null;
-            draggedBlock = null;
+            ownerDocument.removeEventListener('pointermove', onPointerMove, true);
+            ownerDocument.removeEventListener('pointerup', onPointerUp, true);
+            ownerDocument.removeEventListener('pointercancel', onPointerCancel, true);
+            ownerDocument.removeEventListener('mouseup', onMouseUp, true);
+            window.removeEventListener('blur', onWindowBlur);
+            clearPointerState();
         };
 
         if (process.env.DEBUG) {
