@@ -1,12 +1,12 @@
 import bindAll from 'lodash.bindall';
 import PropTypes from 'prop-types';
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 
 import VM from 'scratch-vm';
 import AudioEngine from 'scratch-audio';
 
-import {setProjectUnchanged} from '../reducers/project-changed';
+import { setProjectUnchanged } from '../reducers/project-changed';
 import {
     LoadingStates,
     getIsLoadingWithId,
@@ -21,13 +21,13 @@ import {
  */
 const vmManagerHOC = function (WrappedComponent) {
     class VMManager extends React.Component {
-        constructor (props) {
+        constructor(props) {
             super(props);
             bindAll(this, [
                 'loadProject'
             ]);
         }
-        componentDidMount () {
+        componentDidMount() {
             if (!this.props.vm.initialized) {
                 this.audioEngine = new AudioEngine();
                 this.props.vm.attachAudioEngine(this.audioEngine);
@@ -38,8 +38,10 @@ const vmManagerHOC = function (WrappedComponent) {
             if (!this.props.isPlayerOnly && !this.props.isStarted) {
                 this.props.vm.start();
             }
+            // Expose vm on window for React Native WebView integration
+            window.vm = this.props.vm;
         }
-        componentDidUpdate (prevProps) {
+        componentDidUpdate(prevProps) {
             // if project is in loading state, AND fonts are loaded,
             // and they weren't both that way until now... load project!
             if (this.props.isLoadingWithId && this.props.fontsLoaded &&
@@ -51,7 +53,7 @@ const vmManagerHOC = function (WrappedComponent) {
                 this.props.vm.start();
             }
         }
-        loadProject () {
+        loadProject() {
             return this.props.vm.loadProject(this.props.projectData)
                 .then(() => {
                     this.props.onLoadedProject(this.props.loadingState, this.props.canSave);
@@ -74,7 +76,7 @@ const vmManagerHOC = function (WrappedComponent) {
                     this.props.onError(e);
                 });
         }
-        render () {
+        render() {
             const {
                 /* eslint-disable no-unused-vars */
                 fontsLoaded,
