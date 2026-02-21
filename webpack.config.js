@@ -80,6 +80,12 @@ const baseConfig = new ScratchWebpackConfigBuilder(
         ]
     }));
 
+if (process.env.NO_SOURCE_MAPS === 'true' || process.env.NO_SOURCE_MAPS === '1') {
+    baseConfig.merge({
+        devtool: false
+    });
+}
+
 if (!process.env.CI) {
     baseConfig.addPlugin(new webpack.ProgressPlugin());
 }
