@@ -3,6 +3,8 @@ FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+COPY scripts ./scripts
+COPY patches ./patches
 RUN npm install --no-audit --no-fund
 
 COPY . .
