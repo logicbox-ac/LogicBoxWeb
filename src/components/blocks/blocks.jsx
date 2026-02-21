@@ -11,6 +11,7 @@ const BlocksComponent = props => {
         dragOver,
         isFlyoutVisible,
         onCloseFlyout,
+        onCloseBlocks: _onCloseBlocks, // consumed to avoid leaking unknown prop to DOM
         mobileDeletePosition,
         onMobileDelete,
         onCancelMobileDelete,

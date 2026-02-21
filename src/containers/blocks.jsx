@@ -57,6 +57,13 @@ class Blocks extends React.Component {
         bindAll(this, [
             'attachVM',
             'detachVM',
+            'attachFlyoutListeners',
+            'detachFlyoutListeners',
+            'attachInteractionDebugListeners',
+            'detachInteractionDebugListeners',
+            'onWorkspaceDebugEvent',
+            'handleViewportInputModeChange',
+            'isMobileTouchViewport',
             'getToolboxXML',
             'handleCategorySelected',
             'handleConnectionModalStart',
@@ -100,6 +107,11 @@ class Blocks extends React.Component {
         this.toolboxUpdateQueue = [];
         this.longPressTimer = null;
         this.longPressBlockId = null;
+        this._connectedFlyoutSvg = null;
+        this._detachFlyoutListeners = null;
+        this._debugMoveCounter = 0;
+        this._interactionDebugDetachers = [];
+        this._workspaceDebugChangeListener = null;
         bindAll(this, ['handleToggleToolbox']);
     }
     componentDidMount() {
@@ -201,6 +213,9 @@ class Blocks extends React.Component {
         }
 
         this.attachVM();
+        window.addEventListener('resize', this.handleViewportInputModeChange);
+        this.handleViewportInputModeChange();
+        this.attachInteractionDebugListeners();
 
         // Only update blocks/vm locale when visible to avoid sizing issues
         // If locale changes while not visible it will get handled in didUpdate
@@ -241,12 +256,9 @@ class Blocks extends React.Component {
             this.requestToolboxUpdate();
         }
 
-        // On mobile, check if flyout SVG has been replaced and re-attach listeners if needed
-        if (window.innerWidth <= 767 && this.props.isVisible) {
-            const flyout = this.workspace.getFlyout();
-            if (flyout && flyout.svgGroup_ && flyout.svgGroup_ !== this._connectedFlyoutSvg) {
-                this.attachFlyoutListeners();
-            }
+        if (this.props.isVisible) {
+            this.handleViewportInputModeChange();
+            this.attachInteractionDebugListeners();
         }
 
         if (this.props.isVisible === prevProps.isVisible) {
@@ -275,6 +287,9 @@ class Blocks extends React.Component {
         }
     }
     componentWillUnmount() {
+        window.removeEventListener('resize', this.handleViewportInputModeChange);
+        this.detachInteractionDebugListeners();
+        this.detachFlyoutListeners();
         this.detachVM();
         this.workspace.dispose();
         clearTimeout(this.toolboxUpdateTimeout);
@@ -568,20 +583,190 @@ class Blocks extends React.Component {
         }
     }
 
-    attachFlyoutListeners() {
-        if (window.innerWidth > 767) return;
+    isBlockInteractionDebugEnabled() {
+        if (process.env.NODE_ENV !== 'production') {
+            return true;
+        }
+        try {
+            return Boolean(
+                (window.location && window.location.search && window.location.search.includes('blocklyDebug=1')) ||
+                (window.localStorage && window.localStorage.getItem('logicbox:blockly-debug') === '1')
+            );
+        } catch (error) {
+            return false;
+        }
+    }
 
-        const flyout = this.workspace.getFlyout();
-        if (!flyout) return;
+    getBlockIdFromTarget(target, stopAt) {
+        let current = target;
+        while (current && current !== stopAt) {
+            if (current.getAttribute) {
+                const blockId = current.getAttribute('data-id');
+                if (blockId) return blockId;
+            }
+            current = current.parentNode;
+        }
+        return null;
+    }
 
-        const flyoutSvgGroup = flyout.svgGroup_;
-        if (!flyoutSvgGroup) return;
+    formatTargetForDebug(target) {
+        if (!target || !target.tagName) return 'unknown';
+        const className = (target.className && target.className.baseVal) ||
+            target.className ||
+            '';
+        return `${target.tagName.toLowerCase()}.${String(className).replace(/\s+/g, '.')}`;
+    }
 
-        // Avoid duplicate listeners on the same element
-        if (this._connectedFlyoutSvg === flyoutSvgGroup) {
+    onWorkspaceDebugEvent(source, eventType, event, rootElement) {
+        if (!this.isBlockInteractionDebugEnabled()) return;
+
+        const isMoveEvent = eventType === 'pointermove' || eventType === 'mousemove';
+        if (isMoveEvent) {
+            const isDraggingPointer = Boolean(event.buttons);
+            if (!isDraggingPointer) return;
+            this._debugMoveCounter = (this._debugMoveCounter + 1) % 6;
+            if (this._debugMoveCounter !== 0) return;
+        }
+
+        const blockId = this.getBlockIdFromTarget(event.target, rootElement);
+        const flyout = this.workspace && this.workspace.getFlyout ? this.workspace.getFlyout() : null;
+        const flyoutVisible = flyout && flyout.isVisible ? flyout.isVisible() : false;
+        const dragging = this.workspace && this.workspace.isDragging ? this.workspace.isDragging() : false;
+
+        console.log('[BLOCK-DBG] DOM event', {
+            source,
+            eventType,
+            blockId,
+            target: this.formatTargetForDebug(event.target),
+            clientX: event.clientX,
+            clientY: event.clientY,
+            buttons: event.buttons,
+            pointerType: event.pointerType || null,
+            defaultPrevented: event.defaultPrevented,
+            flyoutVisible,
+            workspaceDragging: dragging,
+            hasCustomFlyoutPointerFallback: Boolean(this._detachFlyoutListeners && this._connectedFlyoutSvg),
+            mobileTouchViewport: this.isMobileTouchViewport()
+        });
+    }
+
+    detachInteractionDebugListeners() {
+        this._interactionDebugDetachers.forEach(detach => detach());
+        this._interactionDebugDetachers = [];
+
+        if (this.workspace && this._workspaceDebugChangeListener) {
+            this.workspace.removeChangeListener(this._workspaceDebugChangeListener);
+        }
+        this._workspaceDebugChangeListener = null;
+    }
+
+    attachInteractionDebugListeners() {
+        if (!this.workspace || !this.isBlockInteractionDebugEnabled()) {
+            this.detachInteractionDebugListeners();
             return;
         }
 
+        this.detachInteractionDebugListeners();
+
+        const addDomDebugListener = (element, eventType, source, options = true) => {
+            if (!element) return;
+            const handler = event => this.onWorkspaceDebugEvent(source, eventType, event, element);
+            element.addEventListener(eventType, handler, options);
+            this._interactionDebugDetachers.push(() => {
+                element.removeEventListener(eventType, handler, options);
+            });
+        };
+
+        const workspaceSvg = this.workspace.getParentSvg && this.workspace.getParentSvg();
+        const flyout = this.workspace.getFlyout && this.workspace.getFlyout();
+        const flyoutSvgGroup = flyout && flyout.svgGroup_;
+
+        ['mousedown', 'mousemove', 'mouseup', 'click', 'pointerdown', 'pointermove', 'pointerup'].forEach(eventType => {
+            addDomDebugListener(workspaceSvg, eventType, 'workspaceSvg');
+            addDomDebugListener(flyoutSvgGroup, eventType, 'flyoutSvg');
+        });
+
+        this._workspaceDebugChangeListener = event => {
+            if (!this.isBlockInteractionDebugEnabled()) return;
+            if (event.type !== this.ScratchBlocks.Events.BLOCK_CREATE &&
+                event.type !== this.ScratchBlocks.Events.BLOCK_DRAG &&
+                event.type !== this.ScratchBlocks.Events.CLICK) {
+                return;
+            }
+
+            console.log('[BLOCK-DBG] Blockly event', {
+                type: event.type,
+                blockId: event.blockId || event.newValue || null,
+                element: event.element || null,
+                isStart: typeof event.isStart === 'boolean' ? event.isStart : null,
+                oldValue: event.oldValue || null,
+                newValue: event.newValue || null
+            });
+        };
+
+        this.workspace.addChangeListener(this._workspaceDebugChangeListener);
+
+        console.log('[BLOCK-DBG] Debug listeners attached', {
+            hasWorkspaceSvg: Boolean(workspaceSvg),
+            hasFlyoutSvg: Boolean(flyoutSvgGroup)
+        });
+    }
+
+    isMobileTouchViewport() {
+        if (window.innerWidth > 767) return false;
+        if (window.matchMedia) {
+            const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+            const noHover = window.matchMedia('(hover: none)').matches;
+            if (coarsePointer || noHover) return true;
+        }
+        return ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+    }
+
+    isTouchPointerEvent(event) {
+        if (!event || !event.isPrimary) return false;
+        if (!event.pointerType) return true;
+        return event.pointerType === 'touch' || event.pointerType === 'pen';
+    }
+
+    handleViewportInputModeChange() {
+        if (!this.workspace) return;
+        if (!this.props.isVisible) {
+            this.detachFlyoutListeners();
+            return;
+        }
+        this.attachFlyoutListeners();
+    }
+
+    detachFlyoutListeners() {
+        if (this._detachFlyoutListeners) {
+            this._detachFlyoutListeners();
+            this._detachFlyoutListeners = null;
+            if (process.env.DEBUG) {
+                log.info('[Blocks] Detached custom flyout touch handlers');
+            }
+        }
+        this._connectedFlyoutSvg = null;
+    }
+
+    attachFlyoutListeners() {
+        const flyout = this.workspace.getFlyout();
+        if (!flyout) {
+            this.detachFlyoutListeners();
+            return;
+        }
+
+        const flyoutSvgGroup = flyout.svgGroup_;
+        if (!flyoutSvgGroup) {
+            this.detachFlyoutListeners();
+            return;
+        }
+
+        // Avoid duplicate listeners on the same element
+        if (this._connectedFlyoutSvg === flyoutSvgGroup && this._detachFlyoutListeners) {
+            return;
+        }
+
+        this.detachFlyoutListeners();
         this._connectedFlyoutSvg = flyoutSvgGroup;
         const flyoutWorkspace = flyout.getWorkspace();
 
@@ -590,28 +775,53 @@ class Blocks extends React.Component {
         const TAP_THRESHOLD = 15;
         const TAP_DURATION = 700;
 
-        flyoutSvgGroup.addEventListener('pointerdown', e => {
-            if (e.isPrimary) {
-                // Ensure we receive pointerup even if finger leaves the flyout
-                if (e.target.setPointerCapture) {
-                    e.target.setPointerCapture(e.pointerId);
-                }
-
-                pointerStartPos = {
-                    x: e.clientX,
-                    y: e.clientY,
-                    target: e.target,
-                    time: Date.now()
-                };
-            }
-        }, { passive: true });
-
         // Live Drag State
         let draggedBlock = null;
         let lastDragEndTime = 0;
 
-        flyoutSvgGroup.addEventListener('pointermove', e => {
-            if (pointerStartPos && e.isPrimary) {
+        const onPointerDown = e => {
+            const pointerType = e.pointerType || 'unknown';
+            const isPrimaryPointer = typeof e.isPrimary === 'boolean' ? e.isPrimary : true;
+            if (!isPrimaryPointer) return;
+
+            // Ensure we receive pointerup even if pointer leaves the flyout.
+            if (e.target.setPointerCapture && pointerType !== 'mouse') {
+                try {
+                    e.target.setPointerCapture(e.pointerId);
+                } catch (error) {
+                    // Pointer capture can fail for detached targets; continue safely.
+                }
+            }
+
+            pointerStartPos = {
+                x: e.clientX,
+                y: e.clientY,
+                pointerId: e.pointerId,
+                pointerType,
+                nativeMouseDownSeen: false,
+                target: e.target,
+                time: Date.now()
+            };
+        };
+
+        const onMouseDown = e => {
+            if (!pointerStartPos) return;
+            const isSamePoint = Math.abs(e.clientX - pointerStartPos.x) < 2 &&
+                Math.abs(e.clientY - pointerStartPos.y) < 2;
+            const isSameMoment = (Date.now() - pointerStartPos.time) < 50;
+            if (isSamePoint && isSameMoment) {
+                pointerStartPos.nativeMouseDownSeen = true;
+            }
+        };
+
+        const onPointerMove = e => {
+            if (pointerStartPos && e.pointerId === pointerStartPos.pointerId) {
+                // Native Blockly handles mouse drag via mousedown/mousemove.
+                // If those events are present, keep custom fallback inert.
+                if (pointerStartPos.pointerType === 'mouse' && pointerStartPos.nativeMouseDownSeen) {
+                    return;
+                }
+
                 const currentX = e.clientX;
                 const currentY = e.clientY;
                 const dx = Math.abs(currentX - pointerStartPos.x);
@@ -641,6 +851,13 @@ class Blocks extends React.Component {
 
                         const sourceBlock = flyoutWorkspace.getBlockById(blockId);
                         if (sourceBlock) {
+                            if (this.isBlockInteractionDebugEnabled()) {
+                                console.log('[BLOCK-DBG] Fallback drag start', {
+                                    blockId,
+                                    pointerType: pointerStartPos.pointerType,
+                                    nativeMouseDownSeen: pointerStartPos.nativeMouseDownSeen
+                                });
+                            }
                             draggedBlock = flyout.createBlock(sourceBlock);
 
                             // Initialize last position for delta updates
@@ -674,10 +891,16 @@ class Blocks extends React.Component {
                     pointerStartPos.lastY = currentY;
                 }
             }
-        }, { passive: false });
+        };
 
-        flyoutSvgGroup.addEventListener('pointerup', e => {
-            if (!pointerStartPos) return;
+        const onPointerUp = e => {
+            if (!pointerStartPos || e.pointerId !== pointerStartPos.pointerId) return;
+
+            // Let native Blockly complete mouse interactions when mousedown fired.
+            if (pointerStartPos.pointerType === 'mouse' && pointerStartPos.nativeMouseDownSeen) {
+                pointerStartPos = null;
+                return;
+            }
 
             // If we were dragging, just finish
             if (draggedBlock) {
@@ -685,6 +908,12 @@ class Blocks extends React.Component {
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
+
+                if (this.isBlockInteractionDebugEnabled()) {
+                    console.log('[BLOCK-DBG] Fallback drag end', {
+                        pointerType: pointerStartPos.pointerType
+                    });
+                }
 
                 draggedBlock = null;
                 lastDragEndTime = Date.now();
@@ -764,18 +993,38 @@ class Blocks extends React.Component {
                 }
             }
             pointerStartPos = null;
-        }, { passive: false });
+        };
 
         // Suppress native touch interactions if we just finished a drag
-        flyoutSvgGroup.addEventListener('touchend', e => {
+        const onTouchEnd = e => {
             if (draggedBlock || (Date.now() - lastDragEndTime < 50)) {
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
             }
-        }, { passive: false });
+        };
 
+        flyoutSvgGroup.addEventListener('pointerdown', onPointerDown, {passive: true});
+        flyoutSvgGroup.addEventListener('mousedown', onMouseDown, {passive: true});
+        flyoutSvgGroup.addEventListener('pointermove', onPointerMove, {passive: false});
+        flyoutSvgGroup.addEventListener('pointerup', onPointerUp, {passive: false});
+        flyoutSvgGroup.addEventListener('touchend', onTouchEnd, {passive: false});
 
+        this._detachFlyoutListeners = () => {
+            flyoutSvgGroup.removeEventListener('pointerdown', onPointerDown);
+            flyoutSvgGroup.removeEventListener('mousedown', onMouseDown);
+            flyoutSvgGroup.removeEventListener('pointermove', onPointerMove);
+            flyoutSvgGroup.removeEventListener('pointerup', onPointerUp);
+            flyoutSvgGroup.removeEventListener('touchend', onTouchEnd);
+            pointerStartPos = null;
+            draggedBlock = null;
+        };
+
+        if (process.env.DEBUG) {
+            log.info('[Blocks] Attached custom flyout touch handlers');
+        }
+
+        this.attachInteractionDebugListeners();
     }
 
     attachVM() {
@@ -820,7 +1069,7 @@ class Blocks extends React.Component {
             originalHide.call(this);
             self.setState({ isFlyoutVisible: false });
             // On mobile, resize workspace to take full width after flyout hides
-            if (window.innerWidth <= 767) {
+            if (self.isMobileTouchViewport()) {
                 setTimeout(() => {
                     self.workspace.resize();
                 }, 0);
@@ -833,7 +1082,7 @@ class Blocks extends React.Component {
         // On mobile, close flyout when a block is created or dragged
         this.workspace.addChangeListener(event => {
             if (event.type === this.ScratchBlocks.Events.BLOCK_CREATE) {
-                if (window.innerWidth <= 767) {
+                if (this.isMobileTouchViewport()) {
                     const currentFlyout = this.workspace.getFlyout();
                     if (currentFlyout && currentFlyout.isVisible()) {
                         currentFlyout.hide();
@@ -842,7 +1091,7 @@ class Blocks extends React.Component {
             }
 
             if (event.type === this.ScratchBlocks.Events.BLOCK_DRAG) {
-                if (event.isStart && window.innerWidth <= 767) {
+                if (event.isStart && this.isMobileTouchViewport()) {
                     const currentFlyout = this.workspace.getFlyout();
                     if (currentFlyout && currentFlyout.isVisible()) {
                         currentFlyout.hide();
@@ -852,7 +1101,7 @@ class Blocks extends React.Component {
         });
 
         // On mobile, close flyout when clicking on the main workspace area (outside flyout/toolbox)
-        if (window.innerWidth <= 767) {
+        if (this.isMobileTouchViewport()) {
             const workspaceSvg = this.workspace.getParentSvg();
             if (workspaceSvg) {
                 // Close flyout when tapping outside
@@ -1256,7 +1505,7 @@ class Blocks extends React.Component {
 
     // Mobile long-press block handlers
     handleMobileBlockLongPress(blockId, x, y) {
-        if (window.innerWidth > 767) return; // Only on mobile
+        if (!this.isMobileTouchViewport()) return; // Only on touch-first mobile view
         this.setState({
             mobileDeletePosition: { x, y },
             mobileDeleteBlockId: blockId
