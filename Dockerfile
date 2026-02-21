@@ -1,6 +1,7 @@
 FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
+ENV CI=true
 
 COPY package.json package-lock.json ./
 COPY scripts ./scripts
