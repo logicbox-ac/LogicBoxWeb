@@ -2,3 +2,7 @@
     justify-content: center;
     margin-bottom: 1rem;
 }
+
+.popover {
+    z-index: 6000 !important;
+}
