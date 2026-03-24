@@ -10,6 +10,9 @@ import penInsetIconURL from './pen/pen-small.svg';
 import videoSensingIconURL from './videoSensing/video-sensing.png';
 import videoSensingInsetIconURL from './videoSensing/video-sensing-small.svg';
 
+import handpose2scratchIconURL from './handpose2scratch/handpose2scratch.png';
+import handpose2scratchInsetIconURL from './handpose2scratch/handpose2scratch-small.png';
+
 import text2speechIconURL from './text2speech/text2speech.png';
 import text2speechInsetIconURL from './text2speech/text2speech-small.svg';
 
@@ -106,6 +109,29 @@ export default [
             />
         ),
         featured: true
+    },
+    {
+        name: (
+            <FormattedMessage
+                defaultMessage="Handpose2Scratch"
+                description="Name for the Handpose2Scratch extension"
+                id="gui.extension.handpose2scratch.name"
+            />
+        ),
+        extensionId: 'handpose2scratch',
+        collaborator: 'champierre',
+        iconURL: handpose2scratchIconURL,
+        insetIconURL: handpose2scratchInsetIconURL,
+        description: (
+            <FormattedMessage
+                defaultMessage="Track your hand with the webcam."
+                description="Description for the Handpose2Scratch extension"
+                id="gui.extension.handpose2scratch.description"
+            />
+        ),
+        featured: true,
+        internetConnectionRequired: true,
+        helpLink: 'https://champierre.github.io/handpose2scratch/'
     },
     {
         name: (
