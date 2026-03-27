@@ -13,10 +13,10 @@ index 94ce3b1..eb15c3e
 
 diff --git a/node_modules/scratch-vm/src/extensions/scratch3_handpose2scratch/index.js b/node_modules/scratch-vm/src/extensions/scratch3_handpose2scratch/index.js
 new file mode 100644
-index 0000000..538abed
+index 0000000..8cdb10a
 --- /dev/null
 +++ b/node_modules/scratch-vm/src/extensions/scratch3_handpose2scratch/index.js
-@@ -0,0 +1,472 @@
+@@ -0,0 +1,508 @@
 +const ArgumentType = require('../../extension-support/argument-type');
 +const BlockType = require('../../extension-support/block-type');
 +const Cast = require('../../util/cast');
@@ -296,23 +296,50 @@ index 0000000..538abed
 +
 +        this.landmarks = [];
 +        this.ratio = 0.75;
++        this._handposeModel = null;
++        this._handposeReady = false;
++        this._handposeStarting = false;
++    }
 +
-+        this.detectHand = () => {
-+          this.video = this.runtime.ioDevices.video.provider.video;
++    _ensureHandpose () {
++      const videoDevice = this.runtime.ioDevices && this.runtime.ioDevices.video;
++      if (!videoDevice || !videoDevice.provider) {
++        return Promise.resolve(false);
++      }
++
++      if (this._handposeReady || this._handposeStarting) {
++        return Promise.resolve(this._handposeReady);
++      }
++
++      this._handposeStarting = true;
++      return Promise.resolve(videoDevice.enableVideo())
++        .then(() => {
++          if (!videoDevice.provider || !videoDevice.provider.video) {
++            return false;
++          }
++
++          this.video = videoDevice.provider.video;
++          this._locale = this._locale || this.setLocale();
 +
 +          alert(Message.please_wait[this._locale]);
 +
-+          const handpose = ml5.handpose(this.video, function() {
-+            console.log("Model loaded!")
++          this._handposeModel = ml5.handpose(this.video, () => {
++            console.log('Model loaded!');
 +          });
 +
-+          handpose.on('predict', hands => {
++          this._handposeModel.on('predict', hands => {
 +            hands.forEach(hand => {
 +              this.landmarks = hand.landmarks;
 +            });
 +          });
-+        }
-+        this.runtime.ioDevices.video.enableVideo().then(this.detectHand)
++          this._handposeReady = true;
++          return true;
++        })
++        .catch(() => false)
++        .then(result => {
++          this._handposeStarting = false;
++          return result;
++        });
 +    }
 +
 +    getInfo () {
@@ -420,6 +447,9 @@ index 0000000..538abed
 +    }
 +
 +    getX (args) {
++      if (!this._handposeReady) {
++        this._ensureHandpose();
++      }
 +      let landmark = parseInt(args.LANDMARK, 10) - 1;
 +      if (this.landmarks[landmark]) {
 +        if (this.runtime.ioDevices.video.mirror === false) {
@@ -433,6 +463,9 @@ index 0000000..538abed
 +    }
 +
 +    getY (args) {
++      if (!this._handposeReady) {
++        this._ensureHandpose();
++      }
 +      let landmark = parseInt(args.LANDMARK, 10) - 1;
 +      if (this.landmarks[landmark]) {
 +        return 180 - this.landmarks[landmark][1] * this.ratio;
@@ -442,6 +475,9 @@ index 0000000..538abed
 +    }
 +
 +    getZ (args) {
++      if (!this._handposeReady) {
++        this._ensureHandpose();
++      }
 +      let landmark = parseInt(args.LANDMARK, 10) - 1;
 +      if (this.landmarks[landmark]) {
 +        return this.landmarks[landmark][2];
@@ -455,7 +491,7 @@ index 0000000..538abed
 +      if (state === 'off') {
 +        this.runtime.ioDevices.video.disableVideo();
 +      } else {
-+        this.runtime.ioDevices.video.enableVideo().then(this.detectHand);
++        this._ensureHandpose();
 +        this.runtime.ioDevices.video.mirror = state === "on";
 +      }
 +    }
@@ -489,4 +525,3 @@ index 0000000..538abed
 +}
 +
 +module.exports = Scratch3Handpose2ScratchBlocks;
-

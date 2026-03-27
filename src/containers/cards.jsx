@@ -10,7 +10,8 @@ import {
     prevStep,
     dragCard,
     startDrag,
-    endDrag
+    endDrag,
+    setCardsContent
 } from '../reducers/cards';
 
 import {
@@ -19,18 +20,37 @@ import {
 
 import CardsComponent from '../components/cards/cards.jsx';
 import {loadImageData} from '../lib/libraries/decks/translate-image.js';
+import {loadDecksLibrary} from '../lib/libraries/loaders';
 import {notScratchDesktop} from '../lib/isScratchDesktop';
 
 class Cards extends React.Component {
     componentDidMount () {
+        this.maybeLoadContent();
         if (this.props.locale !== 'en') {
             loadImageData(this.props.locale);
         }
     }
     componentDidUpdate (prevProps) {
+        if (
+            !this.props.content &&
+            (this.props.visible || this.props.activeDeckId) &&
+            (
+                this.props.visible !== prevProps.visible ||
+                this.props.activeDeckId !== prevProps.activeDeckId
+            )
+        ) {
+            this.maybeLoadContent();
+        }
         if (this.props.locale !== prevProps.locale) {
             loadImageData(this.props.locale);
         }
+    }
+    async maybeLoadContent () {
+        if (this.props.content || (!this.props.visible && !this.props.activeDeckId)) {
+            return;
+        }
+        const content = await loadDecksLibrary();
+        this.props.onLoadCardsContent(content);
     }
     render () {
         return (
@@ -40,7 +60,11 @@ class Cards extends React.Component {
 }
 
 Cards.propTypes = {
-    locale: PropTypes.string.isRequired
+    activeDeckId: PropTypes.string,
+    content: PropTypes.object,
+    locale: PropTypes.string.isRequired,
+    onLoadCardsContent: PropTypes.func,
+    visible: PropTypes.bool
 };
 
 const mapStateToProps = state => ({
@@ -59,6 +83,7 @@ const mapStateToProps = state => ({
 
 const mapDispatchToProps = dispatch => ({
     onActivateDeckFactory: id => () => dispatch(activateDeck(id)),
+    onLoadCardsContent: content => dispatch(setCardsContent(content)),
     onShowAll: () => {
         dispatch(openTipsLibrary());
         dispatch(closeCards());

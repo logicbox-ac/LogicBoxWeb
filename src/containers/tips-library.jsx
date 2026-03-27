@@ -1,15 +1,15 @@
-import bindAll from 'lodash.bindall';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {injectIntl, intlShape, defineMessages} from 'react-intl';
 
-import decksLibraryContent from '../lib/libraries/decks/index.jsx';
 import tutorialTags from '../lib/libraries/tutorial-tags';
+import {loadDecksLibrary} from '../lib/libraries/loaders';
 
 import analytics from '../lib/analytics';
 import {notScratchDesktop} from '../lib/isScratchDesktop';
 
 import LibraryComponent from '../components/library/library.jsx';
+import Loader from '../components/loader/loader.jsx';
 
 import {connect} from 'react-redux';
 
@@ -29,14 +29,24 @@ const messages = defineMessages({
     }
 });
 
-class TipsLibrary extends React.PureComponent {
-    constructor (props) {
-        super(props);
-        bindAll(this, [
-            'handleItemSelect'
-        ]);
-    }
-    handleItemSelect (item) {
+const TipsLibrary = props => {
+    const [decksLibraryContent, setDecksLibraryContent] = useState(null);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        loadDecksLibrary().then(content => {
+            if (isMounted) {
+                setDecksLibraryContent(content);
+            }
+        });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const handleItemSelect = useCallback(item => {
         analytics.event({
             category: 'library',
             action: 'Select How-to',
@@ -53,53 +63,54 @@ class TipsLibrary extends React.PureComponent {
             UPDATE well now Paul is wrapped into this as well. Sigh...
                 eventually we will find a solution that doesn't involve loading a whole project
         */
-        if (item.requiredProjectId && (item.requiredProjectId !== this.props.projectId)) {
+        if (item.requiredProjectId && (item.requiredProjectId !== props.projectId)) {
             const urlParams = `/projects/${item.requiredProjectId}/editor?tutorial=${item.urlId}`;
             return window.open(window.location.origin + urlParams, '_blank');
         }
 
-        this.props.onActivateDeck(item.id);
-    }
-    render () {
-        const decksLibraryThumbnailData = Object.keys(decksLibraryContent)
-            .filter(id => {
-                if (notScratchDesktop()) return true; // Do not filter anything in online editor
-                const deck = decksLibraryContent[id];
-                // Scratch Desktop doesn't want tutorials with `requiredProjectId`
-                if (Object.prototype.hasOwnProperty.call(deck, 'requiredProjectId')) return false;
-                // Scratch Desktop should not load tutorials that are _only_ videos
-                if (deck.steps.filter(s => s.title).length === 0) return false;
-                // Allow any other tutorials
-                return true;
-            })
-            .map(id => ({
-                rawURL: decksLibraryContent[id].img,
-                id: id,
-                name: decksLibraryContent[id].name,
-                featured: true,
-                tags: decksLibraryContent[id].tags,
-                category: decksLibraryContent[id].category,
-                urlId: decksLibraryContent[id].urlId,
-                requiredProjectId: decksLibraryContent[id].requiredProjectId,
-                hidden: decksLibraryContent[id].hidden || false
-            }));
+        props.onActivateDeck(item.id);
+    }, [props.onActivateDeck, props.projectId]);
 
-        if (!this.props.visible) return null;
-        return (
-            <LibraryComponent
-                filterable
-                data={decksLibraryThumbnailData}
-                id="tipsLibrary"
-                tags={tutorialTags}
-                title={this.props.intl.formatMessage(messages.tipsLibraryTitle)}
-                visible={this.props.visible}
-                onItemSelected={this.handleItemSelect}
-                onRequestClose={this.props.onRequestClose}
-                withCategories
-            />
-        );
-    }
-}
+    if (!props.visible) return null;
+    if (!decksLibraryContent) return <Loader />;
+
+    const decksLibraryThumbnailData = Object.keys(decksLibraryContent)
+        .filter(id => {
+            if (notScratchDesktop()) return true; // Do not filter anything in online editor
+            const deck = decksLibraryContent[id];
+            // Scratch Desktop doesn't want tutorials with `requiredProjectId`
+            if (Object.prototype.hasOwnProperty.call(deck, 'requiredProjectId')) return false;
+            // Scratch Desktop should not load tutorials that are _only_ videos
+            if (deck.steps.filter(s => s.title).length === 0) return false;
+            // Allow any other tutorials
+            return true;
+        })
+        .map(id => ({
+            rawURL: decksLibraryContent[id].img,
+            id: id,
+            name: decksLibraryContent[id].name,
+            featured: true,
+            tags: decksLibraryContent[id].tags,
+            category: decksLibraryContent[id].category,
+            urlId: decksLibraryContent[id].urlId,
+            requiredProjectId: decksLibraryContent[id].requiredProjectId,
+            hidden: decksLibraryContent[id].hidden || false
+        }));
+
+    return (
+        <LibraryComponent
+            filterable
+            data={decksLibraryThumbnailData}
+            id="tipsLibrary"
+            tags={tutorialTags}
+            title={props.intl.formatMessage(messages.tipsLibraryTitle)}
+            visible={props.visible}
+            onItemSelected={handleItemSelect}
+            onRequestClose={props.onRequestClose}
+            withCategories
+        />
+    );
+};
 
 TipsLibrary.propTypes = {
     intl: intlShape.isRequired,

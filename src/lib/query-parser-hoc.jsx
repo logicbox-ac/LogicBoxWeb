@@ -14,10 +14,9 @@ import {openTipsLibrary} from '../reducers/modals';
  */
 const QueryParserHOC = function (WrappedComponent) {
     class QueryParserComponent extends React.Component {
-        constructor (props) {
-            super(props);
+        async componentDidMount () {
             const queryParams = queryString.parse(location.search);
-            const tutorialId = detectTutorialId(queryParams);
+            const tutorialId = await detectTutorialId(queryParams);
             if (tutorialId) {
                 if (tutorialId === 'all') {
                     this.openTutorials();

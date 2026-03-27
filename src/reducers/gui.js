@@ -1,39 +1,37 @@
-import { applyMiddleware, compose, combineReducers } from 'redux';
-import alertsReducer, { alertsInitialState } from './alerts';
-import assetDragReducer, { assetDragInitialState } from './asset-drag';
-import cardsReducer, { cardsInitialState } from './cards';
-import colorPickerReducer, { colorPickerInitialState } from './color-picker';
-import connectionModalReducer, { connectionModalInitialState } from './connection-modal';
-import customProceduresReducer, { customProceduresInitialState } from './custom-procedures';
-import blockDragReducer, { blockDragInitialState } from './block-drag';
-import editorTabReducer, { editorTabInitialState } from './editor-tab';
-import hoveredTargetReducer, { hoveredTargetInitialState } from './hovered-target';
-import menuReducer, { menuInitialState } from './menus';
-import micIndicatorReducer, { micIndicatorInitialState } from './mic-indicator';
-import modalReducer, { modalsInitialState } from './modals';
-import modeReducer, { modeInitialState } from './mode';
-import monitorReducer, { monitorsInitialState } from './monitors';
-import monitorLayoutReducer, { monitorLayoutInitialState } from './monitor-layout';
-import projectChangedReducer, { projectChangedInitialState } from './project-changed';
-import projectStateReducer, { projectStateInitialState } from './project-state';
-import projectTitleReducer, { projectTitleInitialState } from './project-title';
-import fontsLoadedReducer, { fontsLoadedInitialState } from './fonts-loaded';
-import restoreDeletionReducer, { restoreDeletionInitialState } from './restore-deletion';
-import stageSizeReducer, { stageSizeInitialState } from './stage-size';
-import targetReducer, { targetsInitialState } from './targets';
-import themeReducer, { themeInitialState } from './theme';
-import timeoutReducer, { timeoutInitialState } from './timeout';
-import timeTravelReducer, { timeTravelInitialState } from './time-travel';
-import toolboxReducer, { toolboxInitialState } from './toolbox';
-import vmReducer, { vmInitialState } from './vm';
-import vmStatusReducer, { vmStatusInitialState } from './vm-status';
-import keyboardStateReducer, { keyboardStateInitialState } from './keyboard-state';
-import workspaceMetricsReducer, { workspaceMetricsInitialState } from './workspace-metrics';
+import {applyMiddleware, compose, combineReducers} from 'redux';
+import alertsReducer, {alertsInitialState} from './alerts';
+import assetDragReducer, {assetDragInitialState} from './asset-drag';
+import cardsReducer, {cardsInitialState} from './cards';
+import colorPickerReducer, {colorPickerInitialState} from './color-picker';
+import connectionModalReducer, {connectionModalInitialState} from './connection-modal';
+import customProceduresReducer, {customProceduresInitialState} from './custom-procedures';
+import blockDragReducer, {blockDragInitialState} from './block-drag';
+import editorTabReducer, {editorTabInitialState} from './editor-tab';
+import hoveredTargetReducer, {hoveredTargetInitialState} from './hovered-target';
+import menuReducer, {menuInitialState} from './menus';
+import micIndicatorReducer, {micIndicatorInitialState} from './mic-indicator';
+import modalReducer, {modalsInitialState} from './modals';
+import modeReducer, {modeInitialState} from './mode';
+import monitorReducer, {monitorsInitialState} from './monitors';
+import monitorLayoutReducer, {monitorLayoutInitialState} from './monitor-layout';
+import projectChangedReducer, {projectChangedInitialState} from './project-changed';
+import projectStateReducer, {projectStateInitialState} from './project-state';
+import projectTitleReducer, {projectTitleInitialState} from './project-title';
+import fontsLoadedReducer, {fontsLoadedInitialState} from './fonts-loaded';
+import restoreDeletionReducer, {restoreDeletionInitialState} from './restore-deletion';
+import stageSizeReducer, {stageSizeInitialState} from './stage-size';
+import targetReducer, {targetsInitialState} from './targets';
+import themeReducer, {themeInitialState} from './theme';
+import timeoutReducer, {timeoutInitialState} from './timeout';
+import timeTravelReducer, {timeTravelInitialState} from './time-travel';
+import toolboxReducer, {toolboxInitialState} from './toolbox';
+import vmReducer, {vmInitialState} from './vm';
+import vmStatusReducer, {vmStatusInitialState} from './vm-status';
+import keyboardStateReducer, {keyboardStateInitialState} from './keyboard-state';
+import workspaceMetricsReducer, {workspaceMetricsInitialState} from './workspace-metrics';
 import throttle from 'redux-throttle';
 
-import decks from '../lib/libraries/decks/index.jsx';
-
-const guiMiddleware = compose(applyMiddleware(throttle(300, { leading: true, trailing: true })));
+const guiMiddleware = compose(applyMiddleware(throttle(300, {leading: true, trailing: true})));
 
 const guiInitialState = {
     alerts: alertsInitialState,
@@ -119,7 +117,7 @@ const initTutorialCard = function (currentState, deckId) {
         {
             cards: {
                 visible: true,
-                content: decks,
+                content: null,
                 activeDeckId: deckId,
                 expanded: true,
                 step: 0,

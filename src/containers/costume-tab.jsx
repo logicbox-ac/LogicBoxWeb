@@ -34,8 +34,7 @@ import paintIcon from '../components/action-menu/icon--paint.svg';
 import surpriseIcon from '../components/action-menu/icon--surprise.svg';
 import searchIcon from '../components/action-menu/icon--search.svg';
 
-import costumeLibraryContent from '../lib/libraries/costumes.json';
-import backdropLibraryContent from '../lib/libraries/backdrops.json';
+import {loadBackdropLibrary, loadCostumeLibrary} from '../lib/libraries/loaders';
 
 let messages = defineMessages({
     addLibraryBackdropMsg: {
@@ -167,7 +166,8 @@ class CostumeTab extends React.Component {
             this.props.intl.formatMessage(messages.costume, {index: 1});
         this.handleNewCostume(emptyCostume(name));
     }
-    handleSurpriseCostume () {
+    async handleSurpriseCostume () {
+        const costumeLibraryContent = await loadCostumeLibrary();
         const item = costumeLibraryContent[Math.floor(Math.random() * costumeLibraryContent.length)];
         const vmCostume = {
             name: item.name,
@@ -179,7 +179,8 @@ class CostumeTab extends React.Component {
         };
         this.handleNewCostume(vmCostume, true /* fromCostumeLibrary */);
     }
-    handleSurpriseBackdrop () {
+    async handleSurpriseBackdrop () {
+        const backdropLibraryContent = await loadBackdropLibrary();
         const item = backdropLibraryContent[Math.floor(Math.random() * backdropLibraryContent.length)];
         const vmCostume = {
             name: item.name,

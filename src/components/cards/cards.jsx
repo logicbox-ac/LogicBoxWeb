@@ -299,7 +299,7 @@ const Cards = props => {
     } = props;
     let {x, y} = posProps;
 
-    if (activeDeckId === null) return;
+    if (activeDeckId === null || !content || !content[activeDeckId]) return null;
 
     // Tutorial cards need to calculate their own dragging bounds
     // to allow for dragging the cards off the left, right and bottom
@@ -396,7 +396,7 @@ const Cards = props => {
 };
 
 Cards.propTypes = {
-    activeDeckId: PropTypes.string.isRequired,
+    activeDeckId: PropTypes.string,
     content: PropTypes.shape({
         id: PropTypes.shape({
             name: PropTypes.node.isRequired,

@@ -1,7 +1,5 @@
 import analytics from '../lib/analytics';
 
-import decks from '../lib/libraries/decks/index.jsx';
-
 const CLOSE_CARDS = 'scratch-gui/cards/CLOSE_CARDS';
 const SHRINK_EXPAND_CARDS = 'scratch-gui/cards/SHRINK_EXPAND_CARDS';
 const VIEW_CARDS = 'scratch-gui/cards/VIEW_CARDS';
@@ -11,10 +9,11 @@ const PREV_STEP = 'scratch-gui/cards/PREV_STEP';
 const DRAG_CARD = 'scratch-gui/cards/DRAG_CARD';
 const START_DRAG = 'scratch-gui/cards/START_DRAG';
 const END_DRAG = 'scratch-gui/cards/END_DRAG';
+const SET_CARDS_CONTENT = 'scratch-gui/cards/SET_CARDS_CONTENT';
 
 const initialState = {
     visible: false,
-    content: decks,
+    content: null,
     activeDeckId: null,
     step: 0,
     x: 0,
@@ -81,6 +80,10 @@ const reducer = function (state, action) {
         return Object.assign({}, state, {
             dragging: false
         });
+    case SET_CARDS_CONTENT:
+        return Object.assign({}, state, {
+            content: action.content
+        });
     default:
         return state;
     }
@@ -125,6 +128,13 @@ const endDrag = function () {
     return {type: END_DRAG};
 };
 
+const setCardsContent = function (content) {
+    return {
+        type: SET_CARDS_CONTENT,
+        content
+    };
+};
+
 export {
     reducer as default,
     initialState as cardsInitialState,
@@ -136,5 +146,6 @@ export {
     prevStep,
     dragCard,
     startDrag,
-    endDrag
+    endDrag,
+    setCardsContent
 };

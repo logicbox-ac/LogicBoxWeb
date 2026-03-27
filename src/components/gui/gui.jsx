@@ -1,50 +1,87 @@
 import classNames from 'classnames';
 import omit from 'lodash.omit';
 import PropTypes from 'prop-types';
-import React, { useState, useCallback } from 'react';
-import { defineMessages, FormattedMessage, injectIntl, intlShape } from 'react-intl';
-import { connect } from 'react-redux';
+import React, {Suspense, lazy, useCallback, useState} from 'react';
+import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-intl';
+import {connect} from 'react-redux';
 import MediaQuery from 'react-responsive';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import {Tab, Tabs, TabList, TabPanel} from 'react-tabs';
 import tabStyles from 'react-tabs/style/react-tabs.css';
 import VM from 'scratch-vm';
 import Renderer from 'scratch-render';
 
 import Blocks from '../../containers/blocks.jsx';
-import CostumeTab from '../../containers/costume-tab.jsx';
 import TargetPane from '../../containers/target-pane.jsx';
-import SoundTab from '../../containers/sound-tab.jsx';
 import StageWrapper from '../../containers/stage-wrapper.jsx';
 import Loader from '../loader/loader.jsx';
 import Box from '../box/box.jsx';
 import MenuBar from '../menu-bar/menu-bar.jsx';
-import CostumeLibrary from '../../containers/costume-library.jsx';
-import BackdropLibrary from '../../containers/backdrop-library.jsx';
 import Watermark from '../../containers/watermark.jsx';
 import MobileTabBar from '../mobile-tab-bar/mobile-tab-bar.jsx';
-import VirtualKeyboard from '../virtual-keyboard/virtual-keyboard.jsx';
 
-import Backpack from '../../containers/backpack.jsx';
-import WebGlModal from '../../containers/webgl-modal.jsx';
-import TipsLibrary from '../../containers/tips-library.jsx';
-import Cards from '../../containers/cards.jsx';
 import Alerts from '../../containers/alerts.jsx';
 import DragLayer from '../../containers/drag-layer.jsx';
-import ConnectionModal from '../../containers/connection-modal.jsx';
-import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
 import CollapsibleStageHeader from '../collapsible-stage-header/collapsible-stage-header.jsx';
 // CollapsiblePaintControls removed - zoom controls are always visible on canvas
 
-import layout, { STAGE_SIZE_MODES } from '../../lib/layout-constants';
-import { resolveStageSize } from '../../lib/screen-utils';
-import { themeMap } from '../../lib/themes';
+import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
+import {resolveStageSize} from '../../lib/screen-utils';
+import {themeMap} from '../../lib/themes';
 
 import styles from './gui.css';
 import addExtensionIcon from './icon--extensions.svg';
 import codeIcon from './icon--code.svg';
 import costumesIcon from './icon--costumes.svg';
 import soundsIcon from './icon--sounds.svg';
-import DebugModal from '../debug-modal/debug-modal.jsx';
+
+const LazyBackdropLibrary = lazy(() => import(
+    /* webpackChunkName: "backdrop-library" */
+    '../../containers/backdrop-library.jsx'
+));
+const LazyBackpack = lazy(() => import(
+    /* webpackChunkName: "backpack" */
+    '../../containers/backpack.jsx'
+));
+const LazyCards = lazy(() => import(
+    /* webpackChunkName: "tutorial-cards" */
+    '../../containers/cards.jsx'
+));
+const LazyConnectionModal = lazy(() => import(
+    /* webpackChunkName: "connection-modal" */
+    '../../containers/connection-modal.jsx'
+));
+const LazyCostumeLibrary = lazy(() => import(
+    /* webpackChunkName: "costume-library" */
+    '../../containers/costume-library.jsx'
+));
+const LazyCostumeTab = lazy(() => import(
+    /* webpackChunkName: "costume-tab" */
+    '../../containers/costume-tab.jsx'
+));
+const LazyDebugModal = lazy(() => import(
+    /* webpackChunkName: "debug-modal" */
+    '../debug-modal/debug-modal.jsx'
+));
+const LazySoundTab = lazy(() => import(
+    /* webpackChunkName: "sound-tab" */
+    '../../containers/sound-tab.jsx'
+));
+const LazyTelemetryModal = lazy(() => import(
+    /* webpackChunkName: "telemetry-modal" */
+    '../telemetry-modal/telemetry-modal.jsx'
+));
+const LazyTipsLibrary = lazy(() => import(
+    /* webpackChunkName: "tips-library" */
+    '../../containers/tips-library.jsx'
+));
+const LazyVirtualKeyboard = lazy(() => import(
+    /* webpackChunkName: "virtual-keyboard" */
+    '../virtual-keyboard/virtual-keyboard.jsx'
+));
+const LazyWebGlModal = lazy(() => import(
+    /* webpackChunkName: "webgl-modal" */
+    '../../containers/webgl-modal.jsx'
+));
 
 const messages = defineMessages({
     addExtension: {
@@ -185,6 +222,11 @@ const GUIComponent = props => {
         tabPanelSelected: classNames(tabStyles.reactTabsTabPanelSelected, styles.isSelected),
         tabSelected: classNames(tabStyles.reactTabsTabSelected, styles.isSelected)
     };
+    const renderLazy = child => (
+        <Suspense fallback={null}>
+            {child}
+        </Suspense>
+    );
 
     if (isRendererSupported === null) {
         isRendererSupported = Renderer.isSupported();
@@ -214,7 +256,7 @@ const GUIComponent = props => {
                 {...componentProps}
             >
                 {telemetryModalVisible ? (
-                    <TelemetryModal
+                    renderLazy(<LazyTelemetryModal
                         isRtl={isRtl}
                         isTelemetryEnabled={isTelemetryEnabled}
                         onCancel={onTelemetryModalCancel}
@@ -222,7 +264,7 @@ const GUIComponent = props => {
                         onOptOut={onTelemetryModalOptOut}
                         onRequestClose={onRequestCloseTelemetryModal}
                         onShowPrivacyPolicy={onShowPrivacyPolicy}
-                    />
+                    />)
                 ) : null}
                 {loading ? (
                     <Loader />
@@ -231,37 +273,37 @@ const GUIComponent = props => {
                     <Loader messageId="gui.loader.creating" />
                 ) : null}
                 {isRendererSupported ? null : (
-                    <WebGlModal isRtl={isRtl} />
+                    renderLazy(<LazyWebGlModal isRtl={isRtl} />)
                 )}
                 {tipsLibraryVisible ? (
-                    <TipsLibrary />
+                    renderLazy(<LazyTipsLibrary />)
                 ) : null}
                 {cardsVisible ? (
-                    <Cards />
+                    renderLazy(<LazyCards />)
                 ) : null}
                 {alertsVisible ? (
                     <Alerts className={styles.alertsContainer} />
                 ) : null}
                 {connectionModalVisible ? (
-                    <ConnectionModal
+                    renderLazy(<LazyConnectionModal
                         vm={vm}
-                    />
+                    />)
                 ) : null}
                 {costumeLibraryVisible ? (
-                    <CostumeLibrary
+                    renderLazy(<LazyCostumeLibrary
                         vm={vm}
                         onRequestClose={onRequestCloseCostumeLibrary}
-                    />
+                    />)
                 ) : null}
-                {<DebugModal
+                {debugModalVisible ? renderLazy(<LazyDebugModal
                     isOpen={debugModalVisible}
                     onClose={onRequestCloseDebugModal}
-                />}
+                />) : null}
                 {backdropLibraryVisible ? (
-                    <BackdropLibrary
+                    renderLazy(<LazyBackdropLibrary
                         vm={vm}
                         onRequestClose={onRequestCloseBackdropLibrary}
-                    />
+                    />)
                 ) : null}
                 <MenuBar
                     accountNavOpen={accountNavOpen}
@@ -397,21 +439,22 @@ const GUIComponent = props => {
                                     </Box>
                                 </TabPanel>
                                 <TabPanel className={tabClassNames.tabPanel}>
-                                    {costumesTabVisible ? <CostumeTab vm={vm} /> : null}
+                                    {costumesTabVisible ? renderLazy(<LazyCostumeTab vm={vm} />) : null}
                                 </TabPanel>
                                 <TabPanel className={tabClassNames.tabPanel}>
-                                    {soundsTabVisible ? <SoundTab vm={vm} /> : null}
+                                    {soundsTabVisible ? renderLazy(<LazySoundTab vm={vm} />) : null}
                                 </TabPanel>
                             </Tabs>
 
                             {backpackVisible ? (
-                                <Backpack host={backpackHost} />
+                                renderLazy(<LazyBackpack host={backpackHost} />)
                             ) : null}
                         </Box>
 
-                        <Box className={classNames(styles.stageAndTargetWrapper, styles[stageSize], {
-                            [styles.collapsed]: isStageCollapsed && mobileActiveTab === 'code'
-                        })}
+                        <Box
+                            className={classNames(styles.stageAndTargetWrapper, styles[stageSize], {
+                                [styles.collapsed]: isStageCollapsed && mobileActiveTab === 'code'
+                            })}
                             data-stage-collapsed={isStageCollapsed}
                             data-mobile-tab={mobileActiveTab}
                         >
@@ -433,10 +476,10 @@ const GUIComponent = props => {
                                     />
                                     {/* Virtual Keyboard - shown on mobile stage tab when keyboard blocks exist */}
                                     {mobileActiveTab === 'stage' && (
-                                        <VirtualKeyboard
+                                        renderLazy(<LazyVirtualKeyboard
                                             visible
                                             vm={vm}
-                                        />
+                                        />)
                                     )}
                                 </Box>
                             )}

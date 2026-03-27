@@ -3,8 +3,8 @@
  * Utility function to detect tutorial id from query paramenter on the URL.
  */
 
-import tutorials from './libraries/decks/index.jsx';
 import analytics from './analytics';
+import {loadDecksLibrary} from './libraries/loaders';
 
 /**
  * Get the tutorial id from the given numerical id (representing the
@@ -13,7 +13,8 @@ import analytics from './analytics';
  * @returns {string} The string id for the tutorial, or null if the URL ID
  * was not found.
  */
-const getDeckIdFromUrlId = urlId => {
+const getDeckIdFromUrlId = async urlId => {
+    const tutorials = await loadDecksLibrary();
     for (const deckId in tutorials) {
         if (tutorials[deckId].urlId === urlId) {
             analytics.event({
