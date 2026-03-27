@@ -7,7 +7,7 @@ ENV NODE_OPTIONS=--max-old-space-size=768
 
 COPY . .
 RUN npm install --no-audit --no-fund \
- && npm run build -- --parallelism 1 \
+ && NODE_ENV=production npm run build -- --parallelism 1 \
  && rm -rf node_modules /root/.npm
 
 FROM nginx:1.27-alpine AS runtime

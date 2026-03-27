@@ -134,7 +134,15 @@ const buildConfig = baseConfig.clone()
             compatibilitytesting: './src/playground/compatibility-testing.jsx',
             player: './src/playground/player.jsx'
         },
+        optimization: {
+            runtimeChunk: 'single',
+            splitChunks: {
+                chunks: 'all'
+            }
+        },
         output: {
+            filename: '[name].[contenthash].js',
+            chunkFilename: 'chunks/[name].[contenthash].js',
             path: path.resolve(__dirname, 'build')
         }
     })
@@ -183,7 +191,7 @@ const buildConfig = baseConfig.clone()
 // It roughly doubles build time and isn't needed for `scratch-gui` development
 // If you need non-production `dist/` for local dev, such as for `scratch-www` work, you can run something like:
 // `BUILD_MODE=dist npm run build`
-const buildDist = process.env.NODE_ENV === 'production' || process.env.BUILD_MODE === 'dist';
+const buildDist = process.env.BUILD_MODE === 'dist';
 
 module.exports = buildDist ?
     [buildConfig.get(), distConfig.get()] :
