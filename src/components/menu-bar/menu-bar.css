@@ -94,6 +94,8 @@
     display: flex;
     flex-direction: row;
     align-items: center;
+    width: 100%;
+    justify-content: space-between;
 }
 
 .desktop-controls {
@@ -103,10 +105,27 @@
 }
 
 .mobile-save-button {
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0;
+    padding: 0 1rem;
     background: rgba(255, 255, 255, 0.18);
     border: 1px solid rgba(255, 255, 255, 0.3);
     min-height: 2rem;
+}
+
+.file-group > :not(.mobile-save-button):not(:first-child) {
+    display: none !important;
+}
+
+.main-menu > :not(.file-group) {
+    display: none !important;
+}
+
+.account-info-group,
+.desktop-only {
+    display: none !important;
 }
 
 .file-group .menu-bar-item {
