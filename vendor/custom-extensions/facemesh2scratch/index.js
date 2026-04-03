@@ -63,69 +63,61 @@ const Message = {
     }
 };
 
-const FACEMESH_KEYPOINT_TOTAL = 468;
-
-const FACEMESH_KEYPOINT_GROUPS = [
-    {
-        label: 'nose',
-        indices: [168, 6, 197, 195, 5, 4, 1, 19, 94, 2, 98, 97, 326, 327, 294, 278, 344, 440, 275, 45, 220, 115, 48, 64]
-    },
-    {
-        label: 'mouth / lips',
-        indices: [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 185, 40, 39, 37, 0, 267, 269, 270, 409, 78, 95, 88, 178, 87, 14, 317, 402, 318, 324, 308, 191, 80, 81, 82, 13, 312, 311, 310, 415]
-    },
-    {
-        label: 'left eye',
-        indices: [263, 249, 390, 373, 374, 380, 381, 382, 362, 466, 388, 387, 386, 385, 384, 398]
-    },
-    {
-        label: 'right eye',
-        indices: [33, 7, 163, 144, 145, 153, 154, 155, 133, 246, 161, 160, 159, 158, 157, 173]
-    },
-    {
-        label: 'left eyebrow',
-        indices: [276, 283, 282, 295, 285, 300, 293, 334, 296, 336]
-    },
-    {
-        label: 'right eyebrow',
-        indices: [46, 53, 52, 65, 55, 70, 63, 105, 66, 107]
-    },
-    {
-        label: 'face outline',
-        indices: [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109]
-    }
+const FACEMESH_ANCHOR_MENU = [
+    {text: 'face center', value: 'face_center'},
+    {text: 'left eye center', value: 'left_eye'},
+    {text: 'right eye center', value: 'right_eye'},
+    {text: 'nose tip', value: 'nose'},
+    {text: 'upper lip', value: 'upper_lip'},
+    {text: 'lower lip', value: 'lower_lip'}
 ];
 
-const buildKeypointMenu = () => {
-    const keypointMenu = [];
-    const seenValues = new Set();
+const FACEMESH_ANCHOR_INDICES = {
+    face_center: [10, 152, 234, 454],
+    left_eye: [263, 249, 390, 373, 374, 380, 381, 382, 362, 466, 388, 387, 386, 385, 384, 398],
+    right_eye: [33, 7, 163, 144, 145, 153, 154, 155, 133, 246, 161, 160, 159, 158, 157, 173],
+    nose: [1],
+    upper_lip: [13],
+    lower_lip: [14]
+};
 
-    FACEMESH_KEYPOINT_GROUPS.forEach(group => {
-        group.indices.forEach((index, indexInGroup) => {
-            const value = String(index + 1);
-            if (seenValues.has(value)) {
-                return;
-            }
-            seenValues.add(value);
-            keypointMenu.push({
-                text: `${group.label} ${indexInGroup + 1} (${value})`,
-                value
-            });
-        });
-    });
-
-    for (let i = 1; i <= FACEMESH_KEYPOINT_TOTAL; i++) {
-        const value = String(i);
-        if (seenValues.has(value)) {
-            continue;
-        }
-        keypointMenu.push({
-            text: `other face point (${value})`,
-            value
-        });
+const averageFacePoints = points => {
+    if (!points.length) {
+        return null;
     }
 
-    return keypointMenu;
+    const totals = points.reduce((accumulator, point) => ({
+        x: accumulator.x + point.x,
+        y: accumulator.y + point.y,
+        z: accumulator.z + point.z
+    }), {x: 0, y: 0, z: 0});
+
+    return {
+        x: totals.x / points.length,
+        y: totals.y / points.length,
+        z: totals.z / points.length
+    };
+};
+
+const resolveFacePoint = (face, keypoint) => {
+    if (!Array.isArray(face) || !face.length) {
+        return null;
+    }
+
+    const normalizedKeypoint = String(keypoint || '').trim();
+    const anchorIndices = FACEMESH_ANCHOR_INDICES[normalizedKeypoint];
+    if (anchorIndices) {
+        const anchorPoints = anchorIndices
+            .map(index => face[index])
+            .filter(point => point && typeof point.x === 'number' && typeof point.y === 'number');
+        return averageFacePoints(anchorPoints);
+    }
+
+    if (!/^\d+$/.test(normalizedKeypoint)) {
+        return null;
+    }
+
+    return face[parseInt(normalizedKeypoint, 10) - 1] || null;
 };
 
 const AvailableLocales = ['en', 'ja', 'ja-Hira'];
@@ -404,7 +396,7 @@ class Scratch3Facemesh2ScratchBlocks {
     }
 
     get KEYPOINT_MENU () {
-        return buildKeypointMenu();
+        return FACEMESH_ANCHOR_MENU;
     }
 
     get VIDEO_MENU () {
@@ -641,7 +633,7 @@ class Scratch3Facemesh2ScratchBlocks {
                             type: ArgumentType.STRING
                         },
                         KEYPOINT: {
-                            defaultValue: '169',
+                            defaultValue: 'nose',
                             menu: 'keypointMenu',
                             type: ArgumentType.STRING
                         }
@@ -658,7 +650,7 @@ class Scratch3Facemesh2ScratchBlocks {
                             type: ArgumentType.STRING
                         },
                         KEYPOINT: {
-                            defaultValue: '169',
+                            defaultValue: 'nose',
                             menu: 'keypointMenu',
                             type: ArgumentType.STRING
                         }
@@ -735,8 +727,7 @@ class Scratch3Facemesh2ScratchBlocks {
         }
 
         const faceIndex = parseInt(args.PERSON_NUMBER, 10) - 1;
-        const keypointIndex = parseInt(args.KEYPOINT, 10) - 1;
-        const point = this.faces[faceIndex] && this.faces[faceIndex][keypointIndex];
+        const point = resolveFacePoint(this.faces[faceIndex], args.KEYPOINT);
         if (!point) {
             return '';
         }
@@ -749,8 +740,7 @@ class Scratch3Facemesh2ScratchBlocks {
         }
 
         const faceIndex = parseInt(args.PERSON_NUMBER, 10) - 1;
-        const keypointIndex = parseInt(args.KEYPOINT, 10) - 1;
-        const point = this.faces[faceIndex] && this.faces[faceIndex][keypointIndex];
+        const point = resolveFacePoint(this.faces[faceIndex], args.KEYPOINT);
         if (!point) {
             return '';
         }
