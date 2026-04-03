@@ -72,12 +72,16 @@ const FACEMESH_ANCHOR_MENU = [
     {text: 'lower lip', value: 'lower_lip'}
 ];
 
+const FACEMESH_IRIS_INDICES = {
+    left_eye: [474, 475, 476, 477],
+    right_eye: [469, 470, 471, 472]
+};
+
 const FACEMESH_ANCHOR_INDICES = {
     face_center: [10, 152, 234, 454],
-    // Eye center uses the inner/outer corners plus upper/lower lid points.
-    // Averaging the full eye contour can drift upward on some faces/camera angles.
-    left_eye: [263, 362, 386, 374],
-    right_eye: [33, 133, 159, 145],
+    // Fall back to eye-corner midpoint when refined iris landmarks are unavailable.
+    left_eye: [263, 362],
+    right_eye: [33, 133],
     nose: [1],
     upper_lip: [13],
     lower_lip: [14]
@@ -107,6 +111,16 @@ const resolveFacePoint = (face, keypoint) => {
     }
 
     const normalizedKeypoint = String(keypoint || '').trim();
+    const irisIndices = FACEMESH_IRIS_INDICES[normalizedKeypoint];
+    if (irisIndices) {
+        const irisPoints = irisIndices
+            .map(index => face[index])
+            .filter(point => point && typeof point.x === 'number' && typeof point.y === 'number');
+        if (irisPoints.length === irisIndices.length) {
+            return averageFacePoints(irisPoints);
+        }
+    }
+
     const anchorIndices = FACEMESH_ANCHOR_INDICES[normalizedKeypoint];
     if (anchorIndices) {
         const anchorPoints = anchorIndices
@@ -130,7 +144,7 @@ const simplifyFaceResults = results => {
     }
 
     return results.multiFaceLandmarks.map(face =>
-        face.slice(0, 468).map(point => ({
+        face.map(point => ({
             x: typeof point.x === 'number' ? point.x : 0,
             y: typeof point.y === 'number' ? point.y : 0,
             z: typeof point.z === 'number' ? point.z : 0
@@ -147,7 +161,7 @@ const simplifyFaceResults = results => {
         return [];
     }
     return results.multiFaceLandmarks.map(face =>
-        face.slice(0, 468).map(point => ({
+        face.map(point => ({
             x: typeof point.x === 'number' ? point.x : 0,
             y: typeof point.y === 'number' ? point.y : 0,
             z: typeof point.z === 'number' ? point.z : 0
@@ -461,7 +475,7 @@ class Scratch3Facemesh2ScratchBlocks {
             maxNumFaces: 1,
             minDetectionConfidence: profile.isLowPerformance ? 0.45 : 0.55,
             minTrackingConfidence: profile.isLowPerformance ? 0.35 : 0.5,
-            refineLandmarks: false,
+            refineLandmarks: !profile.isLowPerformance,
             selfieMode: false
         };
     }
