@@ -74,8 +74,10 @@ const FACEMESH_ANCHOR_MENU = [
 
 const FACEMESH_ANCHOR_INDICES = {
     face_center: [10, 152, 234, 454],
-    left_eye: [263, 249, 390, 373, 374, 380, 381, 382, 362, 466, 388, 387, 386, 385, 384, 398],
-    right_eye: [33, 7, 163, 144, 145, 153, 154, 155, 133, 246, 161, 160, 159, 158, 157, 173],
+    // Eye center uses the inner/outer corners plus upper/lower lid points.
+    // Averaging the full eye contour can drift upward on some faces/camera angles.
+    left_eye: [263, 362, 386, 374],
+    right_eye: [33, 133, 159, 145],
     nose: [1],
     upper_lip: [13],
     lower_lip: [14]
