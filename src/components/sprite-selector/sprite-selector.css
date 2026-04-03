@@ -30,16 +30,15 @@
         flex: 0 0 50% !important;
         height: 50% !important;
         overflow: visible !important;
-        /* Allow add-button to be visible outside bounds */
     }
+}
 
-    /* Move the add-button inside the visible area on mobile */
-    .add-button {
-        position: absolute !important;
-        bottom: 0.75rem !important;
-        right: 0.75rem !important;
-        z-index: 50 !important;
-    }
+.sprite-list-pane {
+    flex: 1 1 auto;
+    min-height: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .sprite-wrapper {
@@ -103,6 +102,7 @@
     .items-wrapper {
         overflow: visible !important;
         padding-top: 0.75rem;
+        padding-right: calc($space + 4rem);
     }
 }
 
@@ -114,10 +114,37 @@
 
 [dir="ltr"] .add-button {
     right: -0.75rem;
+    left: auto;
 }
 
 [dir="rtl"] .add-button {
-    left: -0.75rem;
+    right: -0.75rem;
+    left: auto;
+}
+
+@media (max-width: 767px) {
+    .sprite-list-pane .add-button {
+        position: absolute !important;
+        top: 5.75rem !important;
+        bottom: auto !important;
+        right: 0.75rem !important;
+        left: auto !important;
+        z-index: 100 !important;
+    }
+
+    .add-button {
+        top: 0.75rem !important;
+        bottom: auto !important;
+        right: 0.75rem !important;
+        left: auto !important;
+        z-index: 100 !important;
+    }
+
+    [dir="ltr"] .add-button,
+    [dir="rtl"] .add-button {
+        right: 0.75rem !important;
+        left: auto !important;
+    }
 }
 
 .raised {

@@ -9,9 +9,9 @@ import SharedAudioContext from '../../../src/lib/audio/shared-audio-context';
 describe('Shared Audio Context', () => {
     const audioContext = new AudioContext();
 
-    test('returns empty object without user gesture', () => {
+    test('returns AudioContext without user gesture', () => {
         const sharedAudioContext = new SharedAudioContext();
-        expect(sharedAudioContext).toMatchObject({});
+        expect(sharedAudioContext).toMatchObject(audioContext);
     });
 
     test('returns AudioContext when mousedown is triggered', () => {
@@ -26,5 +26,11 @@ describe('Shared Audio Context', () => {
         const event = new Event('touchstart');
         document.dispatchEvent(event);
         expect(sharedAudioContext).toMatchObject(audioContext);
+    });
+
+    test('returns the same singleton instance across calls', () => {
+        const firstContext = new SharedAudioContext();
+        const secondContext = new SharedAudioContext();
+        expect(firstContext).toBe(secondContext);
     });
 });

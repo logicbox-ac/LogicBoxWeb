@@ -278,4 +278,18 @@ describe('Sound Editor Container', () => {
         expect(mockAudioBufferPlayer.instance.play).toHaveBeenCalled();
         expect(vm.updateSoundBuffer).toHaveBeenCalled();
     });
+
+    test('does not crash when unmounting if audio stop throws', () => {
+        const wrapper = mountWithIntl(
+            <SoundEditor
+                soundIndex={soundIndex}
+                store={store}
+            />
+        );
+        mockAudioBufferPlayer.instance.stop.mockImplementation(() => {
+            throw new Error('stop failed');
+        });
+
+        expect(() => wrapper.unmount()).not.toThrow();
+    });
 });

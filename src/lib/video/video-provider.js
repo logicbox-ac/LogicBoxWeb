@@ -1,6 +1,156 @@
 import {requestVideoStream, requestDisableVideo} from './camera.js';
 import log from '../log.js';
 
+const DEFAULT_VIDEO_ASPECT_RATIO = 4 / 3;
+
+const getVideoPerformanceProfile = () => {
+    const nav = typeof navigator === 'undefined' ? null : navigator;
+    const connection = nav && nav.connection ? nav.connection : null;
+    const effectiveType = connection && connection.effectiveType ? connection.effectiveType : '';
+    const saveData = Boolean(connection && connection.saveData);
+    const deviceMemory = nav && typeof nav.deviceMemory === 'number' ? nav.deviceMemory : null;
+    const hardwareConcurrency = nav && typeof nav.hardwareConcurrency === 'number' ? nav.hardwareConcurrency : null;
+    const isMobileUserAgent = nav && typeof nav.userAgent === 'string' ?
+        /android|iphone|ipad|ipod|mobile/i.test(nav.userAgent) :
+        false;
+    const isNarrowViewport = typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(max-width: 767px)').matches;
+    const isMobile = isMobileUserAgent || isNarrowViewport;
+    const isLowPerformance = saveData ||
+        effectiveType === 'slow-2g' ||
+        effectiveType === '2g' ||
+        (deviceMemory !== null && deviceMemory <= 4) ||
+        (hardwareConcurrency !== null && hardwareConcurrency <= 4);
+
+    return {
+        isLowPerformance,
+        isMobile
+    };
+};
+
+const getPreferredVideoConstraints = () => {
+    const profile = getVideoPerformanceProfile();
+    if (profile.isLowPerformance) {
+        return {
+            width: {ideal: 320, max: 480},
+            height: {ideal: 240, max: 360},
+            aspectRatio: {ideal: DEFAULT_VIDEO_ASPECT_RATIO}
+        };
+    }
+
+    if (profile.isMobile) {
+        return {
+            width: {ideal: 480, max: 640},
+            height: {ideal: 360, max: 480},
+            aspectRatio: {ideal: DEFAULT_VIDEO_ASPECT_RATIO}
+        };
+    }
+
+    return {
+        width: {min: 480, ideal: 640},
+        height: {min: 360, ideal: 480},
+        aspectRatio: {ideal: DEFAULT_VIDEO_ASPECT_RATIO}
+    };
+};
+
+const getVideoProjection = ({sourceWidth, sourceHeight, targetWidth, targetHeight}) => {
+    if (!sourceWidth || !sourceHeight || !targetWidth || !targetHeight) {
+        return null;
+    }
+
+    const scale = Math.min(targetWidth / sourceWidth, targetHeight / sourceHeight);
+    const drawWidth = sourceWidth * scale;
+    const drawHeight = sourceHeight * scale;
+
+    return {
+        drawHeight,
+        drawWidth,
+        offsetX: (targetWidth - drawWidth) / 2,
+        offsetY: (targetHeight - drawHeight) / 2,
+        scale,
+        sourceHeight,
+        sourceWidth,
+        targetHeight,
+        targetWidth
+    };
+};
+
+const configureVideoElement = video => {
+    if (!video) return;
+    video.muted = true;
+    video.autoplay = true;
+    video.preload = 'auto';
+    video.playsInline = true;
+    video.setAttribute('muted', '');
+    video.setAttribute('autoplay', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+};
+
+const mountVideoElement = video => {
+    if (!video || typeof document === 'undefined' || video.isConnected) {
+        return;
+    }
+
+    video.setAttribute('aria-hidden', 'true');
+    video.style.position = 'fixed';
+    video.style.left = '-10000px';
+    video.style.top = '0';
+    video.style.width = '1px';
+    video.style.height = '1px';
+    video.style.opacity = '0';
+    video.style.pointerEvents = 'none';
+    video.style.zIndex = '-1';
+
+    const mountTarget = document.body || document.documentElement;
+    if (mountTarget) {
+        mountTarget.appendChild(video);
+    }
+};
+
+const unmountVideoElement = video => {
+    if (video && video.parentNode) {
+        video.parentNode.removeChild(video);
+    }
+};
+
+const waitForVideoMetadata = video => new Promise(resolve => {
+    if (!video) {
+        resolve();
+        return;
+    }
+    const isReady = () => video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0;
+    if (isReady()) {
+        resolve();
+        return;
+    }
+    let timeoutId = null;
+    let onReady = null;
+    const cleanup = () => {
+        if (timeoutId !== null) {
+            clearTimeout(timeoutId);
+        }
+        video.removeEventListener('loadedmetadata', onReady);
+        video.removeEventListener('loadeddata', onReady);
+        video.removeEventListener('canplay', onReady);
+        video.removeEventListener('playing', onReady);
+    };
+    onReady = () => {
+        if (!isReady()) return;
+        cleanup();
+        resolve();
+    };
+    video.addEventListener('loadedmetadata', onReady);
+    video.addEventListener('loadeddata', onReady);
+    video.addEventListener('canplay', onReady);
+    video.addEventListener('playing', onReady);
+    timeoutId = setTimeout(() => {
+        cleanup();
+        resolve();
+    }, 5000);
+});
+
 /**
  * Video Manager for video extensions.
  */
@@ -68,6 +218,47 @@ class VideoProvider {
         return this._video;
     }
 
+    getPerformanceProfile () {
+        return getVideoPerformanceProfile();
+    }
+
+    getPreviewProjection ({
+        dimensions = VideoProvider.DIMENSIONS
+    } = {}) {
+        if (!this.videoReady) {
+            return null;
+        }
+
+        const [targetWidth, targetHeight] = dimensions;
+        return getVideoProjection({
+            sourceHeight: this._video.videoHeight,
+            sourceWidth: this._video.videoWidth,
+            targetHeight,
+            targetWidth
+        });
+    }
+
+    projectVideoPointToStage (x, y, {
+        dimensions = VideoProvider.DIMENSIONS,
+        mirror = this.mirror
+    } = {}) {
+        const projection = this.getPreviewProjection({dimensions});
+        if (!projection) {
+            return null;
+        }
+
+        const stageX = mirror ?
+            (projection.targetWidth / 2) - (projection.offsetX + (x * projection.scale)) :
+            (projection.offsetX + (x * projection.scale)) - (projection.targetWidth / 2);
+        const stageY = (projection.targetHeight / 2) - (projection.offsetY + (y * projection.scale));
+
+        return {
+            projection,
+            x: stageX,
+            y: stageY
+        };
+    }
+
     /**
      * Request video be enabled.  Sets up video, creates video skin and enables preview.
      *
@@ -101,6 +292,19 @@ class VideoProvider {
             const disableTrack = requestDisableVideo();
             this._singleSetup = null;
             // by clearing refs to video and track, we should lose our hold over the camera
+            if (this._video) {
+                try {
+                    this._video.pause();
+                } catch (error) {
+                    log.warn('Could not pause hidden video element during teardown', error);
+                }
+                try {
+                    this._video.srcObject = null;
+                } catch (error) {
+                    this._video.src = '';
+                }
+                unmountVideoElement(this._video);
+            }
             this._video = null;
             if (this._track && disableTrack) {
                 this._track.stop();
@@ -135,9 +339,16 @@ class VideoProvider {
         const {videoWidth, videoHeight} = this._video;
         const {canvas, context, lastUpdate, cacheData} = workspace;
         const now = Date.now();
+        const projection = getVideoProjection({
+            sourceHeight: videoHeight,
+            sourceWidth: videoWidth,
+            targetHeight: height,
+            targetWidth: width
+        });
 
         // if the canvas hasn't been updated...
         if (lastUpdate + cacheTimeout < now) {
+            context.clearRect(0, 0, width, height);
 
             if (mirror) {
                 context.scale(-1, 1);
@@ -148,7 +359,7 @@ class VideoProvider {
                 // source x, y, width, height
                 0, 0, videoWidth, videoHeight,
                 // dest x, y, width, height
-                0, 0, width, height
+                projection.offsetX, projection.offsetY, projection.drawWidth, projection.drawHeight
             );
 
             // context.resetTransform() doesn't work on Edge but the following should
@@ -205,12 +416,11 @@ class VideoProvider {
             return this._singleSetup;
         }
 
-        this._singleSetup = requestVideoStream({
-            width: {min: 480, ideal: 640},
-            height: {min: 360, ideal: 480}
-        })
+        this._singleSetup = requestVideoStream(getPreferredVideoConstraints())
             .then(stream => {
                 this._video = document.createElement('video');
+                configureVideoElement(this._video);
+                mountVideoElement(this._video);
 
                 // Use the new srcObject API, falling back to createObjectURL
                 try {
@@ -223,9 +433,19 @@ class VideoProvider {
                 // hide the video tag and instead render a sample of the stream into
                 // the webgl rendered Scratch canvas, another hint like this one is
                 // needed.
-                this._video.play(); // Needed for Safari/Firefox, Chrome auto-plays.
-                this._track = stream.getTracks()[0];
-                return this;
+                let playPromise;
+                try {
+                    playPromise = this._video.play(); // Needed for Safari/Firefox, Chrome auto-plays.
+                } catch (error) {
+                    playPromise = Promise.resolve();
+                }
+                return Promise.resolve(playPromise)
+                    .catch(() => null)
+                    .then(() => waitForVideoMetadata(this._video))
+                    .then(() => {
+                        this._track = stream.getTracks()[0];
+                        return this;
+                    });
             })
             .catch(error => {
                 this._singleSetup = null;

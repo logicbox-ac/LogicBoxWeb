@@ -3,6 +3,35 @@ import bowser from 'bowser';
 
 let AUDIO_CONTEXT;
 
+const createAudioContext = function () {
+    const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextConstructor) {
+        return null;
+    }
+
+    try {
+        return new AudioContextConstructor();
+    } catch (e) {
+        return null;
+    }
+};
+
+const ensureAudioContext = function () {
+    if (AUDIO_CONTEXT && typeof AUDIO_CONTEXT.createBuffer === 'function') {
+        return AUDIO_CONTEXT;
+    }
+
+    AUDIO_CONTEXT = createAudioContext();
+    if (AUDIO_CONTEXT) {
+        try {
+            StartAudioContext(AUDIO_CONTEXT);
+        } catch (e) {
+            // No-op: failing to auto-resume should not break editor initialization.
+        }
+    }
+    return AUDIO_CONTEXT;
+};
+
 if (!bowser.msie) {
     /**
      * AudioContext can be initialized only when user interaction event happens
@@ -11,11 +40,9 @@ if (!bowser.msie) {
         typeof document.ontouchstart === 'undefined' ?
             'mousedown' :
             'touchstart';
-    const initAudioContext = () => {
+    const initAudioContext = function () {
         document.removeEventListener(event, initAudioContext);
-        AUDIO_CONTEXT = new (window.AudioContext ||
-            window.webkitAudioContext)();
-        StartAudioContext(AUDIO_CONTEXT);
+        ensureAudioContext();
     };
     document.addEventListener(event, initAudioContext);
 }
@@ -25,5 +52,5 @@ if (!bowser.msie) {
  * @return {AudioContext} The singleton AudioContext
  */
 export default function () {
-    return AUDIO_CONTEXT;
+    return ensureAudioContext();
 }

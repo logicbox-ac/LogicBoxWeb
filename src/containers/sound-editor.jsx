@@ -45,7 +45,8 @@ class SoundEditor extends React.Component {
             'handleKeyPress',
             'handleContainerClick',
             'setRef',
-            'resampleBufferToRate'
+            'resampleBufferToRate',
+            'stopAudioBufferPlayer'
         ]);
         this.state = {
             copyBuffer: null,
@@ -78,9 +79,21 @@ class SoundEditor extends React.Component {
         }
     }
     componentWillUnmount() {
-        this.audioBufferPlayer.stop();
+        this.stopAudioBufferPlayer();
 
         document.removeEventListener('keydown', this.handleKeyPress);
+    }
+    stopAudioBufferPlayer() {
+        if (!this.audioBufferPlayer || typeof this.audioBufferPlayer.stop !== 'function') {
+            return;
+        }
+
+        try {
+            this.audioBufferPlayer.stop();
+        } catch (e) {
+            // Keep tab transitions safe even if the underlying WebAudio node is already invalid.
+            log.warn(`Encountered error while trying to stop sound playback: ${e.message}`);
+        }
     }
     handleKeyPress(event) {
         if (event.target instanceof HTMLInputElement) {
@@ -135,7 +148,7 @@ class SoundEditor extends React.Component {
         }
     }
     resetState(samples, sampleRate) {
-        this.audioBufferPlayer.stop();
+        this.stopAudioBufferPlayer();
         this.audioBufferPlayer = new AudioBufferPlayer(samples, sampleRate);
         this.setState({
             chunkLevels: computeChunkedRMS(samples),
@@ -171,7 +184,7 @@ class SoundEditor extends React.Component {
             });
     }
     handlePlay() {
-        this.audioBufferPlayer.stop();
+        this.stopAudioBufferPlayer();
         this.audioBufferPlayer.play(
             this.state.trimStart || 0,
             this.state.trimEnd || 1,
@@ -179,7 +192,7 @@ class SoundEditor extends React.Component {
             this.handleStoppedPlaying);
     }
     handleStopPlaying() {
-        this.audioBufferPlayer.stop();
+        this.stopAudioBufferPlayer();
         this.handleStoppedPlaying();
     }
     handleStoppedPlaying() {

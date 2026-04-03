@@ -201,12 +201,20 @@ $arrow-rounding: 0.125rem;
 
 /* Mobile overrides for Floating Action Button style */
 @media (max-width: 767px) {
-    .menu-container {
+    .mobile-fixed {
         position: fixed !important;
         bottom: 15px !important;
         right: 15px !important;
         left: auto !important;
         z-index: 1000 !important;
+    }
+
+    .mobile-inline {
+        position: relative !important;
+        bottom: auto !important;
+        right: auto !important;
+        left: auto !important;
+        z-index: auto !important;
     }
 
     .main-button {

@@ -5,7 +5,7 @@ import {computeRMS, computeChunkedRMS} from './audio-util.js';
 
 class AudioRecorder {
     constructor () {
-        this.audioContext = new SharedAudioContext();
+        this.audioContext = SharedAudioContext();
         this.bufferLength = 8192;
 
         this.userMediaStream = null;

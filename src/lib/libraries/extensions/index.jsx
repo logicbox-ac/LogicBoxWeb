@@ -13,6 +13,18 @@ import videoSensingInsetIconURL from './videoSensing/video-sensing-small.svg';
 import handpose2scratchIconURL from './handpose2scratch/handpose2scratch.png';
 import handpose2scratchInsetIconURL from './handpose2scratch/handpose2scratch-small.png';
 
+import facemesh2scratchIconURL from './facemesh2scratch/facemesh2scratch.png';
+import facemesh2scratchInsetIconURL from './facemesh2scratch/facemesh2scratch-small.png';
+
+import ml2scratchIconURL from './ml2scratch/ml2scratch.png';
+import ml2scratchInsetIconURL from './ml2scratch/ml2scratch-small.png';
+
+import speech2scratchIconURL from './speech2scratch/speech2scratch.png';
+import speech2scratchInsetIconURL from './speech2scratch/speech2scratch-small.png';
+
+import cameraselectorIconURL from './cameraselector/cameraselector.png';
+import cameraselectorInsetIconURL from './cameraselector/cameraselector-small.png';
+
 import text2speechIconURL from './text2speech/text2speech.png';
 import text2speechInsetIconURL from './text2speech/text2speech-small.svg';
 
@@ -26,6 +38,11 @@ import microbitIconURL from './microbit/microbit.png';
 import microbitInsetIconURL from './microbit/microbit-small.svg';
 import microbitConnectionIconURL from './microbit/microbit-illustration.svg';
 import microbitConnectionSmallIconURL from './microbit/microbit-small.svg';
+
+import microbitMoreIconURL from './microbitMore/microbitMore.png';
+import microbitMoreInsetIconURL from './microbitMore/microbitMore-small.svg';
+import microbitMoreConnectionIconURL from './microbitMore/microbitMore-illustration.svg';
+import microbitMoreConnectionSmallIconURL from './microbitMore/microbitMore-connection-small.svg';
 
 import ev3IconURL from './ev3/ev3.png';
 import ev3InsetIconURL from './ev3/ev3-small.svg';
@@ -136,6 +153,97 @@ export default [
     {
         name: (
             <FormattedMessage
+                defaultMessage="Facemesh2Scratch"
+                description="Name for the Facemesh2Scratch extension"
+                id="gui.extension.facemesh2scratch.name"
+            />
+        ),
+        extensionId: 'facemesh2scratch',
+        collaborator: 'champierre',
+        iconURL: facemesh2scratchIconURL,
+        insetIconURL: facemesh2scratchInsetIconURL,
+        description: (
+            <FormattedMessage
+                defaultMessage="Track face landmarks with the webcam."
+                description="Description for the Facemesh2Scratch extension"
+                id="gui.extension.facemesh2scratch.description"
+            />
+        ),
+        featured: true,
+        internetConnectionRequired: true,
+        helpLink: 'https://champierre.github.io/facemesh2scratch/'
+    },
+    {
+        name: (
+            <FormattedMessage
+                defaultMessage="ML2Scratch"
+                description="Name for the ML2Scratch extension"
+                id="gui.extension.ml2scratch.name"
+            />
+        ),
+        extensionId: 'ml2scratch',
+        collaborator: 'champierre',
+        iconURL: ml2scratchIconURL,
+        insetIconURL: ml2scratchInsetIconURL,
+        description: (
+            <FormattedMessage
+                defaultMessage="Train image labels in your browser."
+                description="Description for the ML2Scratch extension"
+                id="gui.extension.ml2scratch.description"
+            />
+        ),
+        featured: true,
+        internetConnectionRequired: true,
+        helpLink: 'https://champierre.github.io/ml2scratch/'
+    },
+    {
+        name: (
+            <FormattedMessage
+                defaultMessage="Speech2Scratch"
+                description="Name for the Speech2Scratch extension"
+                id="gui.extension.speech2scratch.name"
+            />
+        ),
+        extensionId: 'speech2scratch',
+        collaborator: 'champierre',
+        iconURL: speech2scratchIconURL,
+        insetIconURL: speech2scratchInsetIconURL,
+        description: (
+            <FormattedMessage
+                defaultMessage="Turn speech into text."
+                description="Description for the Speech2Scratch extension"
+                id="gui.extension.speech2scratch.description"
+            />
+        ),
+        featured: true,
+        internetConnectionRequired: true,
+        helpLink: 'https://champierre.github.io/speech2scratch/'
+    },
+    {
+        name: (
+            <FormattedMessage
+                defaultMessage="CameraSelector"
+                description="Name for the CameraSelector extension"
+                id="gui.extension.cameraselector.name"
+            />
+        ),
+        extensionId: 'cameraselector',
+        collaborator: 'TFabWorks',
+        iconURL: cameraselectorIconURL,
+        insetIconURL: cameraselectorInsetIconURL,
+        description: (
+            <FormattedMessage
+                defaultMessage="Choose which camera video extensions use."
+                description="Description for the CameraSelector extension"
+                id="gui.extension.cameraselector.description"
+            />
+        ),
+        featured: true,
+        helpLink: 'https://tfabworks.github.io/xcx-cameraselector/'
+    },
+    {
+        name: (
+            <FormattedMessage
                 defaultMessage="Text to Speech"
                 description="Name for the Text to Speech extension"
                 id="gui.extension.text2speech.name"
@@ -221,6 +329,42 @@ export default [
             />
         ),
         helpLink: 'https://scratch.mit.edu/microbit'
+    },
+    {
+        name: (
+            <FormattedMessage
+                defaultMessage="micro:bit More"
+                description="Name for the micro:bit More extension"
+                id="gui.extension.microbitMore.name"
+            />
+        ),
+        extensionId: 'microbitMore',
+        collaborator: 'Yengawa Lab',
+        iconURL: microbitMoreIconURL,
+        insetIconURL: microbitMoreInsetIconURL,
+        description: (
+            <FormattedMessage
+                defaultMessage="Use more sensors, pins, and events from micro:bit."
+                description="Description for the micro:bit More extension"
+                id="gui.extension.microbitMore.description"
+            />
+        ),
+        featured: true,
+        disabled: false,
+        bluetoothRequired: true,
+        internetConnectionRequired: false,
+        launchPeripheralConnectionFlow: true,
+        useAutoScan: false,
+        connectionIconURL: microbitMoreConnectionIconURL,
+        connectionSmallIconURL: microbitMoreConnectionSmallIconURL,
+        connectingMessage: (
+            <FormattedMessage
+                defaultMessage="Connecting"
+                description="Message to help people connect to their micro:bit More device."
+                id="gui.extension.microbitMore.connectingMessage"
+            />
+        ),
+        helpLink: 'https://microbit-more.github.io/'
     },
     {
         name: 'LEGO MINDSTORMS EV3',

@@ -48,6 +48,7 @@ import {
     remixProject,
     saveProjectAsCopy
 } from '../../reducers/project-state';
+import {setProjectTitle} from '../../reducers/project-title';
 import {
     openAboutMenu,
     closeAboutMenu,
@@ -104,6 +105,16 @@ const ariaMessages = defineMessages({
         id: 'gui.menuBar.debug',
         defaultMessage: 'Debug',
         description: 'accessibility text for the debug button'
+    },
+    mobileProjectNamePrompt: {
+        id: 'gui.menuBar.mobileProjectNamePrompt',
+        defaultMessage: 'Enter a project name before saving:',
+        description: 'Prompt shown on mobile before saving so user can set a project name'
+    },
+    untitledProjectName: {
+        id: 'gui.menuBar.untitledProjectName',
+        defaultMessage: 'Untitled Project',
+        description: 'Fallback project title when saving on mobile without a provided name'
     }
 });
 
@@ -181,12 +192,16 @@ class MenuBar extends React.Component {
             'handleClickNew',
             'handleClickRemix',
             'handleClickSave',
+            'handleClickMobileSave',
             'handleClickSaveAsCopy',
             'handleClickLoadFromComputer',
             'handleClickSeeCommunity',
             'handleClickShare',
+            'handleMobileSaveToComputer',
             'handleSetMode',
             'handleKeyPress',
+            'getMobileSaveToComputerHandler',
+            'prepareProjectTitleForMobileSave',
             'handleRestoreOption',
             'handleSaveToComputer',
             'getSaveToComputerHandler',
@@ -222,9 +237,38 @@ class MenuBar extends React.Component {
         this.props.onClickSave();
         this.props.onRequestCloseFile();
     }
+    handleClickMobileSave () {
+        if (!this.prepareProjectTitleForMobileSave()) return;
+        this.handleClickSave();
+    }
     handleClickSaveAsCopy () {
         this.props.onClickSaveAsCopy();
         this.props.onRequestCloseFile();
+    }
+    handleMobileSaveToComputer (downloadProjectCallback) {
+        if (!this.prepareProjectTitleForMobileSave()) return;
+        this.handleSaveToComputer(downloadProjectCallback, false);
+    }
+    getMobileSaveToComputerHandler (downloadProjectCallback) {
+        return () => this.handleMobileSaveToComputer(downloadProjectCallback);
+    }
+    prepareProjectTitleForMobileSave () {
+        // Show the naming prompt only on desktop screens.
+        if (typeof window === 'undefined' || window.innerWidth <= 767) {
+            return true;
+        }
+        const fallbackTitle = this.props.intl.formatMessage(ariaMessages.untitledProjectName);
+        const currentTitle = (this.props.projectTitle || '').trim();
+        const enteredTitle = window.prompt( // eslint-disable-line no-alert
+            this.props.intl.formatMessage(ariaMessages.mobileProjectNamePrompt),
+            currentTitle || fallbackTitle
+        );
+        if (enteredTitle === null) {
+            return false;
+        }
+        const normalizedTitle = enteredTitle.trim().slice(0, 100);
+        this.props.onSetProjectTitle(normalizedTitle || fallbackTitle);
+        return true;
     }
     handleClickLoadFromComputer () {
         if (window.ReactNativeWebView) {
@@ -453,6 +497,13 @@ class MenuBar extends React.Component {
                 id="gui.menuBar.mobileSave"
             />
         );
+        const mobileOpenMessage = (
+            <FormattedMessage
+                defaultMessage="Open"
+                description="Compact mobile header button for opening a local project file"
+                id="gui.menuBar.mobileOpen"
+            />
+        );
         const remixButton = (
             <Button
                 className={classNames(
@@ -469,7 +520,7 @@ class MenuBar extends React.Component {
         const mobileSaveButton = this.props.canSave ? (
             <Button
                 className={styles.mobileSaveButton}
-                onClick={this.handleClickSave}
+                onClick={this.handleClickMobileSave}
             >
                 {mobileSaveMessage}
             </Button>
@@ -477,12 +528,20 @@ class MenuBar extends React.Component {
             <SB3Downloader>{(className, downloadProjectCallback) => (
                 <Button
                     className={classNames(styles.mobileSaveButton, className)}
-                    onClick={this.getSaveToComputerHandler(downloadProjectCallback, false)}
+                    onClick={this.getMobileSaveToComputerHandler(downloadProjectCallback)}
                 >
                     {mobileSaveMessage}
                 </Button>
             )}</SB3Downloader>
         ) : null);
+        const mobileOpenButton = this.props.canManageFiles ? (
+            <Button
+                className={styles.mobileOpenButton}
+                onClick={this.handleClickLoadFromComputer}
+            >
+                {mobileOpenMessage}
+            </Button>
+        ) : null;
         // Show the About button only if we have a handler for it (like in the desktop app)
         const aboutButton = this.buildAboutMenu(this.props.onClickAbout);
         return (
@@ -506,6 +565,7 @@ class MenuBar extends React.Component {
                                 onClick={this.props.onClickLogo}
                             />
                         </div>
+                        {mobileOpenButton}
                         {mobileSaveButton}
                         <div className={styles.desktopControls}>
                             {(this.props.canChangeTheme || this.props.canChangeLanguage) && (<SettingsMenu
@@ -996,6 +1056,7 @@ MenuBar.propTypes = {
     onOpenTipLibrary: PropTypes.func,
     onOpenDebugModal: PropTypes.func,
     onProjectTelemetryEvent: PropTypes.func,
+    onSetProjectTitle: PropTypes.func,
     onRequestCloseAbout: PropTypes.func,
     onRequestCloseAccount: PropTypes.func,
     onRequestCloseEdit: PropTypes.func,
@@ -1077,6 +1138,7 @@ const mapDispatchToProps = dispatch => ({
     onClickRemix: () => dispatch(remixProject()),
     onClickSave: () => dispatch(manualUpdateProject()),
     onClickSaveAsCopy: () => dispatch(saveProjectAsCopy()),
+    onSetProjectTitle: title => dispatch(setProjectTitle(title)),
     onSeeCommunity: () => dispatch(setPlayer(true)),
     onSetTimeTravelMode: mode => dispatch(setTimeTravel(mode))
 });

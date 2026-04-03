@@ -102,6 +102,7 @@ class ActionMenu extends React.Component {
     render () {
         const {
             className,
+            floatingOnMobile,
             img: mainImg,
             title: mainTitle,
             moreButtons,
@@ -112,6 +113,8 @@ class ActionMenu extends React.Component {
         return (
             <div
                 className={classNames(styles.menuContainer, className, {
+                    [styles.mobileFixed]: floatingOnMobile,
+                    [styles.mobileInline]: !floatingOnMobile,
                     [styles.expanded]: this.state.isOpen,
                     [styles.forceHidden]: this.state.forceHide
                 })}
@@ -192,6 +195,7 @@ class ActionMenu extends React.Component {
 
 ActionMenu.propTypes = {
     className: PropTypes.string,
+    floatingOnMobile: PropTypes.bool,
     img: PropTypes.string,
     moreButtons: PropTypes.arrayOf(PropTypes.shape({
         img: PropTypes.string,
@@ -205,6 +209,10 @@ ActionMenu.propTypes = {
     onClick: PropTypes.func.isRequired,
     title: PropTypes.node.isRequired,
     tooltipPlace: PropTypes.string
+};
+
+ActionMenu.defaultProps = {
+    floatingOnMobile: false
 };
 
 export default ActionMenu;
