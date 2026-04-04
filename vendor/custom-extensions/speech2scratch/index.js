@@ -22,7 +22,7 @@ class Scratch3Speech2Scratch {
      * @return {string} - the name of this extension.
      */
     static get EXTENSION_NAME() {
-        return 'Speech2Scratch';
+        return 'Speech to Text';
     }
 
     /**

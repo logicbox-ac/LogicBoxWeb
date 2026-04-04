@@ -65,6 +65,7 @@ class Blocks extends React.Component {
             'handleViewportInputModeChange',
             'isMobileTouchViewport',
             'getToolboxXML',
+            'refreshFlyoutLayout',
             'selectToolboxCategory',
             'handleCategorySelected',
             'handleConnectionModalStart',
@@ -568,6 +569,7 @@ class Blocks extends React.Component {
         // Toolbox refreshes can recreate the flyout DOM on mobile, so rebind touch handlers
         // after the new category content is in place.
         setTimeout(() => {
+            this.refreshFlyoutLayout();
             this.attachFlyoutListeners();
             this.attachInteractionDebugListeners();
         }, 0);
@@ -586,6 +588,40 @@ class Blocks extends React.Component {
         }
     }
 
+    refreshFlyoutLayout(options = {}) {
+        if (!this.workspace || !this.workspace.getFlyout) return;
+
+        const {scrollToStart = false} = options;
+        const relayout = () => {
+            if (!this.workspace || !this.workspace.getFlyout) return;
+            const flyout = this.workspace.getFlyout();
+            if (!flyout) return;
+
+            try {
+                if (typeof flyout.reflow === 'function') {
+                    flyout.reflow();
+                }
+                if (flyout.workspace_ && typeof flyout.workspace_.resizeContents === 'function') {
+                    flyout.workspace_.resizeContents();
+                }
+                if (flyout.scrollbar_ && typeof flyout.scrollbar_.resize === 'function') {
+                    flyout.scrollbar_.resize();
+                }
+                if (typeof flyout.position === 'function') {
+                    flyout.position();
+                }
+                if (scrollToStart && typeof flyout.scrollToStart === 'function') {
+                    flyout.scrollToStart();
+                }
+            } catch (error) {
+                log.warn('[Blocks] Failed to refresh flyout layout', error);
+            }
+        };
+
+        setTimeout(relayout, 0);
+        setTimeout(relayout, 60);
+    }
+
     selectToolboxCategory(categoryId) {
         if (!categoryId || !this.workspace || !this.workspace.toolbox_) return false;
 
@@ -595,6 +631,7 @@ class Blocks extends React.Component {
         }
 
         this.workspace.toolbox_.setSelectedCategoryById(categoryId);
+        this.refreshFlyoutLayout({scrollToStart: true});
         this.attachFlyoutListeners();
         this.attachInteractionDebugListeners();
         return true;
@@ -991,6 +1028,7 @@ class Blocks extends React.Component {
         flyout.show = function (xmlList) {
             showTimestamp = Date.now();
             originalShow.call(this, xmlList);
+            self.refreshFlyoutLayout();
             self.setState({ isFlyoutVisible: true });
         };
         flyout.hide = function () {
@@ -1305,6 +1343,7 @@ class Blocks extends React.Component {
         // fresh workspace and we don't want any changes made to another sprites
         // workspace to be 'undone' here.
         this.workspace.clearUndo();
+        this.refreshFlyoutLayout();
         setTimeout(() => this.addCloseButtonsToAllBlocks(), 0);
     }
     handleMonitorsUpdate(monitors) {

@@ -199,8 +199,8 @@ export default [
     {
         name: (
             <FormattedMessage
-                defaultMessage="Speech2Scratch"
-                description="Name for the Speech2Scratch extension"
+                defaultMessage="Speech to Text"
+                description="Name for the Speech to Text extension"
                 id="gui.extension.speech2scratch.name"
             />
         ),

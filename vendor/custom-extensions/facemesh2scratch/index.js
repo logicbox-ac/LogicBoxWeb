@@ -72,6 +72,8 @@ const FACEMESH_ANCHOR_MENU = [
     {text: 'lower lip', value: 'lower_lip'}
 ];
 
+const MAX_SUPPORTED_FACES = 1;
+
 const FACEMESH_IRIS_INDICES = {
     left_eye: [474, 475, 476, 477],
     right_eye: [469, 470, 471, 472]
@@ -405,7 +407,7 @@ class WorkerFaceDetector {
 class Scratch3Facemesh2ScratchBlocks {
     get PERSON_NUMBER_MENU () {
         const personNumberMenu = [];
-        for (let i = 1; i <= 10; i++) {
+        for (let i = 1; i <= MAX_SUPPORTED_FACES; i++) {
             personNumberMenu.push({text: String(i), value: String(i)});
         }
         return personNumberMenu;
@@ -472,7 +474,7 @@ class Scratch3Facemesh2ScratchBlocks {
     _getDetectorOptions () {
         const profile = this._profile || this._getPerformanceProfile();
         return {
-            maxNumFaces: 1,
+            maxNumFaces: MAX_SUPPORTED_FACES,
             minDetectionConfidence: profile.isLowPerformance ? 0.45 : 0.55,
             minTrackingConfidence: profile.isLowPerformance ? 0.35 : 0.5,
             refineLandmarks: !profile.isLowPerformance,

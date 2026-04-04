@@ -38,7 +38,7 @@ class VirtualKeyboard extends React.Component {
         ]);
         this.state = {
             pressedKeys: new Set(),
-            isCollapsed: false
+            isCollapsed: true
         };
         this.containerRef = null;
         this.activePointers = new Map();
@@ -152,6 +152,7 @@ class VirtualKeyboard extends React.Component {
                     className={styles.toggleButton}
                     onClick={this.toggleCollapsed}
                     type="button"
+                    aria-expanded={!isCollapsed}
                 >
                     <span className={styles.toggleIcon}>⌨</span>
                     <span className={styles.toggleText}>

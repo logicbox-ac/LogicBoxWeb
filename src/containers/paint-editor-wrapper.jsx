@@ -69,11 +69,13 @@ class PaintEditorWrapper extends React.Component {
                     max-width: 100% !important;
                     height: 100% !important;
                     min-height: 0 !important;
-                    overflow: hidden !important;
+                    overflow-y: auto !important;
+                    overflow-x: hidden !important;
                     padding: 4px !important;
                     box-sizing: border-box !important;
                     display: flex !important;
                     flex-direction: column !important;
+                    -webkit-overflow-scrolling: touch !important;
                 }
 
                 /* ── Editor container top (single scrollable toolbar area) ── */
@@ -98,8 +100,10 @@ class PaintEditorWrapper extends React.Component {
                     flex: 1 1 0 !important;
                     min-height: 0 !important;
                     min-width: 0 !important;
-                    overflow: hidden !important;
+                    overflow-y: auto !important;
+                    overflow-x: hidden !important;
                     padding-top: 4px !important;
+                    -webkit-overflow-scrolling: touch !important;
                 }
 
                 /* ── Mode selector: horizontal scrollable ribbon ── */
@@ -191,7 +195,7 @@ class PaintEditorWrapper extends React.Component {
                     box-sizing: border-box !important;
                     display: flex !important;
                     flex-direction: column !important;
-                    overflow: hidden !important;
+                    overflow: visible !important;
                     position: relative !important;
                 }
 
@@ -202,9 +206,9 @@ class PaintEditorWrapper extends React.Component {
                     max-width: 100% !important;
                     min-width: 0 !important;
                     flex: 1 1 0 !important;
-                    min-height: 0 !important;
+                    min-height: clamp(18rem, 65vh, 26rem) !important;
                     position: relative !important;
-                    overflow: hidden !important;
+                    overflow: visible !important;
                     box-sizing: border-box !important;
                 }
 
@@ -221,6 +225,7 @@ class PaintEditorWrapper extends React.Component {
                     height: 100% !important;
                     max-width: 100% !important;
                     min-width: 0 !important;
+                    min-height: inherit !important;
                 }
 
                 /* ── Canvas controls: overlay at bottom of canvas ── */
@@ -455,7 +460,8 @@ class PaintEditorWrapper extends React.Component {
                 topAlignRow.style.setProperty('flex', '1 1 0', 'important');
                 topAlignRow.style.setProperty('min-height', '0', 'important');
                 topAlignRow.style.setProperty('min-width', '0', 'important');
-                topAlignRow.style.setProperty('overflow', 'hidden', 'important');
+                topAlignRow.style.setProperty('overflow-y', 'auto', 'important');
+                topAlignRow.style.setProperty('overflow-x', 'hidden', 'important');
                 topAlignRow.style.setProperty('padding-top', '4px', 'important');
                 this.logDebug(`TopAlignRow inline fix applied`);
             }
@@ -469,7 +475,7 @@ class PaintEditorWrapper extends React.Component {
 
             const editorContainer = document.querySelector('[class*="paint-editor_editor-container"]');
             if (editorContainer) {
-                editorContainer.style.cssText += ';width:100%;max-width:100%;height:100%;overflow:hidden;padding:4px;display:flex;flex-direction:column;min-height:0;';
+                editorContainer.style.cssText += ';width:100%;max-width:100%;height:100%;overflow-y:auto;overflow-x:hidden;padding:4px;display:flex;flex-direction:column;min-height:0;-webkit-overflow-scrolling:touch;';
             }
 
             // Force toolbar rows to expand within single scrollable container
@@ -684,7 +690,7 @@ class PaintEditorWrapper extends React.Component {
                 controlsContainer.style.setProperty('margin', '0', 'important');
                 controlsContainer.style.setProperty('display', 'flex', 'important');
                 controlsContainer.style.setProperty('flex-direction', 'column', 'important');
-                controlsContainer.style.setProperty('overflow', 'hidden', 'important');
+                controlsContainer.style.setProperty('overflow', 'visible', 'important');
                 controlsContainer.style.setProperty('flex', '1 1 0', 'important');
                 controlsContainer.style.setProperty('min-height', '0', 'important');
                 controlsContainer.style.setProperty('position', 'relative', 'important');
@@ -696,8 +702,8 @@ class PaintEditorWrapper extends React.Component {
                 canvasContainer.style.setProperty('max-width', '100%', 'important');
                 canvasContainer.style.setProperty('min-width', '0', 'important');
                 canvasContainer.style.setProperty('flex', '1 1 0', 'important');
-                canvasContainer.style.setProperty('min-height', '0', 'important');
-                canvasContainer.style.setProperty('overflow', 'hidden', 'important');
+                canvasContainer.style.setProperty('min-height', 'clamp(18rem, 65vh, 26rem)', 'important');
+                canvasContainer.style.setProperty('overflow', 'visible', 'important');
                 canvasContainer.style.setProperty('position', 'relative', 'important');
                 canvasContainer.style.setProperty('box-sizing', 'border-box', 'important');
                 // Remove any previously set fixed height

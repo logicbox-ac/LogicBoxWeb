@@ -89,11 +89,12 @@
     display: flex;
     flex-wrap: wrap;
     flex-direction: row;
+    align-content: flex-start;
 
     padding-top: calc($space / 2);
     padding-left: calc($space / 2);
     padding-right: calc($space / 2);
-    padding-bottom: calc($space + 3.5rem);
+    padding-bottom: calc($space / 2);
 
     overflow-x: hidden;
 }
@@ -102,48 +103,31 @@
     .items-wrapper {
         overflow: visible !important;
         padding-top: 0.75rem;
-        padding-right: calc($space + 4rem);
+        padding-right: calc($space / 2);
     }
+}
+
+.add-button-tray {
+    display: flex;
+    width: 100%;
+    justify-content: flex-end;
+    padding: 0.5rem calc($space / 2) 0;
+    margin-top: auto;
 }
 
 .add-button {
-    position: absolute;
-    bottom: 1.75rem;
-    z-index: $z-index-add-button;
-}
-
-[dir="ltr"] .add-button {
-    right: -0.75rem;
-    left: auto;
-}
-
-[dir="rtl"] .add-button {
-    right: -0.75rem;
-    left: auto;
+    position: static;
+    z-index: auto;
+    margin-left: auto;
 }
 
 @media (max-width: 767px) {
-    .sprite-list-pane .add-button {
-        position: absolute !important;
-        top: 5.75rem !important;
-        bottom: auto !important;
-        right: 0.75rem !important;
-        left: auto !important;
-        z-index: 100 !important;
-    }
-
-    .add-button {
-        top: 0.75rem !important;
-        bottom: auto !important;
-        right: 0.75rem !important;
-        left: auto !important;
-        z-index: 100 !important;
-    }
-
-    [dir="ltr"] .add-button,
-    [dir="rtl"] .add-button {
-        right: 0.75rem !important;
-        left: auto !important;
+    .add-button-tray {
+        position: sticky;
+        bottom: 0;
+        z-index: $z-index-add-button;
+        padding-bottom: 0.5rem;
+        background: linear-gradient(to top, $ui-secondary 70%, rgba(255, 255, 255, 0));
     }
 }
 

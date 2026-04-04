@@ -16,6 +16,7 @@ const ThrottledSpriteSelectorItem = ThrottledPropertyHOC('asset', 500)(SpriteSel
 
 const SpriteList = function (props) {
     const {
+        addButton,
         containerRef,
         editingTarget,
         draggingIndex,
@@ -100,12 +101,18 @@ const SpriteList = function (props) {
                         </SortableAsset>
                     );
                 })}
+                {addButton ? (
+                    <Box className={styles.addButtonTray}>
+                        {addButton}
+                    </Box>
+                ) : null}
             </Box>
         </Box>
     );
 };
 
 SpriteList.propTypes = {
+    addButton: PropTypes.node,
     containerRef: PropTypes.func,
     draggingIndex: PropTypes.number,
     draggingType: PropTypes.oneOf(Object.keys(DragConstants)),
