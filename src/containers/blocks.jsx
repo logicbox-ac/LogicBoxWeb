@@ -228,6 +228,8 @@ class Blocks extends React.Component {
             this.state.prompt !== nextState.prompt ||
             this.state.isToolboxCollapsed !== nextState.isToolboxCollapsed ||
             this.state.isFlyoutVisible !== nextState.isFlyoutVisible ||
+            this.state.mobileDeletePosition !== nextState.mobileDeletePosition ||
+            this.state.mobileDeleteBlockId !== nextState.mobileDeleteBlockId ||
             this.props.isVisible !== nextProps.isVisible ||
             this._renderedToolboxXML !== nextProps.toolboxXML ||
             this.props.extensionLibraryVisible !== nextProps.extensionLibraryVisible ||
@@ -332,21 +334,22 @@ class Blocks extends React.Component {
         }, 2000);
     }
 
-    _isStatementBlock(block) {
-        // Only statement blocks (stackable blocks) and hat blocks should get X buttons.
-        // Filter out:
-        // - Shadow blocks (default values in inputs like dropdowns)
-        // - Reporter/value blocks with outputConnection (blocks that sit inside other blocks)
+    _shouldShowCloseButton(block) {
+        // Show close buttons on non-shadow stack blocks and on top-level reporters.
+        // Nested reporter/value blocks stay button-free so they don't clutter inputs.
         if (!block) return false;
         if (typeof block.isShadow === 'function' && block.isShadow()) return false;
-        if (block.outputConnection) return false;
+        if (typeof block.isInsertionMarker === 'function' && block.isInsertionMarker()) return false;
+        if (block.outputConnection) {
+            return !block.getParent();
+        }
         return true;
     }
 
     _ensureCloseButtonForBlock(blockId) {
         if (!this.workspace) return;
         const block = this.workspace.getBlockById(blockId);
-        if (block && block.svgGroup_ && !block.closeButton_ && this._isStatementBlock(block)) {
+        if (block && block.svgGroup_ && !block.closeButton_ && this._shouldShowCloseButton(block)) {
             this.addCloseButtonToBlock(block);
         }
     }
@@ -354,10 +357,10 @@ class Blocks extends React.Component {
     addCloseButtonsToAllBlocks() {
         if (!this.workspace) return;
 
-        // Add close buttons to all statement blocks (not input/value blocks)
+        // Add close buttons to all stack blocks and top-level reporters.
         const allBlocks = this.workspace.getAllBlocks();
         allBlocks.forEach(block => {
-            if (!this._isStatementBlock(block)) {
+            if (!this._shouldShowCloseButton(block)) {
                 // Remove any close button that was wrongly added to an input block
                 if (block.closeButton_) {
                     block.closeButton_.remove();
@@ -410,8 +413,7 @@ class Blocks extends React.Component {
     }
 
     addCloseButtonToBlock(block) {
-        // Add to statement blocks only (not shadow/input/value blocks)
-        if (!block.svgGroup_ || block.closeButton_ || !this._isStatementBlock(block)) {
+        if (!block.svgGroup_ || block.closeButton_ || !this._shouldShowCloseButton(block)) {
             return;
         }
 
@@ -749,6 +751,11 @@ class Blocks extends React.Component {
     }
 
     attachFlyoutListeners() {
+        if (!this.isMobileTouchViewport()) {
+            this.detachFlyoutListeners();
+            return;
+        }
+
         const flyout = this.workspace.getFlyout();
         if (!flyout) {
             this.detachFlyoutListeners();
@@ -769,296 +776,151 @@ class Blocks extends React.Component {
         this.detachFlyoutListeners();
         this._connectedFlyoutSvg = flyoutSvgGroup;
         const flyoutWorkspace = flyout.getWorkspace();
-        const ownerDocument = flyoutSvgGroup.ownerDocument || document;
-
-        let pointerStartPos = null;
-        // Relaxed thresholds for mobile headers/fingers
         const TAP_THRESHOLD = 15;
         const TAP_DURATION = 700;
+        let touchStartInfo = null;
 
-        // Live Drag State
-        let draggedBlock = null;
-        let lastDragEndTime = 0;
-        const clearPointerState = () => {
-            pointerStartPos = null;
-            draggedBlock = null;
-        };
-        const matchesActivePointer = event => {
-            if (!pointerStartPos) return false;
-            if (typeof event.pointerId === 'number') {
-                return event.pointerId === pointerStartPos.pointerId;
-            }
-            return pointerStartPos.pointerType === 'mouse';
+        const clearTouchState = () => {
+            touchStartInfo = null;
         };
 
-        const onPointerDown = e => {
-            const pointerType = e.pointerType || 'unknown';
-            const isPrimaryPointer = typeof e.isPrimary === 'boolean' ? e.isPrimary : true;
-            if (!isPrimaryPointer) return;
+        const getFlyoutCheckboxFromTarget = target => {
+            if (!target || !flyout.checkboxes_) return null;
 
-            // Ensure we receive pointerup even if pointer leaves the flyout.
-            if (e.target.setPointerCapture && pointerType !== 'mouse') {
-                try {
-                    e.target.setPointerCapture(e.pointerId);
-                } catch (error) {
-                    // Pointer capture can fail for detached targets; continue safely.
+            const checkboxIds = Object.keys(flyout.checkboxes_);
+            for (let i = 0; i < checkboxIds.length; i++) {
+                const checkboxObj = flyout.checkboxes_[checkboxIds[i]];
+                if (!checkboxObj || !checkboxObj.svgRoot) continue;
+                if (checkboxObj.svgRoot === target || checkboxObj.svgRoot.contains(target)) {
+                    return checkboxObj;
                 }
             }
+            return null;
+        };
 
-            pointerStartPos = {
-                x: e.clientX,
-                y: e.clientY,
-                pointerId: e.pointerId,
-                pointerType,
-                nativeMouseDownSeen: false,
+        const getMatchingTouch = event => {
+            if (!touchStartInfo || !event.changedTouches) return null;
+            for (let i = 0; i < event.changedTouches.length; i++) {
+                const changedTouch = event.changedTouches[i];
+                if (changedTouch.identifier === touchStartInfo.identifier) {
+                    return changedTouch;
+                }
+            }
+            return null;
+        };
+
+        const isCheckboxTapTarget = target => {
+            if (getFlyoutCheckboxFromTarget(target)) {
+                return true;
+            }
+
+            let checkTarget = target;
+            while (checkTarget && checkTarget !== flyoutSvgGroup) {
+                if (checkTarget.classList &&
+                    (checkTarget.classList.contains('blocklyFlyoutCheckbox') ||
+                        checkTarget.classList.contains('blocklyFlyoutCheckboxPath') ||
+                        checkTarget.classList.contains('blocklyTouchTargetBackground'))) {
+                    return true;
+                }
+                if (checkTarget.tagName === 'g' && checkTarget.querySelector('.blocklyFlyoutCheckbox')) {
+                    return true;
+                }
+                checkTarget = checkTarget.parentNode;
+            }
+            return false;
+        };
+
+        const getFlyoutTopBlockFromTarget = target => {
+            const blockId = this.getBlockIdFromTarget(target, flyoutSvgGroup);
+            if (!blockId || !flyoutWorkspace) return null;
+
+            let block = flyoutWorkspace.getBlockById(blockId);
+            while (block && block.getParent()) {
+                block = block.getParent();
+            }
+            return block;
+        };
+
+        const onTouchStart = e => {
+            if (!e.changedTouches || e.changedTouches.length !== 1) {
+                clearTouchState();
+                return;
+            }
+
+            const touch = e.changedTouches[0];
+            const checkboxObj = getFlyoutCheckboxFromTarget(e.target);
+            touchStartInfo = {
+                identifier: touch.identifier,
+                x: touch.clientX,
+                y: touch.clientY,
+                moved: false,
                 target: e.target,
-                time: Date.now()
+                time: Date.now(),
+                checkboxInitialState: checkboxObj ? checkboxObj.clicked : null
             };
         };
 
-        const onMouseDown = e => {
-            if (!pointerStartPos) return;
-            const isSamePoint = Math.abs(e.clientX - pointerStartPos.x) < 2 &&
-                Math.abs(e.clientY - pointerStartPos.y) < 2;
-            const isSameMoment = (Date.now() - pointerStartPos.time) < 50;
-            if (isSamePoint && isSameMoment) {
-                pointerStartPos.nativeMouseDownSeen = true;
+        const onTouchMove = e => {
+            const touch = getMatchingTouch(e);
+            if (!touchStartInfo || !touch) return;
+
+            const dx = Math.abs(touch.clientX - touchStartInfo.x);
+            const dy = Math.abs(touch.clientY - touchStartInfo.y);
+            if (dx >= TAP_THRESHOLD || dy >= TAP_THRESHOLD) {
+                touchStartInfo.moved = true;
             }
         };
 
-        const onPointerMove = e => {
-            if (pointerStartPos && e.pointerId === pointerStartPos.pointerId) {
-                // Native Blockly handles mouse drag via mousedown/mousemove.
-                // If those events are present, keep custom fallback inert.
-                if (pointerStartPos.pointerType === 'mouse' && pointerStartPos.nativeMouseDownSeen) {
-                    return;
-                }
-
-                const currentX = e.clientX;
-                const currentY = e.clientY;
-                const dx = Math.abs(currentX - pointerStartPos.x);
-                const dy = Math.abs(currentY - pointerStartPos.y);
-
-                // Case 1: Detect Start of Drag (Horizontal Swipe)
-                if (!draggedBlock && dx > 20 && dx > dy * 1.5) {
-                    // If native drag is already active, don't interfere
-                    if (this.workspace.isDragging && this.workspace.isDragging()) {
-                        return;
-                    }
-
-                    let target = pointerStartPos.target;
-                    let blockId = null;
-                    while (target && target !== flyoutSvgGroup) {
-                        if (target.getAttribute && target.getAttribute('data-id')) {
-                            blockId = target.getAttribute('data-id');
-                            break;
-                        }
-                        target = target.parentNode;
-                    }
-
-                    if (blockId && flyoutWorkspace) {
-                        // Stop browser scroll and native Blockly handlers
-                        e.preventDefault();
-                        e.stopPropagation();
-
-                        const sourceBlock = flyoutWorkspace.getBlockById(blockId);
-                        if (sourceBlock) {
-                            if (this.isBlockInteractionDebugEnabled()) {
-                                console.log('[BLOCK-DBG] Fallback drag start', {
-                                    blockId,
-                                    pointerType: pointerStartPos.pointerType,
-                                    nativeMouseDownSeen: pointerStartPos.nativeMouseDownSeen
-                                });
-                            }
-                            draggedBlock = flyout.createBlock(sourceBlock);
-
-                            // Initialize last position for delta updates
-                            pointerStartPos.lastX = currentX;
-                            pointerStartPos.lastY = currentY;
-
-                            // Initial jump to finger
-                            const scale = this.workspace.scale;
-                            draggedBlock.moveBy((currentX - pointerStartPos.x) / scale, (currentY - pointerStartPos.y) / scale);
-                        }
-                    }
-                }
-
-                // Case 2: Continue Live Drag
-                if (draggedBlock) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    const scale = this.workspace.scale;
-                    // Calculate delta since last move event to avoid accumulation errors
-                    // use defaults in case lastX is missing (though it shouldn't be)
-                    const prevX = pointerStartPos.lastX || pointerStartPos.x;
-                    const prevY = pointerStartPos.lastY || pointerStartPos.y;
-
-                    const deltaX = (currentX - prevX) / scale;
-                    const deltaY = (currentY - prevY) / scale;
-
-                    draggedBlock.moveBy(deltaX, deltaY);
-
-                    pointerStartPos.lastX = currentX;
-                    pointerStartPos.lastY = currentY;
-                }
-            }
-        };
-
-        const finishPointerInteraction = (e, isCanceled = false) => {
-            if (!matchesActivePointer(e)) return;
-
-            // Let native Blockly complete mouse interactions when mousedown fired.
-            if (pointerStartPos.pointerType === 'mouse' && pointerStartPos.nativeMouseDownSeen) {
-                pointerStartPos = null;
-                return;
-            }
-
-            // If we were dragging, just finish.
-            if (draggedBlock) {
-                // CRITICAL FIX: Stop event propagation so Native Blockly doesn't interpret this as a Click/Tap
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-
-                if (this.isBlockInteractionDebugEnabled()) {
-                    console.log('[BLOCK-DBG] Fallback drag end', {
-                        pointerType: pointerStartPos.pointerType,
-                        canceled: isCanceled
-                    });
-                }
-
-                clearPointerState();
-                lastDragEndTime = Date.now();
-                return;
-            }
-
-            if (isCanceled) {
-                clearPointerState();
-                return;
-            }
-
-            // Otherwise, check for Tap
-            if (!flyout.isVisible()) {
-                clearPointerState();
-                return;
-            }
-
-            const dx = Math.abs(e.clientX - pointerStartPos.x);
-            const dy = Math.abs(e.clientY - pointerStartPos.y);
-            const duration = Date.now() - pointerStartPos.time;
-
-            const isTap = dx < TAP_THRESHOLD && dy < TAP_THRESHOLD && duration < TAP_DURATION;
-
-            if (isTap) {
-                const tapTarget = pointerStartPos.target;
-
-                // Check if user tapped on a checkbox element.
-                // Blockly's native mousedown handler already toggles the checkbox,
-                // so we just detect checkbox taps and return early to prevent
-                // the tap from also creating a new block.
-                let checkTarget = tapTarget;
-                let isCheckboxTap = false;
-                while (checkTarget && checkTarget !== flyoutSvgGroup) {
-                    if (checkTarget.classList &&
-                        (checkTarget.classList.contains('blocklyFlyoutCheckbox') ||
-                            checkTarget.classList.contains('blocklyFlyoutCheckboxPath') ||
-                            checkTarget.classList.contains('blocklyTouchTargetBackground'))) {
-                        isCheckboxTap = true;
-                        break;
-                    }
-                    if (checkTarget.tagName === 'g' && checkTarget.querySelector('.blocklyFlyoutCheckbox')) {
-                        isCheckboxTap = true;
-                        break;
-                    }
-                    checkTarget = checkTarget.parentNode;
-                }
-
-                if (isCheckboxTap) {
-                    pointerStartPos = null;
-                    return;
-                }
-
-                // Find the block that was tapped
-                let target = tapTarget;
-                let blockId = null;
-
-                while (target && target !== flyoutSvgGroup) {
-                    if (target.getAttribute && target.getAttribute('data-id')) {
-                        blockId = target.getAttribute('data-id');
-                        break;
-                    }
-                    target = target.parentNode;
-                }
-
-                if (blockId && flyoutWorkspace) {
-                    let block = flyoutWorkspace.getBlockById(blockId);
-                    if (block) {
-                        // Walk up to the topmost parent block in the flyout
-                        // This ensures that tapping an inner dropdown/argument
-                        // creates the full parent block, not just the inner piece
-                        while (block.getParent()) {
-                            block = block.getParent();
-                        }
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        flyout.createBlock(block);
-                        // Ensure close buttons are added to the newly created block
-                        setTimeout(() => this.addCloseButtonsToAllBlocks(), 200);
-                        setTimeout(() => this.addCloseButtonsToAllBlocks(), 500);
-                    }
-                }
-            }
-            clearPointerState();
-        };
-
-        const onPointerUp = e => {
-            finishPointerInteraction(e, false);
-        };
-
-        const onPointerCancel = e => {
-            finishPointerInteraction(e, true);
-        };
-
-        const onMouseUp = e => {
-            if (!pointerStartPos || pointerStartPos.pointerType !== 'mouse') return;
-            finishPointerInteraction(e, false);
-        };
-
-        const onWindowBlur = () => {
-            clearPointerState();
-        };
-
-        // Suppress native touch interactions if we just finished a drag
         const onTouchEnd = e => {
-            if (draggedBlock || (Date.now() - lastDragEndTime < 50)) {
-                e.preventDefault();
-                e.stopPropagation();
+            const touch = getMatchingTouch(e);
+            const interaction = touchStartInfo;
+            clearTouchState();
+
+            if (!interaction || !touch) return;
+            if (!flyout.isVisible()) return;
+            if (interaction.moved) return;
+            if ((Date.now() - interaction.time) >= TAP_DURATION) return;
+            if (this.workspace.isDragging && this.workspace.isDragging()) return;
+
+            const tapTarget = interaction.target || e.target;
+            if (isCheckboxTapTarget(tapTarget)) {
+                const checkboxObj = getFlyoutCheckboxFromTarget(tapTarget);
+                if (checkboxObj && checkboxObj.clicked === interaction.checkboxInitialState) {
+                    flyout.setCheckboxState(checkboxObj.block.id, !checkboxObj.clicked);
+                }
+                return;
+            }
+
+            const block = getFlyoutTopBlockFromTarget(tapTarget);
+            if (!block) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.stopImmediatePropagation) {
                 e.stopImmediatePropagation();
             }
+
+            flyout.createBlock(block);
+            setTimeout(() => this.addCloseButtonsToAllBlocks(), 50);
+            setTimeout(() => this.addCloseButtonsToAllBlocks(), 200);
         };
 
-        flyoutSvgGroup.addEventListener('pointerdown', onPointerDown, {passive: true});
-        flyoutSvgGroup.addEventListener('mousedown', onMouseDown, {passive: true});
-        flyoutSvgGroup.addEventListener('touchend', onTouchEnd, {passive: false});
-        ownerDocument.addEventListener('pointermove', onPointerMove, true);
-        ownerDocument.addEventListener('pointerup', onPointerUp, true);
-        ownerDocument.addEventListener('pointercancel', onPointerCancel, true);
-        ownerDocument.addEventListener('mouseup', onMouseUp, true);
-        window.addEventListener('blur', onWindowBlur);
+        const onTouchCancel = () => {
+            clearTouchState();
+        };
 
         this._detachFlyoutListeners = () => {
-            flyoutSvgGroup.removeEventListener('pointerdown', onPointerDown);
-            flyoutSvgGroup.removeEventListener('mousedown', onMouseDown);
+            flyoutSvgGroup.removeEventListener('touchstart', onTouchStart);
+            flyoutSvgGroup.removeEventListener('touchmove', onTouchMove);
             flyoutSvgGroup.removeEventListener('touchend', onTouchEnd);
-            ownerDocument.removeEventListener('pointermove', onPointerMove, true);
-            ownerDocument.removeEventListener('pointerup', onPointerUp, true);
-            ownerDocument.removeEventListener('pointercancel', onPointerCancel, true);
-            ownerDocument.removeEventListener('mouseup', onMouseUp, true);
-            window.removeEventListener('blur', onWindowBlur);
-            clearPointerState();
+            flyoutSvgGroup.removeEventListener('touchcancel', onTouchCancel);
+            clearTouchState();
         };
+
+        flyoutSvgGroup.addEventListener('touchstart', onTouchStart, {passive: true});
+        flyoutSvgGroup.addEventListener('touchmove', onTouchMove, {passive: true});
+        flyoutSvgGroup.addEventListener('touchend', onTouchEnd, {passive: false});
+        flyoutSvgGroup.addEventListener('touchcancel', onTouchCancel, {passive: true});
 
         if (process.env.DEBUG) {
             log.info('[Blocks] Attached custom flyout touch handlers');
@@ -1412,6 +1274,7 @@ class Blocks extends React.Component {
         // fresh workspace and we don't want any changes made to another sprites
         // workspace to be 'undone' here.
         this.workspace.clearUndo();
+        setTimeout(() => this.addCloseButtonsToAllBlocks(), 0);
     }
     handleMonitorsUpdate(monitors) {
         // Update the checkboxes of the relevant monitors.
