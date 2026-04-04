@@ -1420,27 +1420,29 @@ $fade-out-distance: 15px;
 @media only screen and (max-width: 767px) {
     [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) {
         display: flex !important;
-        flex-direction: row !important;
+        flex-direction: column !important;
         flex-wrap: nowrap !important;
-        align-items: center !important;
+        align-items: stretch !important;
         width: 100% !important;
         min-width: 0 !important;
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-x !important;
+        overflow: visible !important;
         padding: 0 0 0.5rem !important;
-        gap: 0.25rem !important;
+        row-gap: 0.5rem !important;
     }
 
     [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) > :global([class*="paint-editor_row"]) {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
+        align-items: center !important;
         flex: 0 0 auto !important;
-        width: max-content !important;
-        min-width: max-content !important;
-        overflow: visible !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-x !important;
         gap: 0.25rem !important;
     }
 
@@ -1519,6 +1521,17 @@ $fade-out-distance: 15px;
         height: 1.1rem !important;
     }
 
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) :global([class*="fixed-tools_row"]),
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) :global([class*="paint-editor_row"]),
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) :global([class*="input-group"]) {
+        flex-wrap: nowrap !important;
+        flex-shrink: 0 !important;
+        width: max-content !important;
+        min-width: max-content !important;
+        max-width: none !important;
+        overflow: visible !important;
+    }
+
     [data-mobile-tab="costumes"] :global([class*="fixed-tools_costume-input"]),
     [data-mobile-tab="costumes"] :global(input[class*="fixed-tools_costume-input"]) {
         width: 4.25rem !important;
@@ -1594,5 +1607,24 @@ $fade-out-distance: 15px;
         right: 0 !important;
         bottom: 0 !important;
         left: 0 !important;
+        display: flex !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+        padding: 0.75rem !important;
+        gap: 0.5rem !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) {
+        position: static !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        margin: 0 !important;
+        z-index: 1 !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) button {
+        min-width: 2.25rem !important;
+        min-height: 2.25rem !important;
     }
 }
