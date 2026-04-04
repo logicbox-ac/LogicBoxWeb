@@ -110,13 +110,15 @@
 }
 
 .add-button-tray {
-    display: flex;
-    width: 100%;
+    display: inline-flex;
+    width: auto;
     justify-content: flex-end;
     padding: 0.5rem calc($space / 2);
+    margin-left: auto;
+    align-self: flex-end;
     position: relative;
     overflow: visible;
-    z-index: $z-index-context-menu;
+    z-index: $z-index-card;
 }
 
 .add-button {
@@ -132,15 +134,19 @@
     }
 
     .items-wrapper {
-        padding-bottom: 0.5rem;
+        padding-bottom: 4rem;
     }
 
     .add-button-tray {
-        position: sticky;
-        bottom: 0;
-        z-index: $z-index-context-menu;
-        padding-bottom: 0.5rem;
-        background: linear-gradient(to top, $ui-secondary 70%, rgba(255, 255, 255, 0));
+        position: absolute;
+        right: calc($space / 2);
+        bottom: 0.5rem;
+        z-index: $z-index-card;
+        width: fit-content;
+        max-width: calc(100% - #{$space});
+        padding: 0;
+        margin-left: 0;
+        background: transparent;
     }
 }
 

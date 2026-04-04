@@ -1418,6 +1418,32 @@ $fade-out-distance: 15px;
 }
 
 @media only screen and (max-width: 767px) {
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-x !important;
+        padding: 0 0 0.5rem !important;
+        gap: 0.25rem !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) > :global([class*="paint-editor_row"]) {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        flex: 0 0 auto !important;
+        width: max-content !important;
+        min-width: max-content !important;
+        overflow: visible !important;
+        gap: 0.25rem !important;
+    }
+
     [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container"]) {
         display: flex !important;
         flex-direction: column !important;
@@ -1463,14 +1489,70 @@ $fade-out-distance: 15px;
         max-height: none !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-x !important;
         padding: 0 0 0.5rem !important;
-        gap: 0.5rem !important;
+        gap: 0.25rem !important;
     }
 
     [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) > * {
         flex: 0 0 auto !important;
         width: auto !important;
         margin-bottom: 0 !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) button,
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) [role="button"],
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) button,
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) [role="button"] {
+        min-width: 2.5rem !important;
+        width: 2.5rem !important;
+        min-height: 2.5rem !important;
+        height: 2.5rem !important;
+        padding: 0.25rem !important;
+        box-sizing: border-box !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) img,
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) img {
+        width: 1.1rem !important;
+        height: 1.1rem !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="fixed-tools_costume-input"]),
+    [data-mobile-tab="costumes"] :global(input[class*="fixed-tools_costume-input"]) {
+        width: 4.25rem !important;
+        min-width: 4.25rem !important;
+        max-width: 4.25rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) :global([class*="input-group"]),
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) :global([class*="label_input-group"]) {
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 0.25rem !important;
+        width: auto !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) :global([class*="label_input-group"]) span {
+        display: inline !important;
+        font-size: 0.65rem !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) input,
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) select {
+        width: 3rem !important;
+        min-width: 3rem !important;
+        max-width: 3rem !important;
+        height: 2.25rem !important;
+        font-size: 0.75rem !important;
     }
 
     [data-mobile-tab="costumes"] :global([class*="paint-editor_controls-container"]) {

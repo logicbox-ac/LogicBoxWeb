@@ -10,7 +10,7 @@ $more-button-size: 2.25rem;
     flex-direction: column-reverse;
     transition: 0.2s;
     position: relative;
-    z-index: $z-index-context-menu;
+    z-index: $z-index-card;
 }
 
 .button {
@@ -220,7 +220,7 @@ $arrow-rounding: 0.125rem;
         bottom: auto !important;
         right: auto !important;
         left: auto !important;
-        z-index: $z-index-context-menu !important;
+        z-index: $z-index-card !important;
     }
 
     .main-button {
