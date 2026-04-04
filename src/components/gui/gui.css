@@ -1472,6 +1472,18 @@ $fade-out-distance: 15px;
         gap: 0.5rem !important;
     }
 
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_top-align-row"]) > :global([class*="paint-editor_row"]) {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        gap: 0.5rem !important;
+    }
+
     [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) {
         display: flex !important;
         flex-direction: row !important;
@@ -1518,6 +1530,14 @@ $fade-out-distance: 15px;
     [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) img {
         width: 1rem !important;
         height: 1rem !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) :global([class*="paint-editor_row"]),
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_mod-labeled-icon-height"]),
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_mod-dashed-border"]) {
+        min-height: 0 !important;
+        height: auto !important;
+        max-height: none !important;
     }
 
     [data-mobile-tab="costumes"] :global([class*="fixed-tools_row"]),
@@ -1572,7 +1592,7 @@ $fade-out-distance: 15px;
         display: flex !important;
         flex-direction: column !important;
         align-items: stretch !important;
-        flex: 0 0 auto !important;
+        flex: 1 1 auto !important;
         width: 100% !important;
         min-width: 0 !important;
         margin: 0 !important;
@@ -1611,7 +1631,7 @@ $fade-out-distance: 15px;
         bottom: 0 !important;
         left: 0 !important;
         display: flex !important;
-        justify-content: flex-start !important;
+        justify-content: space-between !important;
         align-items: flex-end !important;
         padding: 0.5rem !important;
         gap: 0.375rem !important;
@@ -1647,11 +1667,11 @@ $fade-out-distance: 15px;
     }
 
     [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) button {
-        min-width: 2rem !important;
-        width: 2rem !important;
-        min-height: 2rem !important;
-        height: 2rem !important;
-        padding: 0.25rem !important;
+        min-width: 1.875rem !important;
+        width: 1.875rem !important;
+        min-height: 1.875rem !important;
+        height: 1.875rem !important;
+        padding: 0.2rem !important;
     }
 
     [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) img {

@@ -141,9 +141,9 @@ $fade-out-distance: 100px;
     .new-buttons {
         position: fixed !important;
         bottom: 20px !important;
-        left: 20px !important;
+        right: 20px !important;
+        left: auto !important;
         top: auto !important;
-        right: auto !important;
         width: auto !important;
         height: auto !important;
         padding: 0 !important;
@@ -153,6 +153,7 @@ $fade-out-distance: 100px;
         display: flex;
         flex-direction: row;
         align-items: center;
+        justify-content: flex-end;
     }
 
     .new-buttons button {
