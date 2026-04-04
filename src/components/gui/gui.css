@@ -435,7 +435,6 @@ $fade-out-distance: 15px;
         flex-direction: column !important;
         -webkit-overflow-scrolling: touch !important;
         overscroll-behavior-y: contain !important;
-        touch-action: pan-y !important;
     }
 
     /* Ensure costume tab panel fills entire editor height */
@@ -451,7 +450,6 @@ $fade-out-distance: 15px;
         flex-direction: column !important;
         -webkit-overflow-scrolling: touch !important;
         overscroll-behavior-y: contain !important;
-        touch-action: pan-y !important;
     }
 
     /* Ensure tabs container also fills height when on costumes/sounds */
@@ -467,7 +465,6 @@ $fade-out-distance: 15px;
         flex-direction: column !important;
         -webkit-overflow-scrolling: touch !important;
         overscroll-behavior-y: contain !important;
-        touch-action: pan-y !important;
     }
 
     [data-mobile-tab="costumes"] .stage-and-target-wrapper,
