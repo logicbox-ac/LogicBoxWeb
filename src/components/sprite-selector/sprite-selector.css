@@ -39,6 +39,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    overflow: visible;
 }
 
 .sprite-wrapper {
@@ -79,6 +80,7 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+    overflow-x: visible;
 }
 
 .scroll-wrapper-dragging {
@@ -111,11 +113,10 @@
     display: flex;
     width: 100%;
     justify-content: flex-end;
-    padding: 0.5rem calc($space / 2) 0;
-    margin-top: auto;
+    padding: 0.5rem calc($space / 2);
     position: relative;
     overflow: visible;
-    z-index: $z-index-add-button;
+    z-index: $z-index-context-menu;
 }
 
 .add-button {
@@ -125,10 +126,19 @@
 }
 
 @media (max-width: 767px) {
+    .scroll-wrapper {
+        overflow-y: auto;
+        overflow-x: visible;
+    }
+
+    .items-wrapper {
+        padding-bottom: 0.5rem;
+    }
+
     .add-button-tray {
         position: sticky;
         bottom: 0;
-        z-index: $z-index-add-button;
+        z-index: $z-index-context-menu;
         padding-bottom: 0.5rem;
         background: linear-gradient(to top, $ui-secondary 70%, rgba(255, 255, 255, 0));
     }
