@@ -209,18 +209,24 @@ class PaintEditorWrapper extends React.Component {
                     min-width: 0 !important;
                     flex: 0 0 auto !important;
                     min-height: 20rem !important;
-                    height: 68vh !important;
+                    height: min(68vh, 30rem) !important;
                     max-height: 30rem !important;
                     margin-bottom: 0.75rem !important;
                     position: relative !important;
-                    overflow: visible !important;
+                    display: block !important;
+                    overflow: hidden !important;
                     box-sizing: border-box !important;
                 }
 
                 /* ── Paper canvas wrapper / layer ── */
+                canvas[class*="paper-canvas_paper-canvas"],
                 [class*="paper-canvas_paper-canvas"] {
+                    display: block !important;
                     width: 100% !important;
-                    height: 100% !important;
+                    min-height: calc(20rem - 2px) !important;
+                    height: calc(100% - 2px) !important;
+                    max-height: calc(30rem - 2px) !important;
+                    z-index: 1 !important;
                 }
                 
                 /* ── Scrollable canvas inner wrappers ── */
@@ -709,12 +715,22 @@ class PaintEditorWrapper extends React.Component {
                 canvasContainer.style.setProperty('min-width', '0', 'important');
                 canvasContainer.style.setProperty('flex', '0 0 auto', 'important');
                 canvasContainer.style.setProperty('min-height', '20rem', 'important');
-                canvasContainer.style.setProperty('height', '68vh', 'important');
+                canvasContainer.style.setProperty('height', 'min(68vh, 30rem)', 'important');
                 canvasContainer.style.setProperty('max-height', '30rem', 'important');
                 canvasContainer.style.setProperty('margin-bottom', '0.75rem', 'important');
-                canvasContainer.style.setProperty('overflow', 'visible', 'important');
+                canvasContainer.style.setProperty('display', 'block', 'important');
+                canvasContainer.style.setProperty('overflow', 'hidden', 'important');
                 canvasContainer.style.setProperty('position', 'relative', 'important');
                 canvasContainer.style.setProperty('box-sizing', 'border-box', 'important');
+            }
+
+            const paperCanvas = document.querySelector('canvas[class*="paper-canvas_paper-canvas"]');
+            if (paperCanvas) {
+                paperCanvas.style.setProperty('display', 'block', 'important');
+                paperCanvas.style.setProperty('min-height', 'calc(20rem - 2px)', 'important');
+                paperCanvas.style.setProperty('height', 'calc(100% - 2px)', 'important');
+                paperCanvas.style.setProperty('max-height', 'calc(30rem - 2px)', 'important');
+                paperCanvas.style.setProperty('z-index', '1', 'important');
             }
 
             // Canvas controls overlay at bottom of canvas

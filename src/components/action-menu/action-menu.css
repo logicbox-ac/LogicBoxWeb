@@ -23,6 +23,8 @@ $more-button-size: 2.25rem;
     background: $looks-secondary;
     outline: none;
     border: none;
+    position: relative;
+    z-index: $z-index-tooltip;
     transition: background-color 0.2s;
 }
 
@@ -47,7 +49,7 @@ button::-moz-focus-inner {
     width: $main-button-size;
     height: $main-button-size;
     box-shadow: 0 0 0 4px $looks-transparent;
-    z-index: $z-index-add-button;
+    z-index: $z-index-context-menu;
     transition: transform, box-shadow 0.5s;
 }
 
@@ -123,6 +125,7 @@ button::-moz-focus-inner {
     width: $more-button-size;
     height: $more-button-size;
     background: $looks-secondary-dark;
+    z-index: $z-index-context-menu;
 }
 
 .more-icon {
@@ -284,6 +287,7 @@ $arrow-rounding: 0.125rem;
         box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
         background: $looks-secondary;
         margin: 0;
+        z-index: $z-index-context-menu;
         opacity: 0;
         transform: scale(0.8) translateX(20px);
         transition: opacity 0.2s ease-out, transform 0.2s ease-out, background-color 0.2s;
