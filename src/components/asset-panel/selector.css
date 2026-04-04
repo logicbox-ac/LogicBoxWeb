@@ -170,9 +170,19 @@ $fade-out-distance: 100px;
     .new-buttons :global([class*="action-menu_menu-container"]) {
         position: relative;
         z-index: 21;
+        overflow: visible;
     }
 
     .new-buttons :global([class*="action-menu_more-buttons-outer"]) {
+        top: calc(100% + 0.5rem) !important;
+        right: 0 !important;
+        bottom: auto !important;
+        left: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-end !important;
         z-index: 22 !important;
     }
 

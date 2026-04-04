@@ -1978,3 +1978,107 @@ $fade-out-distance: 15px;
         margin: 0 !important;
     }
 }
+
+@media only screen and (max-width: 767px) {
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container"]) {
+        padding-bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) > :global([class*="paint-editor_row"]),
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) {
+        padding-left: 0.125rem !important;
+        padding-right: 0.75rem !important;
+        padding-bottom: 0.35rem !important;
+        scroll-padding-left: 0.5rem !important;
+        scroll-padding-right: 0.75rem !important;
+        overscroll-behavior-x: contain !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_controls-container"]) {
+        overflow: visible !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_canvas-container"]) {
+        min-height: clamp(14.5rem, calc(100vh - 25rem), 20rem) !important;
+        height: clamp(14.5rem, calc(100vh - 25rem), 20rem) !important;
+        max-height: clamp(14.5rem, calc(100vh - 25rem), 20rem) !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_canvas-controls"]) {
+        left: 0.625rem !important;
+        right: 0.625rem !important;
+        bottom: calc(0.625rem + env(safe-area-inset-bottom, 0px)) !important;
+        width: auto !important;
+        justify-content: space-between !important;
+        align-items: flex-end !important;
+        padding: 0 !important;
+        gap: 0.5rem !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) {
+        margin: 0 !important;
+        align-self: flex-end !important;
+        background: rgba(255, 255, 255, 0.98) !important;
+        border: 1px solid rgba(87, 94, 117, 0.18) !important;
+        border-radius: 999px !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        overflow: hidden !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) :global([class*="input-group"]) {
+        display: inline-flex !important;
+        align-items: stretch !important;
+        gap: 0 !important;
+        overflow: hidden !important;
+        border-radius: inherit !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) :global([class*="button_button"]),
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) button,
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) [role="button"] {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-width: 2.5rem !important;
+        width: 2.5rem !important;
+        min-height: 2.5rem !important;
+        height: 2.5rem !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        flex: 0 0 auto !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) :global([class*="button_button"]) + :global([class*="button_button"]),
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) button + button,
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) [role="button"] + [role="button"] {
+        border-left: 1px solid rgba(87, 94, 117, 0.14) !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) :global([class*="button_button"]):nth-child(2),
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) button:nth-child(2),
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) [role="button"]:nth-child(2) {
+        min-width: 2.75rem !important;
+        width: 2.75rem !important;
+        background: rgba(76, 151, 255, 0.08) !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) :global([class*="button_button"]) img,
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) :global([class*="button_button"]) svg,
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) button img,
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) button svg,
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) [role="button"] img,
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) [role="button"] svg {
+        display: block !important;
+        width: 1rem !important;
+        height: 1rem !important;
+        margin: 0 !important;
+        flex: 0 0 auto !important;
+    }
+}

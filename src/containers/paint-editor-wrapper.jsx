@@ -424,6 +424,89 @@ class PaintEditorWrapper extends React.Component {
         this.detachCostumeDiagnosticListeners();
         if (!this.isCostumeDiagnosticViewport()) return;
 
+        const resolveScrollableTarget = (event, fallbackElement) => {
+            if (!event || !event.target || typeof event.target.closest !== 'function') {
+                return fallbackElement;
+            }
+
+            const candidate = event.target.closest(
+                '[class*="paint-editor_row"], [class*="paint-editor_mode-selector"], [class*="selector_list-area"]'
+            );
+
+            if (candidate && candidate.scrollWidth > candidate.clientWidth + 4) {
+                return candidate;
+            }
+
+            return fallbackElement;
+        };
+
+        const attachHorizontalPanAssist = (element, name, getScrollElement) => {
+            if (!element) return;
+
+            const state = {
+                active: false,
+                dragging: false,
+                scrollElement: null,
+                startX: 0,
+                startY: 0,
+                startScrollLeft: 0
+            };
+
+            const onTouchStart = event => {
+                if (event.touches.length !== 1) return;
+                const scrollElement = typeof getScrollElement === 'function' ?
+                    getScrollElement(event) :
+                    element;
+                if (!scrollElement) return;
+                const touch = event.touches[0];
+                state.active = true;
+                state.dragging = false;
+                state.scrollElement = scrollElement;
+                state.startX = touch.clientX;
+                state.startY = touch.clientY;
+                state.startScrollLeft = scrollElement.scrollLeft;
+            };
+
+            const onTouchMove = event => {
+                if (!state.active || !state.scrollElement || event.touches.length !== 1) return;
+                const touch = event.touches[0];
+                const deltaX = touch.clientX - state.startX;
+                const deltaY = touch.clientY - state.startY;
+
+                if (!state.dragging) {
+                    if (Math.abs(deltaX) < 6 || Math.abs(deltaX) <= Math.abs(deltaY)) {
+                        return;
+                    }
+                    state.dragging = true;
+                }
+
+                if (event.cancelable) {
+                    event.preventDefault();
+                }
+                state.scrollElement.scrollLeft = state.startScrollLeft - deltaX;
+            };
+
+            const endTouch = () => {
+                state.active = false;
+                state.dragging = false;
+                state.scrollElement = null;
+            };
+
+            element.addEventListener('touchstart', onTouchStart, {passive: true, capture: true});
+            element.addEventListener('touchmove', onTouchMove, {passive: false, capture: true});
+            element.addEventListener('touchend', endTouch, {passive: true, capture: true});
+            element.addEventListener('touchcancel', endTouch, {passive: true, capture: true});
+
+            this.costumeDiagnosticDetachers.push(() => {
+                element.removeEventListener('touchstart', onTouchStart, true);
+                element.removeEventListener('touchmove', onTouchMove, true);
+                element.removeEventListener('touchend', endTouch, true);
+                element.removeEventListener('touchcancel', endTouch, true);
+            });
+
+            void name;
+        };
+
         const attachScrollableListener = (element, name) => {
             if (!element) return;
 
@@ -454,11 +537,39 @@ class PaintEditorWrapper extends React.Component {
             });
         };
 
+        attachScrollableListener(elements.editorTop, 'editorTop');
         attachScrollableListener(elements.primaryRow, 'primaryRow');
         attachScrollableListener(elements.fixedToolsRow, 'fixedToolsRow');
         attachScrollableListener(elements.secondaryRow, 'secondaryRow');
         attachScrollableListener(elements.modeSelector, 'modeSelector');
         attachScrollableListener(elements.canvasContainer, 'canvasContainer');
+        attachScrollableListener(elements.selectorListArea, 'selectorListArea');
+
+        attachHorizontalPanAssist(
+            elements.editorTop,
+            'editorTop',
+            event => resolveScrollableTarget(event, elements.primaryRow || elements.editorTop)
+        );
+        attachHorizontalPanAssist(
+            elements.primaryRow,
+            'primaryRow',
+            event => resolveScrollableTarget(event, elements.primaryRow)
+        );
+        attachHorizontalPanAssist(
+            elements.secondaryRow,
+            'secondaryRow',
+            event => resolveScrollableTarget(event, elements.secondaryRow)
+        );
+        attachHorizontalPanAssist(
+            elements.modeSelector,
+            'modeSelector',
+            event => resolveScrollableTarget(event, elements.modeSelector)
+        );
+        attachHorizontalPanAssist(
+            elements.selectorListArea,
+            'selectorListArea',
+            event => resolveScrollableTarget(event, elements.selectorListArea)
+        );
     }
 
     runCostumeDiagnostics (reason, pass) {
@@ -480,6 +591,7 @@ class PaintEditorWrapper extends React.Component {
         const zoomControls = editor.querySelector('[class*="paint-editor_zoom-controls"]');
         const canvas = canvasContainer && canvasContainer.querySelector('canvas');
         const addButtonTray = mobileRoot.querySelector('[class*="selector_new-buttons"], [class*="new-buttons"]');
+        const selectorListArea = mobileRoot.querySelector('[class*="selector_list-area"]');
 
         const payload = {
             reason,
@@ -502,7 +614,8 @@ class PaintEditorWrapper extends React.Component {
                 canvasControls: getElementSnapshot('canvasControls', canvasControls),
                 zoomControls: getElementSnapshot('zoomControls', zoomControls),
                 canvas: getElementSnapshot('canvas', canvas),
-                addButtonTray: getElementSnapshot('addButtonTray', addButtonTray)
+                addButtonTray: getElementSnapshot('addButtonTray', addButtonTray),
+                selectorListArea: getElementSnapshot('selectorListArea', selectorListArea)
             },
             overlaps: [
                 getOverlapSnapshot('primaryRow-secondaryRow', primaryRow, secondaryRow),
@@ -533,7 +646,8 @@ class PaintEditorWrapper extends React.Component {
                 fixedToolsRow: getChildDiagnostics(fixedToolsRow, 'fixedToolsRow'),
                 modeSelector: getChildDiagnostics(modeSelector, 'modeSelector'),
                 controlsContainer: getChildDiagnostics(controlsContainer, 'controlsContainer'),
-                canvasControls: getChildDiagnostics(canvasControls, 'canvasControls')
+                canvasControls: getChildDiagnostics(canvasControls, 'canvasControls'),
+                selectorListArea: getChildDiagnostics(selectorListArea, 'selectorListArea')
             }
         };
 
@@ -548,11 +662,13 @@ class PaintEditorWrapper extends React.Component {
         console.groupEnd();
 
         this.attachCostumeDiagnosticListeners({
+            editorTop,
             primaryRow,
             fixedToolsRow,
             secondaryRow,
             modeSelector,
-            canvasContainer
+            canvasContainer,
+            selectorListArea
         });
     }
 

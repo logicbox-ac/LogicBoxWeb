@@ -251,6 +251,16 @@ $arrow-rounding: 0.125rem;
         align-items: flex-end;
     }
 
+    .mobile-inline .more-buttons-outer {
+        top: calc(100% + 0.5rem);
+        bottom: auto;
+        margin-bottom: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
     .more-buttons {
         background: transparent;
         box-shadow: none;
@@ -269,6 +279,12 @@ $arrow-rounding: 0.125rem;
         z-index: $z-index-tooltip;
     }
 
+    .mobile-inline .more-buttons {
+        padding-top: 4px;
+        padding-bottom: 0;
+        transform: translateY(-12px);
+    }
+
     /* Show when expanded with animation */
     :global(.expanded) .more-buttons,
     .expanded .more-buttons {
@@ -277,6 +293,11 @@ $arrow-rounding: 0.125rem;
         opacity: 1;
         transform: translateY(0);
         pointer-events: auto;
+    }
+
+    :global(.expanded).mobile-inline .more-buttons,
+    .mobile-inline.expanded .more-buttons {
+        transform: translateY(0);
     }
 
     /* Style individual buttons to look floating */
