@@ -10,6 +10,7 @@ $more-button-size: 2.25rem;
     flex-direction: column-reverse;
     transition: 0.2s;
     position: relative;
+    z-index: $z-index-add-button;
 }
 
 .button {
@@ -81,6 +82,7 @@ button::-moz-focus-inner {
 
     position: absolute;
     bottom: calc($main-button-size);
+    z-index: $z-index-tooltip;
 
     margin-bottom: calc($main-button-size / -2);
     padding-bottom: calc($main-button-size / 2);
@@ -92,7 +94,8 @@ button::-moz-focus-inner {
     overflow-x: visible;
     display: flex;
     flex-direction: column;
-    z-index: 10;
+    position: relative;
+    z-index: $z-index-tooltip;
     /* @todo justify */
 }
 
@@ -214,7 +217,7 @@ $arrow-rounding: 0.125rem;
         bottom: auto !important;
         right: auto !important;
         left: auto !important;
-        z-index: auto !important;
+        z-index: $z-index-add-button !important;
     }
 
     .main-button {
@@ -226,6 +229,7 @@ $arrow-rounding: 0.125rem;
         bottom: 100%;
         right: 0;
         left: auto;
+        z-index: $z-index-tooltip;
         transform: none;
 
         margin: 0;
@@ -258,6 +262,8 @@ $arrow-rounding: 0.125rem;
         transition: max-height 0.3s ease-out, opacity 0.3s ease-out, transform 0.3s ease-out;
         padding-bottom: 5px;
         pointer-events: none;
+        position: relative;
+        z-index: $z-index-tooltip;
     }
 
     /* Show when expanded with animation */

@@ -427,38 +427,47 @@ $fade-out-distance: 15px;
     [data-mobile-tab="sounds"] .editor-wrapper {
         display: flex !important;
         flex: 1 1 0 !important;
-        height: 100% !important;
+        height: auto !important;
+        max-height: 100% !important;
         min-height: 0 !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         flex-direction: column !important;
         -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior-y: contain !important;
+        touch-action: pan-y !important;
     }
 
     /* Ensure costume tab panel fills entire editor height */
     [data-mobile-tab="costumes"] .tab-panel.is-selected,
     [data-mobile-tab="sounds"] .tab-panel.is-selected {
         flex: 1 1 0 !important;
-        height: 100% !important;
+        height: auto !important;
+        max-height: 100% !important;
         min-height: 0 !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         display: flex !important;
         flex-direction: column !important;
         -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior-y: contain !important;
+        touch-action: pan-y !important;
     }
 
     /* Ensure tabs container also fills height when on costumes/sounds */
     [data-mobile-tab="costumes"] .tabs,
     [data-mobile-tab="sounds"] .tabs {
         flex: 1 1 0 !important;
-        height: 100% !important;
+        height: auto !important;
+        max-height: 100% !important;
         min-height: 0 !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         display: flex !important;
         flex-direction: column !important;
         -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior-y: contain !important;
+        touch-action: pan-y !important;
     }
 
     [data-mobile-tab="costumes"] .stage-and-target-wrapper,

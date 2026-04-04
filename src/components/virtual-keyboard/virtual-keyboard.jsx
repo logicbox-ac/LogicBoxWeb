@@ -12,8 +12,6 @@ const LETTER_ROWS = [
     ['z', 'x', 'c', 'v', 'b', 'n', 'm']
 ];
 
-const NUMBER_KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
-
 const ARROW_KEYS = [
     { key: 'ArrowUp', display: '↑', className: 'arrowUp' },
     { key: 'ArrowLeft', display: '←', className: 'arrowLeft' },
@@ -168,11 +166,6 @@ class VirtualKeyboard extends React.Component {
                     className={`${styles.keyboardContainer} ${isCollapsed ? styles.hidden : ''}`}
                     ref={this.setContainerRef}
                 >
-                    {/* Number row */}
-                    <div className={styles.row}>
-                        {NUMBER_KEYS.map(key => this.renderKey(key))}
-                    </div>
-
                     {/* Letter rows */}
                     {LETTER_ROWS.map((row, rowIndex) => (
                         <div

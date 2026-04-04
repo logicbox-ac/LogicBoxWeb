@@ -6,7 +6,7 @@
     flex-direction: column;
     align-self: stretch;
     width: 100%;
-    max-width: 30rem;
+    max-width: 100%;
     margin: clamp(0.5rem, 2.5vw, 1rem) auto 0;
     background: #d1d5db;
     border: 1px solid #bbb;
@@ -36,6 +36,11 @@
     box-sizing: border-box;
 }
 
+.keyboard-wrapper button {
+    min-width: 0 !important;
+    min-height: 0 !important;
+}
+
 .toggle-button:active {
     background: #d1d5db;
 }
@@ -61,9 +66,9 @@
 .keyboard-container {
     display: flex;
     flex-direction: column;
-    gap: clamp(0.15rem, 0.8vw, 0.35rem);
-    max-height: 18rem;
-    padding: clamp(0.25rem, 1vw, 0.45rem);
+    gap: clamp(0.1rem, 0.5vw, 0.2rem);
+    max-height: 14rem;
+    padding: clamp(0.18rem, 0.7vw, 0.3rem);
     width: 100%;
     box-sizing: border-box;
     overflow: hidden;
@@ -82,7 +87,7 @@
 .row {
     display: flex;
     width: 100%;
-    gap: clamp(0.12rem, 0.6vw, 0.25rem);
+    gap: clamp(0.08rem, 0.35vw, 0.16rem);
     padding: 0;
     box-sizing: border-box;
 }
@@ -92,7 +97,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: clamp(0.2rem, 0.9vw, 0.35rem);
+    gap: clamp(0.12rem, 0.5vw, 0.2rem);
     padding: 0;
     width: 100%;
     box-sizing: border-box;
@@ -103,7 +108,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: clamp(0.12rem, 0.6vw, 0.25rem);
+    gap: clamp(0.08rem, 0.35vw, 0.16rem);
     flex-shrink: 0;
 }
 
@@ -113,7 +118,7 @@
 
 .arrow-bottom {
     display: flex;
-    gap: clamp(0.12rem, 0.6vw, 0.25rem);
+    gap: clamp(0.08rem, 0.35vw, 0.16rem);
 }
 
 /* Individual key button - uses flex to fill available space */
@@ -122,16 +127,17 @@
     align-items: center;
     justify-content: center;
     flex: 1 1 0;
-    min-width: 0;
-    height: clamp(1.8rem, 8vw, 2.35rem);
+    min-width: 0 !important;
+    min-height: clamp(1.55rem, 6.8vw, 1.95rem) !important;
+    height: clamp(1.55rem, 6.8vw, 1.95rem);
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    font-size: clamp(0.7rem, 3vw, 0.9rem);
+    font-size: clamp(0.58rem, 2.5vw, 0.78rem);
     font-weight: 400;
     color: #000;
     background: #fff;
     border: none;
-    border-radius: clamp(0.25rem, 1vw, 0.45rem);
+    border-radius: clamp(0.2rem, 0.8vw, 0.35rem);
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
     cursor: pointer;
     user-select: none;
@@ -148,9 +154,11 @@
 /* Arrow keys - fixed size */
 .arrow-key {
     flex: none;
-    width: clamp(1.55rem, 7.5vw, 2rem);
-    height: clamp(1.45rem, 6.5vw, 1.8rem);
-    font-size: clamp(0.65rem, 2.8vw, 0.8rem);
+    width: clamp(1.3rem, 5.8vw, 1.6rem);
+    min-width: clamp(1.3rem, 5.8vw, 1.6rem) !important;
+    height: clamp(1.2rem, 5.2vw, 1.5rem);
+    min-height: clamp(1.2rem, 5.2vw, 1.5rem) !important;
+    font-size: clamp(0.55rem, 2.2vw, 0.7rem);
     background: #adb5bd;
     color: #333;
 }
@@ -163,9 +171,9 @@
 /* Space key */
 .space-key {
     flex: 1 1 auto;
-    min-width: clamp(5rem, 22vw, 7rem);
+    min-width: clamp(4rem, 18vw, 5.5rem) !important;
     max-width: none;
-    font-size: clamp(0.65rem, 2.6vw, 0.75rem);
+    font-size: clamp(0.55rem, 2.2vw, 0.68rem);
     letter-spacing: 0.08em;
     color: #333;
 }
@@ -180,6 +188,34 @@
 @media (max-width: 480px) {
     .keyboard-wrapper {
         max-width: 100%;
+    }
+
+    .keyboard-container {
+        gap: 0.08rem;
+        padding: 0.16rem;
+    }
+
+    .row,
+    .bottom-row,
+    .arrow-bottom {
+        gap: 0.08rem;
+    }
+
+    .key {
+        height: clamp(1.45rem, 6.4vw, 1.75rem);
+        min-height: clamp(1.45rem, 6.4vw, 1.75rem) !important;
+        font-size: clamp(0.54rem, 2.35vw, 0.68rem);
+    }
+
+    .arrow-key {
+        width: clamp(1.15rem, 5vw, 1.45rem);
+        min-width: clamp(1.15rem, 5vw, 1.45rem) !important;
+        height: clamp(1.1rem, 4.8vw, 1.35rem);
+        min-height: clamp(1.1rem, 4.8vw, 1.35rem) !important;
+    }
+
+    .space-key {
+        min-width: clamp(3.4rem, 15vw, 4.6rem) !important;
     }
 
     .toggle-text {
