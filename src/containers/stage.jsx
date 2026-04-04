@@ -369,13 +369,6 @@ class Stage extends React.Component {
         // The editor drag canvas hides the sprite and shows a canvas copy,
         // but the canvas positioning doesn't work properly on mobile WebView
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        console.log('[Stage] onStartDrag:', {
-            targetId,
-            targetName: target.sprite ? target.sprite.name : 'unknown',
-            useEditorDragStyle: this.props.useEditorDragStyle,
-            isTouchDevice,
-            willUseEditorDrag: this.props.useEditorDragStyle && !isTouchDevice
-        });
 
         if (this.props.useEditorDragStyle && !isTouchDevice) {
             // Extract the drawable art
@@ -397,13 +390,6 @@ class Stage extends React.Component {
             });
         };
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        console.log('[Stage] onStopDrag:', {
-            dragId,
-            mouseX, mouseY,
-            useEditorDragStyle: this.props.useEditorDragStyle,
-            isTouchDevice,
-            willUseEditorDrag: this.props.useEditorDragStyle && !isTouchDevice
-        });
         if (this.props.useEditorDragStyle && !isTouchDevice) {
             // Need to sequence these actions to prevent flickering.
             const spriteInfo = { visible: true };

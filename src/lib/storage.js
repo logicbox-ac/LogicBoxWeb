@@ -50,8 +50,6 @@ class Storage extends ScratchStorage {
         const fetchTool = new SimpleFetchTool();
         this.webHelper.assetTool = fetchTool;
         this.webHelper.projectTool = fetchTool;
-        console.log('[STORAGE] Overrode webHelper tools to use SimpleFetchTool directly (bypassing Web Worker)');
-
         this.cacheDefaultProject();
     }
     addOfficialScratchWebStores() {
@@ -102,14 +100,7 @@ class Storage extends ScratchStorage {
         this.assetHost = assetHost;
     }
     getAssetGetConfig(asset) {
-        const url = `${this.assetHost}/internalapi/asset/${asset.assetId}.${asset.dataFormat}/get/`;
-        console.log('[STORAGE] getAssetGetConfig called:', {
-            assetHost: this.assetHost,
-            assetId: asset.assetId,
-            dataFormat: asset.dataFormat,
-            constructedUrl: url
-        });
-        return url;
+        return `${this.assetHost}/internalapi/asset/${asset.assetId}.${asset.dataFormat}/get/`;
     }
     getAssetCreateConfig(asset) {
         return {

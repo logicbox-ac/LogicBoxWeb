@@ -115,6 +115,8 @@ $fade-out-distance: 100px;
         flex-direction: row;
         border-right: none;
         border-bottom: 1px solid $ui-black-transparent;
+        overflow: visible !important;
+        align-items: stretch;
     }
 
     .list-area {
@@ -124,7 +126,7 @@ $fade-out-distance: 100px;
         overflow-x: auto !important;
         width: 100%;
         display: flex;
-        padding-right: 60px;
+        padding-right: 72px;
         /* Space for add button */
     }
 
@@ -139,28 +141,39 @@ $fade-out-distance: 100px;
     }
 
     .new-buttons {
-        position: fixed !important;
-        bottom: 20px !important;
-        right: 20px !important;
+        position: absolute !important;
+        top: 50% !important;
+        bottom: auto !important;
+        right: 12px !important;
         left: auto !important;
-        top: auto !important;
+        transform: translateY(-50%) !important;
         width: auto !important;
         height: auto !important;
         padding: 0 !important;
         background: transparent !important;
         border: none !important;
-        z-index: 500 !important;
+        z-index: 20 !important;
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: flex-end;
+        pointer-events: auto !important;
     }
 
     .new-buttons button {
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
         border-radius: 50% !important;
         background-color: $motion-primary !important;
-        margin-right: 10px;
+        margin-right: 0;
+    }
+
+    .new-buttons :global([class*="action-menu_menu-container"]) {
+        position: relative;
+        z-index: 21;
+    }
+
+    .new-buttons :global([class*="action-menu_more-buttons-outer"]) {
+        z-index: 22 !important;
     }
 
     .new-buttons:before {

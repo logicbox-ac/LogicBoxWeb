@@ -28,8 +28,6 @@ import { closeExtensionLibrary, openSoundRecorder, openConnectionModal } from '.
 import { activateCustomProcedures, deactivateCustomProcedures } from '../reducers/custom-procedures';
 import { setConnectionModalExtensionId } from '../reducers/connection-modal';
 import { updateMetrics } from '../reducers/workspace-metrics';
-
-console.log('[Blocks.jsx] Module loaded - close button feature active');
 import { isTimeTravel2020 } from '../reducers/time-travel';
 
 import {
@@ -127,7 +125,6 @@ class Blocks extends React.Component {
 
             window.CanvasRenderingContext2D.prototype.getImageData = function (sx, sy, sw, sh) {
                 if (sw <= 0 || sh <= 0) {
-                    console.warn(`[MOBILE FIX] Prevented IndexSizeError in getImageData: w=${sw}, h=${sh}`);
                     // Return a 1x1 transparent pixel to satisfy the return type contract
                     return new ImageData(1, 1);
                 }
@@ -155,15 +152,10 @@ class Blocks extends React.Component {
                 closeButtonCallback: this.props.onCloseBlocks
             }
         );
-        console.log('[Blocks.jsx] Workspace config:', workspaceConfig);
-        console.log('[Blocks.jsx] closeButton:', workspaceConfig.closeButton);
-        console.log('[Blocks.jsx] closeButtonCallback:', workspaceConfig.closeButtonCallback);
         this.workspace = this.ScratchBlocks.inject(this.blocks, workspaceConfig);
-        console.log('[Blocks.jsx] Workspace created:', this.workspace);
 
         // Add close buttons to individual blocks
         if (workspaceConfig.closeButton) {
-            console.log('[Blocks.jsx] Setting up block close buttons');
             this.setupBlockCloseButtons();
         }
 
@@ -703,21 +695,11 @@ class Blocks extends React.Component {
         const flyoutVisible = flyout && flyout.isVisible ? flyout.isVisible() : false;
         const dragging = this.workspace && this.workspace.isDragging ? this.workspace.isDragging() : false;
 
-        console.log('[BLOCK-DBG] DOM event', {
-            source,
-            eventType,
-            blockId,
-            target: this.formatTargetForDebug(event.target),
-            clientX: event.clientX,
-            clientY: event.clientY,
-            buttons: event.buttons,
-            pointerType: event.pointerType || null,
-            defaultPrevented: event.defaultPrevented,
-            flyoutVisible,
-            workspaceDragging: dragging,
-            hasCustomFlyoutPointerFallback: Boolean(this._detachFlyoutListeners && this._connectedFlyoutSvg),
-            mobileTouchViewport: this.isMobileTouchViewport()
-        });
+        void source;
+        void eventType;
+        void blockId;
+        void flyoutVisible;
+        void dragging;
     }
 
     detachInteractionDebugListeners() {
@@ -764,22 +746,10 @@ class Blocks extends React.Component {
                 return;
             }
 
-            console.log('[BLOCK-DBG] Blockly event', {
-                type: event.type,
-                blockId: event.blockId || event.newValue || null,
-                element: event.element || null,
-                isStart: typeof event.isStart === 'boolean' ? event.isStart : null,
-                oldValue: event.oldValue || null,
-                newValue: event.newValue || null
-            });
+            void event;
         };
 
         this.workspace.addChangeListener(this._workspaceDebugChangeListener);
-
-        console.log('[BLOCK-DBG] Debug listeners attached', {
-            hasWorkspaceSvg: Boolean(workspaceSvg),
-            hasFlyoutSvg: Boolean(flyoutSvgGroup)
-        });
     }
 
     isMobileTouchViewport() {

@@ -10,17 +10,13 @@ const closeIconSource = path.join(__dirname, '..', 'patches', 'close.svg');
 const closeButtonDest = path.join(scratchBlocksPath, 'core', 'close_button.js');
 const closeIconDest = path.join(scratchBlocksPath, 'media', 'close.svg');
 
-console.log('Patching scratch-blocks with close button...');
-
 // Copy files if they exist
 if (fs.existsSync(closeButtonSource)) {
   fs.copyFileSync(closeButtonSource, closeButtonDest);
-  console.log('✓ Copied close_button.js');
 }
 
 if (fs.existsSync(closeIconSource)) {
   fs.copyFileSync(closeIconSource, closeIconDest);
-  console.log('✓ Copied close.svg');
 }
 
 // Ensure the shim file is correct (restore original if needed)
@@ -31,7 +27,6 @@ if (fs.existsSync(shimPath)) {
   const currentContent = fs.readFileSync(shimPath, 'utf8');
   if (!currentContent.includes('imports-loader')) {
     fs.writeFileSync(shimPath, correctShimContent);
-    console.log('✓ Restored original shim file');
   }
 }
 
@@ -56,13 +51,11 @@ if (fs.existsSync(workspaceSvgPath)) {
  * @private
  */
 Blockly.WorkspaceSvg.prototype.addCloseButton_ = function() {
-  console.log('[Workspace] addCloseButton_ called, options:', this.options);
   /** @type {Blockly.CloseButton} */
   this.closeButton_ = new Blockly.CloseButton(this);
   var svgCloseButton = this.closeButton_.createDom();
   this.svgGroup_.appendChild(svgCloseButton);
   this.closeButton_.init();
-  console.log('[Workspace] Close button added to workspace');
 };
 `;
     // Add after addZoomControls_ - find the closing }; and add after it
@@ -77,7 +70,7 @@ Blockly.WorkspaceSvg.prototype.addCloseButton_ = function() {
   if (!content.includes('this.addCloseButton_()')) {
     content = content.replace(
       /(if \(this\.options\.zoomOptions && this\.options\.zoomOptions\.controls\) \{\s+this\.addZoomControls_\(bottom\);\s+\})/,
-      `$1\n  console.log('[Workspace] Checking closeButton option:', this.options.closeButton);\n  if (this.options.closeButton) {\n    console.log('[Workspace] closeButton is true, calling addCloseButton_');\n    this.addCloseButton_();\n  }`
+      `$1\n  if (this.options.closeButton) {\n    this.addCloseButton_();\n  }`
     );
   }
   
@@ -93,7 +86,7 @@ Blockly.WorkspaceSvg.prototype.addCloseButton_ = function() {
   
   // Add close button positioning
   if (!content.includes('this.closeButton_.position()')) {
-    const positionCode = `  console.log('[Workspace] Checking closeButton_ for positioning:', !!this.closeButton_);\n  if (this.closeButton_) {\n    console.log('[Workspace] Calling closeButton_.position()');\n    this.closeButton_.position();\n  }\n`;
+    const positionCode = `  if (this.closeButton_) {\n    this.closeButton_.position();\n  }\n`;
     const zoomPositionEnd = content.indexOf('this.zoomControls_.position();\n  }');
     if (zoomPositionEnd !== -1) {
       const insertPos = zoomPositionEnd + 'this.zoomControls_.position();\n  }'.length;
@@ -102,7 +95,4 @@ Blockly.WorkspaceSvg.prototype.addCloseButton_ = function() {
   }
   
   fs.writeFileSync(workspaceSvgPath, content);
-  console.log('✓ Patched workspace_svg.js');
 }
-
-console.log('Patch complete!');

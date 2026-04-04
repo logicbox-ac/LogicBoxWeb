@@ -47,18 +47,15 @@ const extractFirstMatchingFile = (filter, relativeDestDir, zipBuffer) => new Pro
                     return zipfile.readEntry();
                 }
                 if (extractedFileName) {
-                    console.warn(`Multiple matching files found. Ignoring: ${entry.fileName}`);
                     return zipfile.readEntry();
                 }
                 extractedFileName = entry.fileName;
-                console.info(`Found matching file: ${entry.fileName}`);
                 zipfile.openReadStream(entry, (fileError, readStream) => {
                     if (fileError) {
                         throw fileError;
                     }
                     const baseName = path.basename(entry.fileName);
                     const relativeDestFile = path.join(relativeDestDir, baseName);
-                    console.info(`Extracting ${relativeDestFile}`);
                     const absoluteDestDir = path.join(basePath, relativeDestDir);
                     fs.mkdirSync(absoluteDestDir, {recursive: true});
                     const absoluteDestFile = path.join(basePath, relativeDestFile);
@@ -78,7 +75,6 @@ const extractFirstMatchingFile = (filter, relativeDestDir, zipBuffer) => new Pro
 
 const downloadMicrobitHex = async () => {
     const url = 'https://downloads.scratch.mit.edu/microbit/scratch-microbit.hex.zip';
-    console.info(`Downloading ${url}`);
     const response = await crossFetch(url);
     const zipBuffer = Buffer.from(await response.arrayBuffer());
     const relativeHexDir = path.join('static', 'microbit');
@@ -107,7 +103,6 @@ const downloadMicrobitHex = async () => {
             '' // final newline
         ].join('\n')
     );
-    console.info(`Wrote ${relativeGeneratedFile}`);
 };
 
 const prepublish = async () => {
@@ -116,11 +111,9 @@ const prepublish = async () => {
 
 prepublish().then(
     () => {
-        console.info('Prepublish script complete');
         process.exit(0);
     },
     e => {
-        console.error(e);
-        process.exit(1);
+        throw e;
     }
 );

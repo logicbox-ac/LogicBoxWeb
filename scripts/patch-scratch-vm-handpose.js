@@ -106,9 +106,7 @@ const OLD_HANDPOSE_BOOTSTRAP_SNIPPET = `    constructor (runtime) {
 
           alert(Message.please_wait[this._locale]);
 
-          this._handposeModel = ml5.handpose(this.video, () => {
-            console.log('Model loaded!');
-          });
+          this._handposeModel = ml5.handpose(this.video, () => {});
 
           this._handposeModel.on('predict', hands => {
             hands.forEach(hand => {
@@ -350,7 +348,6 @@ const NEW_HANDPOSE_BOOTSTRAP_SNIPPET = `    constructor (runtime) {
           alert(Message.please_wait[this._locale]);
           return new Promise(resolve => {
             this._handposeModel = ml5.handpose(this._getModelOptions(), () => {
-              console.log('Model loaded!');
               resolve(true);
             });
           });
@@ -584,8 +581,7 @@ const BUNDLED_EXTENSION_FILES = [
 ];
 
 function fail(message) {
-    console.error(`[patch-scratch-vm-handpose] ${message}`);
-    process.exit(1);
+    throw new Error(`[patch-scratch-vm-handpose] ${message}`);
 }
 
 function upsertSnippetAfter(source, anchor, snippet, fileLabel, oldSnippets = []) {
@@ -645,7 +641,7 @@ function replaceSnippet(source, oldSnippet, newSnippet, fileLabel) {
 function writeFile(destPath, content, label) {
     fs.mkdirSync(path.dirname(destPath), {recursive: true});
     fs.writeFileSync(destPath, content, 'utf8');
-    console.log(`[patch-scratch-vm-handpose] wrote ${label}`);
+    void label;
 }
 
 function patchExtensionManager() {
@@ -740,9 +736,6 @@ function patchExtensionManager() {
 
     if (changed) {
         fs.writeFileSync(extensionManagerPath, source, 'utf8');
-        console.log('[patch-scratch-vm-handpose] patched extension-manager.js');
-    } else {
-        console.log('[patch-scratch-vm-handpose] extension-manager already patched');
     }
 }
 
@@ -789,7 +782,6 @@ function copyBundledExtensionFiles() {
         }
         fs.mkdirSync(path.dirname(destPath), {recursive: true});
         fs.copyFileSync(sourcePath, destPath);
-        console.log(`[patch-scratch-vm-handpose] copied ${label}`);
     }
 }
 
@@ -854,7 +846,6 @@ function main() {
     patchExtensionManager();
     copyBundledExtensionFiles();
     verifyWrittenFiles();
-    console.log('[patch-scratch-vm-handpose] done');
 }
 
 main();

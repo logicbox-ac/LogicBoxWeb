@@ -6,38 +6,20 @@ import styles from './collapsible-stage-header.css';
 
 const CollapsibleStageHeader = ({isCollapsed, onToggle}) => {
     const handleClick = (e) => {
-        console.log('[COLLAPSIBLE-HEADER] Button clicked:', {
-            isCollapsed,
-            hasOnToggle: !!onToggle,
-            eventType: e.type,
-            target: e.target.tagName
-        });
         e.preventDefault();
         e.stopPropagation();
-        
+
         if (onToggle) {
             onToggle();
-        } else {
-            console.error('[COLLAPSIBLE-HEADER] onToggle is not defined!');
         }
     };
-
-    const handleTouchStart = (e) => {
-        console.log('[COLLAPSIBLE-HEADER] Touch start detected');
-        handleClick(e);
-    };
-
-    console.log('[COLLAPSIBLE-HEADER] Rendering:', {
-        isCollapsed,
-        hasOnToggle: !!onToggle
-    });
 
     return (
         <div className={styles.header}>
             <button
                 className={styles.toggleButton}
                 onClick={handleClick}
-                onTouchStart={handleTouchStart}
+                onTouchStart={handleClick}
                 aria-expanded={!isCollapsed}
                 aria-label={isCollapsed ? 'Expand stage' : 'Collapse stage'}
                 type="button"

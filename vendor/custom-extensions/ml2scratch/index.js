@@ -348,7 +348,6 @@ class Scratch3ML2ScratchBlocks {
 
     this.knnClassifier = ml5.KNNClassifier();
     this.featureExtractor = ml5.featureExtractor('MobileNet', () => {
-      console.log('[featureExtractor] Model Loaded!');
       this.timer = setInterval(() => {
         this.classify();
       }, this.interval);
@@ -388,7 +387,6 @@ class Scratch3ML2ScratchBlocks {
         }
       });
     } catch (e) {
-      console.error("failed to load media devices!");
     }
   }
 
@@ -939,8 +937,6 @@ class Scratch3ML2ScratchBlocks {
     fr.onload = (e) => {
       let data = JSON.parse(e.target.result);
       this.knnClassifier.load(data, () => {
-        console.log('uploaded!');
-
         this.updateCounts();
         alert(Message.uploaded[this.locale]);
       });
@@ -962,9 +958,7 @@ class Scratch3ML2ScratchBlocks {
 
     let features = this.featureExtractor.infer(this.input);
     this.knnClassifier.classify(features, (err, result) => {
-      if (err) {
-        console.error(err);
-      } else {
+      if (!err) {
         if (!result || !result.confidencesByLabel) return;
 
         const topLabel = this.getTopConfidenceLabel(result.confidencesByLabel);
@@ -993,13 +987,11 @@ class Scratch3ML2ScratchBlocks {
 
   updateCounts() {
     this.counts = this.knnClassifier.getCountByLabel();
-    console.debug(this.counts);
   }
 
   actionRepeated() {
     let currentTime = Date.now();
     if (this.blockClickedAt && (this.blockClickedAt + 250) > currentTime) {
-      console.log('Please do not repeat trigerring this block.');
       this.blockClickedAt = currentTime;
       return true;
     } else {
