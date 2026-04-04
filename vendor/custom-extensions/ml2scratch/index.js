@@ -292,7 +292,7 @@ class Scratch3ML2ScratchBlocks {
    * @return {string} - the name of this extension.
    */
   static get EXTENSION_NAME() {
-    return 'ML2Scratch';
+    return 'Image Classifier';
   }
 
   /**
@@ -827,7 +827,7 @@ class Scratch3ML2ScratchBlocks {
   }
 
   getCountByLabel(args) {
-    if (this.counts[args.LABEL]) {
+    if (this.counts && typeof this.counts[args.LABEL] !== 'undefined') {
       return this.counts[args.LABEL];
     } else {
       return 0;
@@ -955,6 +955,8 @@ class Scratch3ML2ScratchBlocks {
   }
 
   classify() {
+    if (!this.input || !this.featureExtractor) return;
+
     let numLabels = this.knnClassifier.getNumLabels();
     if (numLabels == 0) return;
 
@@ -963,9 +965,14 @@ class Scratch3ML2ScratchBlocks {
       if (err) {
         console.error(err);
       } else {
-        this.label = this.getTopConfidenceLabel(result.confidencesByLabel);
+        if (!result || !result.confidencesByLabel) return;
+
+        const topLabel = this.getTopConfidenceLabel(result.confidencesByLabel);
+        if (!topLabel) return;
+
+        this.label = topLabel;
         this.when_received = true;
-        this.when_received_arr[this.label] = true
+        this.when_received_arr[this.label] = true;
       }
     });
   }
@@ -976,6 +983,7 @@ class Scratch3ML2ScratchBlocks {
 
     for (let label in confidences) {
       if (confidences[label] > topConfidence) {
+        topConfidence = confidences[label];
         topConfidenceLabel = label;
       }
     }

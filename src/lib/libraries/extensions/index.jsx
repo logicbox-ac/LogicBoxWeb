@@ -130,8 +130,8 @@ export default [
     {
         name: (
             <FormattedMessage
-                defaultMessage="Handpose2Scratch"
-                description="Name for the Handpose2Scratch extension"
+                defaultMessage="Hand Sensing"
+                description="Name for the Hand Sensing extension"
                 id="gui.extension.handpose2scratch.name"
             />
         ),
@@ -153,8 +153,8 @@ export default [
     {
         name: (
             <FormattedMessage
-                defaultMessage="Facemesh2Scratch"
-                description="Name for the Facemesh2Scratch extension"
+                defaultMessage="Face Recognition"
+                description="Name for the Face Recognition extension"
                 id="gui.extension.facemesh2scratch.name"
             />
         ),
@@ -176,8 +176,8 @@ export default [
     {
         name: (
             <FormattedMessage
-                defaultMessage="ML2Scratch"
-                description="Name for the ML2Scratch extension"
+                defaultMessage="Image Classifier"
+                description="Name for the Image Classifier extension"
                 id="gui.extension.ml2scratch.name"
             />
         ),

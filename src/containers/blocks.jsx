@@ -65,6 +65,7 @@ class Blocks extends React.Component {
             'handleViewportInputModeChange',
             'isMobileTouchViewport',
             'getToolboxXML',
+            'selectToolboxCategory',
             'handleCategorySelected',
             'handleConnectionModalStart',
             'handleDrop',
@@ -107,6 +108,7 @@ class Blocks extends React.Component {
         this.toolboxUpdateQueue = [];
         this.longPressTimer = null;
         this.longPressBlockId = null;
+        this.pendingCategorySelection = null;
         this._connectedFlyoutSvg = null;
         this._detachFlyoutListeners = null;
         this._debugMoveCounter = 0;
@@ -547,13 +549,28 @@ class Blocks extends React.Component {
         // Using the setter function will rerender the entire toolbox which we just rendered.
         this.workspace.toolboxRefreshEnabled_ = true;
 
-        const currentCategoryPos = this.workspace.toolbox_.getCategoryPositionById(categoryId);
-        const currentCategoryLen = this.workspace.toolbox_.getCategoryLengthById(categoryId);
-        if (offset < currentCategoryLen) {
-            this.workspace.toolbox_.setFlyoutScrollPos(currentCategoryPos + offset);
-        } else {
-            this.workspace.toolbox_.setFlyoutScrollPos(currentCategoryPos);
+        if (categoryId) {
+            const currentCategoryPos = this.workspace.toolbox_.getCategoryPositionById(categoryId);
+            const currentCategoryLen = this.workspace.toolbox_.getCategoryLengthById(categoryId);
+            if (typeof currentCategoryPos === 'number' && typeof currentCategoryLen === 'number') {
+                if (offset < currentCategoryLen) {
+                    this.workspace.toolbox_.setFlyoutScrollPos(currentCategoryPos + offset);
+                } else {
+                    this.workspace.toolbox_.setFlyoutScrollPos(currentCategoryPos);
+                }
+            }
         }
+
+        if (this.pendingCategorySelection && this.selectToolboxCategory(this.pendingCategorySelection)) {
+            this.pendingCategorySelection = null;
+        }
+
+        // Toolbox refreshes can recreate the flyout DOM on mobile, so rebind touch handlers
+        // after the new category content is in place.
+        setTimeout(() => {
+            this.attachFlyoutListeners();
+            this.attachInteractionDebugListeners();
+        }, 0);
 
         const queue = this.toolboxUpdateQueue;
         this.toolboxUpdateQueue = [];
@@ -567,6 +584,20 @@ class Blocks extends React.Component {
         } else {
             fn();
         }
+    }
+
+    selectToolboxCategory(categoryId) {
+        if (!categoryId || !this.workspace || !this.workspace.toolbox_) return false;
+
+        const categoryPosition = this.workspace.toolbox_.getCategoryPositionById(categoryId);
+        if (typeof categoryPosition !== 'number' || Number.isNaN(categoryPosition)) {
+            return false;
+        }
+
+        this.workspace.toolbox_.setSelectedCategoryById(categoryId);
+        this.attachFlyoutListeners();
+        this.attachInteractionDebugListeners();
+        return true;
     }
 
     ensureWorkspaceSize(attempts = 0) {
@@ -1346,7 +1377,12 @@ class Blocks extends React.Component {
         }
 
         this.withToolboxUpdates(() => {
-            this.workspace.toolbox_.setSelectedCategoryById(categoryId);
+            if (this.selectToolboxCategory(categoryId)) {
+                this.pendingCategorySelection = null;
+                return;
+            }
+
+            this.pendingCategorySelection = categoryId;
         });
     }
     setBlocks(blocks) {
