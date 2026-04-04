@@ -192,6 +192,8 @@ class PaintEditorWrapper extends React.Component {
             'handleUpdateImage',
             'handleUpdateName',
             'triggerPaintLayoutSync',
+            'syncMobileCostumeLayout',
+            'resetMobileCostumeLayout',
             'scheduleCostumeDiagnostics',
             'runCostumeDiagnostics',
             'handleDiagnosticViewportChange',
@@ -222,6 +224,7 @@ class PaintEditorWrapper extends React.Component {
     }
 
     componentWillUnmount () {
+        this.resetMobileCostumeLayout();
         this.clearCostumeDiagnosticTimers();
         this.detachCostumeDiagnosticListeners();
         if (typeof window !== 'undefined') {
@@ -232,10 +235,14 @@ class PaintEditorWrapper extends React.Component {
     triggerPaintLayoutSync () {
         if (typeof window === 'undefined') return;
 
-        const emitResize = () => window.dispatchEvent(new Event('resize'));
+        const syncLayout = () => {
+            this.syncMobileCostumeLayout();
+            window.dispatchEvent(new Event('resize'));
+        };
 
-        window.requestAnimationFrame(emitResize);
-        window.setTimeout(emitResize, 120);
+        window.requestAnimationFrame(syncLayout);
+        window.setTimeout(syncLayout, 120);
+        window.setTimeout(this.syncMobileCostumeLayout, 260);
     }
 
     clearCostumeDiagnosticTimers () {
@@ -253,6 +260,147 @@ class PaintEditorWrapper extends React.Component {
         if (window.innerWidth > 767) return false;
         const mobileRoot = document.querySelector('[data-mobile-tab]');
         return Boolean(mobileRoot && mobileRoot.getAttribute('data-mobile-tab') === 'costumes');
+    }
+
+    resetMobileCostumeLayout () {
+        if (typeof document === 'undefined') return;
+
+        const editor = document.querySelector('[data-mobile-tab="costumes"] [class*="paint-editor_editor-container"]');
+        if (!editor) return;
+
+        const editorTop = editor.querySelector('[class*="paint-editor_editor-container-top"]');
+        const topAlignRow = editor.querySelector('[class*="paint-editor_top-align-row"]');
+        const fixedToolsRow = editor.querySelector('[class*="fixed-tools_row"]');
+        const secondaryRow = editorTop ? Array.from(editorTop.children).find((child, index) =>
+            index === 1 && child.matches('[class*="paint-editor_row"]')) : null;
+        const modeSelector = editor.querySelector('[class*="paint-editor_mode-selector"]');
+        const zoomControls = editor.querySelector('[class*="paint-editor_zoom-controls"]');
+
+        if (editorTop) {
+            editorTop.style.height = '';
+            editorTop.style.minHeight = '';
+            editorTop.style.flex = '';
+        }
+        if (topAlignRow) {
+            topAlignRow.style.marginTop = '';
+        }
+        if (fixedToolsRow) {
+            Array.from(fixedToolsRow.children).forEach(child => {
+                child.style.marginBottom = '';
+                child.style.marginTop = '';
+            });
+        }
+        if (secondaryRow) {
+            Array.from(secondaryRow.children).forEach(child => {
+                child.style.marginBottom = '';
+                child.style.marginTop = '';
+                child.style.height = '';
+                child.style.minHeight = '';
+                child.style.alignSelf = '';
+            });
+        }
+        if (modeSelector) {
+            Array.from(modeSelector.children).forEach(child => {
+                child.style.width = '';
+                child.style.minWidth = '';
+                child.style.height = '';
+                child.style.minHeight = '';
+                child.style.display = '';
+                child.style.flexDirection = '';
+                child.style.alignItems = '';
+                child.style.justifyContent = '';
+                child.style.gap = '';
+            });
+        }
+        if (zoomControls) {
+            Array.from(zoomControls.querySelectorAll('button')).forEach(button => {
+                button.style.display = '';
+                button.style.alignItems = '';
+                button.style.justifyContent = '';
+            });
+        }
+    }
+
+    syncMobileCostumeLayout () {
+        if (!this.isCostumeDiagnosticViewport()) {
+            this.resetMobileCostumeLayout();
+            return;
+        }
+
+        const editor = document.querySelector('[data-mobile-tab="costumes"] [class*="paint-editor_editor-container"]');
+        if (!editor) return;
+
+        const editorTop = editor.querySelector('[class*="paint-editor_editor-container-top"]');
+        const topAlignRow = editor.querySelector('[class*="paint-editor_top-align-row"]');
+        const fixedToolsRow = editor.querySelector('[class*="fixed-tools_row"]');
+        const modeSelector = editor.querySelector('[class*="paint-editor_mode-selector"]');
+        const zoomControls = editor.querySelector('[class*="paint-editor_zoom-controls"]');
+        if (!editorTop || !topAlignRow) return;
+
+        const topRows = Array.from(editorTop.children)
+            .filter(child => child.matches('[class*="paint-editor_row"]'));
+
+        const rowsBottom = topRows.reduce((maxBottom, row) => {
+            const styles = window.getComputedStyle(row);
+            const bottom =
+                row.offsetTop +
+                row.offsetHeight +
+                parseFloat(styles.marginBottom || 0);
+            return Math.max(maxBottom, bottom);
+        }, 0);
+
+        if (rowsBottom > 0) {
+            const reservedHeight = Math.ceil(rowsBottom + 8);
+            editorTop.style.height = `${reservedHeight}px`;
+            editorTop.style.minHeight = `${reservedHeight}px`;
+            editorTop.style.flex = '0 0 auto';
+
+            const existingMarginTop = parseFloat(window.getComputedStyle(topAlignRow).marginTop || 0);
+            const currentTop = topAlignRow.getBoundingClientRect().top;
+            const naturalTop = currentTop - existingMarginTop;
+            const desiredTop = editorTop.getBoundingClientRect().top + reservedHeight;
+            topAlignRow.style.marginTop = `${Math.max(0, Math.ceil(desiredTop - naturalTop))}px`;
+        }
+
+        if (fixedToolsRow) {
+            Array.from(fixedToolsRow.children).forEach(child => {
+                child.style.marginBottom = '0px';
+                child.style.marginTop = '0px';
+            });
+        }
+
+        const secondaryRow = topRows[1];
+        if (secondaryRow) {
+            Array.from(secondaryRow.children).forEach(child => {
+                child.style.marginBottom = '0px';
+                child.style.marginTop = '0px';
+                child.style.height = 'auto';
+                child.style.minHeight = '0px';
+                child.style.alignSelf = 'center';
+            });
+        }
+
+        if (modeSelector) {
+            Array.from(modeSelector.children).forEach(child => {
+                child.style.width = '3.85rem';
+                child.style.minWidth = '3.85rem';
+                child.style.height = '4rem';
+                child.style.minHeight = '4rem';
+                child.style.display = 'inline-flex';
+                child.style.flexDirection = 'column';
+                child.style.alignItems = 'center';
+                child.style.justifyContent = 'center';
+                child.style.gap = '0.15rem';
+            });
+        }
+
+        if (zoomControls) {
+            Array.from(zoomControls.querySelectorAll('button')).forEach(button => {
+                button.style.display = 'flex';
+                button.style.alignItems = 'center';
+                button.style.justifyContent = 'center';
+            });
+        }
     }
 
     handleDiagnosticViewportChange () {
