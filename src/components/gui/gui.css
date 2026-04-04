@@ -1418,6 +1418,16 @@ $fade-out-distance: 15px;
 }
 
 @media only screen and (max-width: 767px) {
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container"]) {
+        display: flex !important;
+        flex-direction: column !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        padding: 0.5rem !important;
+        gap: 0.5rem !important;
+    }
+
     [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) {
         display: flex !important;
         flex-direction: column !important;
@@ -1438,21 +1448,16 @@ $fade-out-distance: 15px;
         flex: 0 0 auto !important;
         width: 100% !important;
         min-width: 0 !important;
+        min-height: auto !important;
         max-width: 100% !important;
         overflow-x: auto !important;
         overflow-y: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-x !important;
-        gap: 0.25rem !important;
-    }
-
-    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container"]) {
-        display: flex !important;
-        flex-direction: column !important;
-        height: auto !important;
-        min-height: 0 !important;
-        overflow: visible !important;
-        padding: 0.5rem !important;
+        gap: 0.375rem !important;
+        padding-bottom: 0.125rem !important;
+        position: relative !important;
+        z-index: auto !important;
     }
 
     [data-mobile-tab="costumes"] :global([class*="paint-editor_top-align-row"]) {
@@ -1467,22 +1472,12 @@ $fade-out-distance: 15px;
         gap: 0.5rem !important;
     }
 
-    [data-mobile-tab="costumes"] :global([class*="paint-editor_top-align-row"]) > :global([class*="paint-editor_row"]) {
-        display: flex !important;
-        flex-direction: column !important;
-        flex: 0 0 auto !important;
-        width: 100% !important;
-        height: auto !important;
-        min-height: 0 !important;
-        overflow: visible !important;
-    }
-
     [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        align-items: stretch !important;
-        align-content: stretch !important;
+        align-items: center !important;
+        align-content: center !important;
         justify-content: flex-start !important;
         order: 0 !important;
         width: 100% !important;
@@ -1493,13 +1488,16 @@ $fade-out-distance: 15px;
         overflow-y: hidden !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-x !important;
-        padding: 0 0 0.5rem !important;
+        padding: 0 0 0.25rem !important;
         gap: 0.25rem !important;
+        position: relative !important;
+        z-index: 1 !important;
     }
 
     [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) > * {
         flex: 0 0 auto !important;
         width: auto !important;
+        min-width: auto !important;
         margin-bottom: 0 !important;
     }
 
@@ -1507,80 +1505,85 @@ $fade-out-distance: 15px;
     [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) [role="button"],
     [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) button,
     [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) [role="button"] {
-        min-width: 2.5rem !important;
-        width: 2.5rem !important;
-        min-height: 2.5rem !important;
-        height: 2.5rem !important;
+        min-width: 2.25rem !important;
+        width: 2.25rem !important;
+        min-height: 2.25rem !important;
+        height: 2.25rem !important;
         padding: 0.25rem !important;
         box-sizing: border-box !important;
+        flex: 0 0 auto !important;
     }
 
     [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) img,
     [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) img {
-        width: 1.1rem !important;
-        height: 1.1rem !important;
+        width: 1rem !important;
+        height: 1rem !important;
     }
 
-    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) :global([class*="fixed-tools_row"]),
-    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) :global([class*="paint-editor_row"]),
-    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) :global([class*="input-group"]) {
+    [data-mobile-tab="costumes"] :global([class*="fixed-tools_row"]),
+    [data-mobile-tab="costumes"] :global([class*="fixed-tools_row"]) > :global([class*="input-group"]),
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) :global([class*="input-group"]),
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) :global([class*="label_input-group"]) {
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
         flex-wrap: nowrap !important;
-        flex-shrink: 0 !important;
+        gap: 0.375rem !important;
+        flex: 0 0 auto !important;
         width: max-content !important;
         min-width: max-content !important;
         max-width: none !important;
         overflow: visible !important;
+        position: static !important;
     }
 
     [data-mobile-tab="costumes"] :global([class*="fixed-tools_costume-input"]),
     [data-mobile-tab="costumes"] :global(input[class*="fixed-tools_costume-input"]) {
-        width: 4.25rem !important;
-        min-width: 4.25rem !important;
-        max-width: 4.25rem !important;
+        width: 5rem !important;
+        min-width: 5rem !important;
+        max-width: 5rem !important;
+        height: 2rem !important;
         font-size: 0.75rem !important;
     }
 
-    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) :global([class*="input-group"]),
-    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) :global([class*="label_input-group"]) {
-        display: inline-flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        gap: 0.25rem !important;
-        width: auto !important;
-        min-width: 0 !important;
-        min-height: 0 !important;
-        margin: 0 !important;
-    }
-
-    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) :global([class*="label_input-group"]) span {
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) :global([class*="label_input-group"]) span {
         display: inline !important;
         font-size: 0.65rem !important;
         line-height: 1 !important;
         margin: 0 !important;
+        white-space: nowrap !important;
     }
 
-    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) input,
-    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) select {
-        width: 3rem !important;
-        min-width: 3rem !important;
-        max-width: 3rem !important;
-        height: 2.25rem !important;
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) :global([class*="label_input-group"]) input,
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_editor-container-top"]) :global([class*="label_input-group"]) select {
+        width: 2.75rem !important;
+        min-width: 2.75rem !important;
+        max-width: 2.75rem !important;
+        height: 2rem !important;
         font-size: 0.75rem !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) button,
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_mode-selector"]) [role="button"] {
+        border-radius: 0.5rem !important;
     }
 
     [data-mobile-tab="costumes"] :global([class*="paint-editor_controls-container"]) {
         display: flex !important;
         flex-direction: column !important;
+        align-items: stretch !important;
         flex: 0 0 auto !important;
         width: 100% !important;
         min-width: 0 !important;
         margin: 0 !important;
         overflow: visible !important;
+        position: relative !important;
+        z-index: 0 !important;
     }
 
     [data-mobile-tab="costumes"] :global([class*="paint-editor_canvas-container"]) {
         display: block !important;
-        flex: 0 0 auto !important;
+        flex: 1 1 auto !important;
         width: 100% !important;
         min-width: 0 !important;
         min-height: clamp(18rem, 52vh, 24rem) !important;
@@ -1609,22 +1612,50 @@ $fade-out-distance: 15px;
         left: 0 !important;
         display: flex !important;
         justify-content: flex-start !important;
-        align-items: center !important;
-        padding: 0.75rem !important;
-        gap: 0.5rem !important;
+        align-items: flex-end !important;
+        padding: 0.5rem !important;
+        gap: 0.375rem !important;
+        pointer-events: none !important;
+        z-index: 1 !important;
     }
 
     [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex: 0 0 auto !important;
+        width: auto !important;
+        max-width: max-content !important;
+        background: rgba(255, 255, 255, 0.96) !important;
+        border: 1px solid #d9d9d9 !important;
+        border-radius: 0.75rem !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+        padding: 0 !important;
         position: static !important;
         bottom: auto !important;
         left: auto !important;
         right: auto !important;
         margin: 0 !important;
         z-index: 1 !important;
+        pointer-events: auto !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) :global([class*="input-group"]) {
+        margin: 0 !important;
+        width: auto !important;
+        min-width: 0 !important;
     }
 
     [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) button {
-        min-width: 2.25rem !important;
-        min-height: 2.25rem !important;
+        min-width: 2rem !important;
+        width: 2rem !important;
+        min-height: 2rem !important;
+        height: 2rem !important;
+        padding: 0.25rem !important;
+    }
+
+    [data-mobile-tab="costumes"] :global([class*="paint-editor_zoom-controls"]) img {
+        width: 0.9rem !important;
+        height: 0.9rem !important;
     }
 }
