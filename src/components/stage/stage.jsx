@@ -87,10 +87,6 @@ const StageComponent = props => {
                 >
                     <div
                         className={styles.stageBottomWrapper}
-                        style={{
-                            width: stageDimensions.width,
-                            height: stageDimensions.height
-                        }}
                     >
                         {micIndicator ? (
                             <MicIndicator
@@ -101,7 +97,6 @@ const StageComponent = props => {
                         {question === null ? null : (
                             <div
                                 className={styles.questionWrapper}
-                                style={{width: stageDimensions.width}}
                             >
                                 <Question
                                     question={question}

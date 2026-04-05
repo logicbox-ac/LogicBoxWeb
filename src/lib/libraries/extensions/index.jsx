@@ -10,15 +10,6 @@ import penInsetIconURL from './pen/pen-small.svg';
 import videoSensingIconURL from './videoSensing/video-sensing.png';
 import videoSensingInsetIconURL from './videoSensing/video-sensing-small.svg';
 
-import handpose2scratchIconURL from './handpose2scratch/handpose2scratch.png';
-import handpose2scratchInsetIconURL from './handpose2scratch/handpose2scratch-small.png';
-
-import facemesh2scratchIconURL from './facemesh2scratch/facemesh2scratch.png';
-import facemesh2scratchInsetIconURL from './facemesh2scratch/facemesh2scratch-small.png';
-
-import ml2scratchIconURL from './ml2scratch/ml2scratch.png';
-import ml2scratchInsetIconURL from './ml2scratch/ml2scratch-small.png';
-
 import speech2scratchIconURL from './speech2scratch/speech2scratch.png';
 import speech2scratchInsetIconURL from './speech2scratch/speech2scratch-small.png';
 
@@ -65,6 +56,13 @@ import gdxforIconURL from './gdxfor/gdxfor.png';
 import gdxforInsetIconURL from './gdxfor/gdxfor-small.svg';
 import gdxforConnectionIconURL from './gdxfor/gdxfor-illustration.svg';
 import gdxforConnectionSmallIconURL from './gdxfor/gdxfor-small.svg';
+
+const handpose2scratchIconURL = '/static/extension-logos/handlg.jpeg';
+const handpose2scratchInsetIconURL = '/static/extension-logos/hand.jpeg';
+const facemesh2scratchIconURL = '/static/extension-logos/facelarge.jpeg';
+const facemesh2scratchInsetIconURL = '/static/extension-logos/face.jpeg';
+const ml2scratchIconURL = '/static/extension-logos/imagelg.jpeg';
+const ml2scratchInsetIconURL = '/static/extension-logos/image.jpeg';
 
 export default [
     {

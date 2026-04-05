@@ -18,7 +18,7 @@ const {
     waitForVideoReady
 } = require('../logicboxTracking/runtime');
 
-const blockIconURI = null;
+const blockIconURI = '/static/extension-logos/face.jpeg';
 
 const Message = {
     getX: {

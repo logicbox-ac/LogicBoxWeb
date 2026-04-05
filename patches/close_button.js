@@ -35,7 +35,6 @@ goog.require('goog.dom');
  * @constructor
  */
 Blockly.CloseButton = function(workspace) {
-  console.log('[CloseButton] Constructor called', workspace);
   this.workspace_ = workspace;
 };
 
@@ -100,11 +99,9 @@ Blockly.CloseButton.prototype.top_ = 0;
  * @return {!Element} The close button SVG group.
  */
 Blockly.CloseButton.prototype.createDom = function() {
-  console.log('[CloseButton] createDom called');
   this.svgGroup_ =
       Blockly.utils.createSvgElement('g', {'class': 'blocklyCloseButton'}, null);
   this.createCloseSvg_();
-  console.log('[CloseButton] createDom complete, svgGroup:', this.svgGroup_);
   return this.svgGroup_;
 };
 
@@ -113,7 +110,6 @@ Blockly.CloseButton.prototype.createDom = function() {
  * @return {number} Height of the close button.
  */
 Blockly.CloseButton.prototype.init = function() {
-  console.log('[CloseButton] init called');
   return this.HEIGHT_;
 };
 
@@ -133,11 +129,9 @@ Blockly.CloseButton.prototype.dispose = function() {
  * Move the close button to the top-right corner.
  */
 Blockly.CloseButton.prototype.position = function() {
-  console.log('[CloseButton] position called');
   var metrics = this.workspace_.getMetrics();
   if (!metrics) {
     // There are no metrics available (workspace is probably not visible).
-    console.log('[CloseButton] No metrics available');
     return;
   }
   if (this.workspace_.RTL) {
@@ -160,7 +154,6 @@ Blockly.CloseButton.prototype.position = function() {
   if (metrics.toolboxPosition == Blockly.TOOLBOX_AT_TOP) {
     this.top_ += metrics.flyoutHeight;
   }
-  console.log('[CloseButton] Positioning at', this.left_, this.top_);
   this.svgGroup_.setAttribute('transform',
       'translate(' + this.left_ + ',' + this.top_ + ')');
 };

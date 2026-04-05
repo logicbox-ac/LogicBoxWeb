@@ -9,6 +9,7 @@ const BlocksComponent = props => {
     const {
         containerRef,
         dragOver,
+        flyoutCloseButtonStyle,
         isFlyoutVisible,
         onCloseFlyout,
         onCloseBlocks: _onCloseBlocks, // consumed to avoid leaking unknown prop to DOM
@@ -27,26 +28,31 @@ const BlocksComponent = props => {
             componentRef={containerRef}
         >
             {isFlyoutVisible && (
-                <div
+                <button
                     className={styles.flyoutCloseButton}
+                    style={flyoutCloseButtonStyle}
+                    type="button"
                     onClick={onCloseFlyout}
-                    role="button"
-                    tabIndex={0}
                     aria-label="Close flyout"
                 >
-                    <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 12 12"
+                    <span
+                        className={styles.flyoutCloseButtonIcon}
+                        aria-hidden="true"
                     >
-                        <path
-                            d="M10 2L2 10M2 2l8 8"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                        />
-                    </svg>
-                </div>
+                        <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 12 12"
+                        >
+                            <path
+                                d="M10 2L2 10M2 2l8 8"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                            />
+                        </svg>
+                    </span>
+                </button>
             )}
             {/* Mobile delete button - shows on long press */}
             {mobileDeletePosition && (
@@ -116,6 +122,7 @@ const BlocksComponent = props => {
 BlocksComponent.propTypes = {
     containerRef: PropTypes.func,
     dragOver: PropTypes.bool,
+    flyoutCloseButtonStyle: PropTypes.object,
     isFlyoutVisible: PropTypes.bool,
     mobileDeletePosition: PropTypes.shape({
         x: PropTypes.number,
