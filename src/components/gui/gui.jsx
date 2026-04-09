@@ -100,41 +100,6 @@ const GUIComponent = props => {
     const [mobileActiveTab, setMobileActiveTab] = useState('code');
     // Collapsible stage state for code tab
     const [isStageCollapsed, setIsStageCollapsed] = useState(false);
-    // Collapsible paint controls state for costume tab - default to collapsed
-
-
-    const handleMobileTabChange = useCallback(tab => {
-        setMobileActiveTab(tab);
-        if (tab === 'code') props.onActivateTab(0);
-        if (tab === 'costumes') props.onActivateCostumesTab();
-        if (tab === 'sounds') props.onActivateSoundsTab();
-        // When switching to stage tab, trigger a redraw after DOM updates
-        if (tab === 'stage' && props.vm && props.vm.renderer) {
-            // Small delay to allow CSS display change to take effect
-            setTimeout(() => {
-                if (props.vm.renderer) {
-                    props.vm.renderer.resize(props.vm.renderer._nativeSize[0], props.vm.renderer._nativeSize[1]);
-                    props.vm.renderer.draw();
-                }
-            }, 50);
-        }
-    }, [props.onActivateTab, props.onActivateCostumesTab, props.onActivateSoundsTab, props.vm]);
-
-    const handleStageToggle = useCallback(() => {
-        setIsStageCollapsed(prev => !prev);
-
-        // Trigger renderer resize after collapse/expand
-        if (props.vm && props.vm.renderer) {
-            setTimeout(() => {
-                if (props.vm.renderer) {
-                    props.vm.renderer.resize(props.vm.renderer._nativeSize[0], props.vm.renderer._nativeSize[1]);
-                    props.vm.renderer.draw();
-                }
-            }, 350);
-        }
-    }, [props.vm]);
-
-
     const {
         accountNavOpen,
         activeTabIndex,
@@ -165,6 +130,7 @@ const GUIComponent = props => {
         costumesTabVisible,
         debugModalVisible,
         enableCommunity,
+        extensionLibraryVisible,
         intl,
         isCreating,
         isFullScreen,
@@ -210,6 +176,38 @@ const GUIComponent = props => {
         vm,
         ...componentProps
     } = omit(props, 'dispatch');
+
+    const handleMobileTabChange = useCallback(tab => {
+        setMobileActiveTab(tab);
+        if (tab === 'code') props.onActivateTab(0);
+        if (tab === 'costumes') props.onActivateCostumesTab();
+        if (tab === 'sounds') props.onActivateSoundsTab();
+        // When switching to stage tab, trigger a redraw after DOM updates
+        if (tab === 'stage' && props.vm && props.vm.renderer) {
+            // Small delay to allow CSS display change to take effect
+            setTimeout(() => {
+                if (props.vm.renderer) {
+                    props.vm.renderer.resize(props.vm.renderer._nativeSize[0], props.vm.renderer._nativeSize[1]);
+                    props.vm.renderer.draw();
+                }
+            }, 50);
+        }
+    }, [props.onActivateTab, props.onActivateCostumesTab, props.onActivateSoundsTab, props.vm]);
+
+    const handleStageToggle = useCallback(() => {
+        setIsStageCollapsed(prev => !prev);
+
+        // Trigger renderer resize after collapse/expand
+        if (props.vm && props.vm.renderer) {
+            setTimeout(() => {
+                if (props.vm.renderer) {
+                    props.vm.renderer.resize(props.vm.renderer._nativeSize[0], props.vm.renderer._nativeSize[1]);
+                    props.vm.renderer.draw();
+                }
+            }, 350);
+        }
+    }, [props.vm]);
+
     if (children) {
         return <Box {...componentProps}>{children}</Box>;
     }
@@ -421,7 +419,9 @@ const GUIComponent = props => {
                                             onCloseBlocks={onCloseBlocks}
                                         />
                                     </Box>
-                                    <Box className={styles.extensionButtonContainer}>
+                                    <Box
+                                        className={styles.extensionButtonContainer}
+                                    >
                                         <button
                                             className={styles.extensionButton}
                                             title={intl.formatMessage(messages.addExtension)}
@@ -525,6 +525,7 @@ GUIComponent.propTypes = {
     costumeLibraryVisible: PropTypes.bool,
     costumesTabVisible: PropTypes.bool,
     debugModalVisible: PropTypes.bool,
+    extensionLibraryVisible: PropTypes.bool,
     enableCommunity: PropTypes.bool,
     intl: intlShape.isRequired,
     isCreating: PropTypes.bool,

@@ -56,7 +56,7 @@ class MobileTabBar extends React.Component {
                     aria-controls="panel-code"
                     tabIndex={activeTab === 'code' ? 0 : -1}
                 >
-                    <span className={styles.tabIcon}>{'🧩'}</span>
+                    <span className={styles.tabIcon}>{'🔌'}</span>
                     <span className={styles.tabLabel}>
                         <FormattedMessage
                             defaultMessage="Code"

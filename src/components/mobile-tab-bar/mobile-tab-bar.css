@@ -65,11 +65,19 @@
     transition: transform 0.2s ease;
 }
 
+.tab-icon-image {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+
 /* Tab label */
 .tab-label {
     font-size: 11px;
     font-weight: 500;
     color: $text-primary;
+    line-height: 1.1;
+    text-align: center;
     transition: color 0.2s ease;
 }
 
@@ -90,6 +98,7 @@
 /* Tablet - slightly larger tabs */
 @media (min-width: 480px) and (max-width: 767px) {
     .tab {
+        min-width: 0;
         padding: 10px 12px;
     }
 
@@ -99,6 +108,23 @@
 
     .tab-label {
         font-size: 12px;
+    }
+}
+
+@media (max-width: 420px) {
+    .tab {
+        padding: 8px 2px;
+    }
+
+    .tab-label {
+        font-size: 10px;
+    }
+
+    .tab-icon,
+    .tab-icon-image {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
     }
 }
 

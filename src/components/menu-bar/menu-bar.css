@@ -127,7 +127,18 @@
     min-height: 2rem;
 }
 
-.file-group > :not(.mobile-save-button):not(.mobile-open-button):not(:first-child) {
+.mobile-share-button {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0;
+    padding: 0 0.85rem;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    min-height: 2rem;
+}
+
+.file-group > :not(.mobile-save-button):not(.mobile-open-button):not(.mobile-share-button):not(:first-child) {
     display: none !important;
 }
 
@@ -341,6 +352,10 @@
 
     .mobile-save-button {
         margin-left: 0;
+    }
+
+    .mobile-share-button {
+        display: none !important;
     }
 
     /* Ensure dropdown menus are positioned correctly */

@@ -5,7 +5,7 @@ import {computeRMS, computeChunkedRMS} from './audio-util.js';
 
 class AudioRecorder {
     constructor () {
-        this.audioContext = SharedAudioContext();
+        this.audioContext = null;
         this.bufferLength = 8192;
 
         this.userMediaStream = null;
@@ -22,6 +22,11 @@ class AudioRecorder {
     }
 
     startListening (onStarted, onUpdate, onError) {
+        this.audioContext = SharedAudioContext();
+        if (!this.audioContext) {
+            onError(new Error('Audio context unavailable'));
+            return;
+        }
         try {
             getUserMedia({audio: true})
                 .then(userMediaStream => {

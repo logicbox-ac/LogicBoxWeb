@@ -341,6 +341,11 @@ $fade-out-distance: 15px;
 
 @media (max-width: 767px) {
 
+    .page-wrapper {
+        min-height: 100vh !important;
+        min-height: 100dvh !important;
+    }
+
     /* ----------------------------------------
        MAIN LAYOUT ADJUSTMENTS
        ---------------------------------------- */
@@ -617,11 +622,35 @@ $fade-out-distance: 15px;
        ---------------------------------------- */
 
     .body-wrapper {
-        height: calc(100% - $menu-bar-height - 56px) !important;
+        height: calc(100vh - $menu-bar-height - 56px) !important;
+        height: calc(100dvh - $menu-bar-height - 56px) !important;
+        min-height: calc(100vh - $menu-bar-height - 56px) !important;
+        min-height: calc(100dvh - $menu-bar-height - 56px) !important;
         /* Account for mobile tab bar */
         overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
+    }
+
+    [data-mobile-tab="code"] .tabs,
+    [data-mobile-tab="code"] .tab-panel.is-selected {
+        height: 100% !important;
+        min-height: 0 !important;
+    }
+
+    [data-mobile-tab="code"] .blocks-wrapper {
+        min-height: 0 !important;
+        padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    [data-mobile-tab="code"] .extension-button-container {
+        position: fixed !important;
+        left: env(safe-area-inset-left, 0px) !important;
+        right: auto !important;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem) !important;
+        width: 3rem !important;
+        height: 3rem !important;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.18) !important;
     }
 
     /* ----------------------------------------
@@ -639,6 +668,17 @@ $fade-out-distance: 15px;
     .alerts-container {
         margin-top: 100px !important;
         /* Account for mobile tab bar */
+    }
+}
+
+@media (max-width: 324px) {
+    [data-mobile-tab="code"] .blocks-wrapper {
+        padding-bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    [data-mobile-tab="code"] .extension-button-container {
+        width: 2.75rem !important;
+        height: 2.75rem !important;
     }
 }
 

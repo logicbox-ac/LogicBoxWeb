@@ -542,6 +542,23 @@ class MenuBar extends React.Component {
                 {mobileOpenMessage}
             </Button>
         ) : null;
+        const mobileShareButton = (this.props.isShowingProject || this.props.isUpdating) ? (
+            <ProjectWatcher onDoneUpdating={this.props.onSeeCommunity}>
+                {
+                    waitForUpdate => (
+                        <ShareButton
+                            className={styles.mobileShareButton}
+                            isShared={this.props.isShared}
+                            /* eslint-disable react/jsx-no-bind */
+                            onClick={() => {
+                                this.handleClickShare(waitForUpdate);
+                            }}
+                            /* eslint-enable react/jsx-no-bind */
+                        />
+                    )
+                }
+            </ProjectWatcher>
+        ) : null;
         // Show the About button only if we have a handler for it (like in the desktop app)
         const aboutButton = this.buildAboutMenu(this.props.onClickAbout);
         return (
@@ -567,6 +584,7 @@ class MenuBar extends React.Component {
                         </div>
                         {mobileOpenButton}
                         {mobileSaveButton}
+                        {mobileShareButton}
                         <div className={styles.desktopControls}>
                             {(this.props.canChangeTheme || this.props.canChangeLanguage) && (<SettingsMenu
                                 canChangeLanguage={this.props.canChangeLanguage}
@@ -770,30 +788,22 @@ class MenuBar extends React.Component {
                         />
                     ) : null)}
                     <div className={classNames(styles.menuBarItem, styles.desktopOnly)}>
-                        {this.props.canShare ? (
-                            (this.props.isShowingProject || this.props.isUpdating) && (
-                                <ProjectWatcher onDoneUpdating={this.props.onSeeCommunity}>
-                                    {
-                                        waitForUpdate => (
-                                            <ShareButton
-                                                className={styles.menuBarButton}
-                                                isShared={this.props.isShared}
-                                                /* eslint-disable react/jsx-no-bind */
-                                                onClick={() => {
-                                                    this.handleClickShare(waitForUpdate);
-                                                }}
-                                            /* eslint-enable react/jsx-no-bind */
-                                            />
-                                        )
-                                    }
-                                </ProjectWatcher>
-                            )
-                        ) : (
-                            this.props.showComingSoon ? (
-                                <MenuBarItemTooltip id="share-button">
-                                    <ShareButton className={styles.menuBarButton} />
-                                </MenuBarItemTooltip>
-                            ) : []
+                        {(this.props.isShowingProject || this.props.isUpdating) && (
+                            <ProjectWatcher onDoneUpdating={this.props.onSeeCommunity}>
+                                {
+                                    waitForUpdate => (
+                                        <ShareButton
+                                            className={styles.menuBarButton}
+                                            isShared={this.props.isShared}
+                                            /* eslint-disable react/jsx-no-bind */
+                                            onClick={() => {
+                                                this.handleClickShare(waitForUpdate);
+                                            }}
+                                        /* eslint-enable react/jsx-no-bind */
+                                        />
+                                    )
+                                }
+                            </ProjectWatcher>
                         )}
                         {this.props.canRemix ? remixButton : []}
                     </div>
