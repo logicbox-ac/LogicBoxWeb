@@ -180,6 +180,11 @@ const buildConfig = baseConfig.clone()
                 to: 'static'
             },
             {
+                from: '.well-known',
+                to: '.well-known',
+                noErrorOnMissing: true
+            },
+            {
                 from: 'extensions/**',
                 to: 'static',
                 context: 'src/examples'
@@ -196,3 +201,4 @@ const buildDist = process.env.BUILD_MODE === 'dist';
 module.exports = buildDist ?
     [buildConfig.get(), distConfig.get()] :
     buildConfig.get();
+

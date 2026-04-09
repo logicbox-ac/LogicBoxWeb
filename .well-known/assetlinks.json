@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.scratchwebview.mvp",
+      "sha256_cert_fingerprints": [
+        "C1:DE:29:39:4D:27:97:89:0F:9D:C0:CB:AF:D7:BF:40:2F:3F:35:07:93:FE:EB:F1:39:35:EB:BF:7C:44:9F:70",
+        "FA:C6:17:45:DC:09:03:78:6F:B9:ED:E6:2A:96:2B:39:9F:73:48:F0:BB:6F:89:9B:83:32:66:75:91:03:3B:9C"
+      ]
+    }
+  }
+]
