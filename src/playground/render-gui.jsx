@@ -8,7 +8,7 @@ import HashParserHOC from '../lib/hash-parser-hoc.jsx';
 import log from '../lib/log.js';
 
 const onClickLogo = () => {
-    // Do nothing — prevent redirect
+    // Do nothing - prevent redirect
 };
 
 const handleTelemetryModalCancel = () => {
@@ -23,6 +23,8 @@ const handleTelemetryModalOptOut = () => {
     log('User opted out of telemetry');
 };
 
+const isTruthyQueryValue = value => value === '1' || value === 'true' || value === 'yes';
+
 /*
  * Render the GUI playground. This is a separate function because importing anything
  * that instantiates the VM causes unsupported browsers to crash
@@ -31,15 +33,11 @@ const handleTelemetryModalOptOut = () => {
 export default appTarget => {
     GUI.setAppElement(appTarget);
 
-    // note that redux's 'compose' function is just being used as a general utility to make
-    // the hierarchy of HOC constructor calls clearer here; it has nothing to do with redux's
-    // ability to compose reducers.
     const WrappedGui = compose(
         AppStateHOC,
         HashParserHOC
     )(GUI);
 
-    // TODO a hack for testing the backpack, allow backpack host to be set by url param
     const backpackHostMatches = window.location.href.match(/[?&]backpack_host=([^&]*)&?/);
     const backpackHost = backpackHostMatches ? backpackHostMatches[1] : null;
 
@@ -47,39 +45,46 @@ export default appTarget => {
     let simulateScratchDesktop;
     if (scratchDesktopMatches) {
         try {
-            // parse 'true' into `true`, 'false' into `false`, etc.
             simulateScratchDesktop = JSON.parse(scratchDesktopMatches[1]);
         } catch {
-            // it's not JSON so just use the string
-            // note that a typo like "falsy" will be treated as true
             simulateScratchDesktop = scratchDesktopMatches[1];
         }
     }
 
+    const params = new URLSearchParams(window.location.search);
+    const forcePlayerOnly = isTruthyQueryValue(params.get('playerOnly'));
+
     if (process.env.NODE_ENV === 'production' && typeof window === 'object') {
-        // Warn before navigating away
         window.onbeforeunload = () => true;
     }
 
+    const playerOnlyProps = {
+        canEditTitle: false,
+        canSave: false,
+        isPlayerOnly: true,
+        onClickLogo: onClickLogo
+    };
+
     ReactDOM.render(
-        // important: this is checking whether `simulateScratchDesktop` is truthy, not just defined!
-        simulateScratchDesktop ?
-            <WrappedGui
-                canEditTitle
-                isScratchDesktop
-                showTelemetryModal
-                canSave={false}
-                onTelemetryModalCancel={handleTelemetryModalCancel}
-                onTelemetryModalOptIn={handleTelemetryModalOptIn}
-                onTelemetryModalOptOut={handleTelemetryModalOptOut}
-            /> :
-            <WrappedGui
-                canEditTitle
-                backpackVisible
-                showComingSoon
-                backpackHost={backpackHost}
-                canSave={false}
-                onClickLogo={onClickLogo}
-            />,
+        forcePlayerOnly ?
+            <WrappedGui {...playerOnlyProps} /> :
+            (simulateScratchDesktop ?
+                <WrappedGui
+                    canEditTitle
+                    isScratchDesktop
+                    showTelemetryModal
+                    canSave={false}
+                    onTelemetryModalCancel={handleTelemetryModalCancel}
+                    onTelemetryModalOptIn={handleTelemetryModalOptIn}
+                    onTelemetryModalOptOut={handleTelemetryModalOptOut}
+                /> :
+                <WrappedGui
+                    canEditTitle
+                    backpackVisible
+                    showComingSoon
+                    backpackHost={backpackHost}
+                    canSave={false}
+                    onClickLogo={onClickLogo}
+                />),
         appTarget);
 };
