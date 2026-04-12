@@ -25,6 +25,25 @@ const handleTelemetryModalOptOut = () => {
 
 const isTruthyQueryValue = value => value === '1' || value === 'true' || value === 'yes';
 
+const getSharedViewerToken = pathname => {
+    const match = pathname.match(/^\/project\/([^/?#]+)/);
+    return match ? decodeURIComponent(match[1]) : null;
+};
+
+const getShareApiHost = () => {
+    if (typeof window !== 'object') {
+        return 'https://api.logicbox.one';
+    }
+    const {protocol, hostname} = window.location;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'https://api.logicbox.one';
+    }
+    if (hostname === 'www.logicbox.one' || hostname === 'logicbox.one') {
+        return `${protocol}//api.logicbox.one`;
+    }
+    return `${protocol}//api.logicbox.one`;
+};
+
 /*
  * Render the GUI playground. This is a separate function because importing anything
  * that instantiates the VM causes unsupported browsers to crash
@@ -52,7 +71,8 @@ export default appTarget => {
     }
 
     const params = new URLSearchParams(window.location.search);
-    const forcePlayerOnly = isTruthyQueryValue(params.get('playerOnly'));
+    const sharedToken = getSharedViewerToken(window.location.pathname);
+    const forcePlayerOnly = isTruthyQueryValue(params.get('playerOnly')) || Boolean(sharedToken);
 
     if (process.env.NODE_ENV === 'production' && typeof window === 'object') {
         window.onbeforeunload = () => true;
@@ -62,8 +82,14 @@ export default appTarget => {
         canEditTitle: false,
         canSave: false,
         isPlayerOnly: true,
+        isSharedViewer: Boolean(sharedToken),
         onClickLogo: onClickLogo
     };
+
+    if (sharedToken) {
+        playerOnlyProps.projectHost = `${getShareApiHost()}/shares`;
+        playerOnlyProps.sharedToken = sharedToken;
+    }
 
     ReactDOM.render(
         forcePlayerOnly ?

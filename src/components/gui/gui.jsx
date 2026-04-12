@@ -136,6 +136,7 @@ const GUIComponent = props => {
         isFullScreen,
         isPlayerOnly,
         isRtl,
+        isSharedViewer,
         isShared,
         isTelemetryEnabled,
         isTotallyNormal,
@@ -235,6 +236,7 @@ const GUIComponent = props => {
 
         return isPlayerOnly ? (
             <StageWrapper
+                hideHeader={isSharedViewer}
                 isFullScreen={isFullScreen}
                 isRendererSupported={isRendererSupported}
                 isRtl={isRtl}
@@ -532,6 +534,7 @@ GUIComponent.propTypes = {
     isFullScreen: PropTypes.bool,
     isPlayerOnly: PropTypes.bool,
     isRtl: PropTypes.bool,
+    isSharedViewer: PropTypes.bool,
     isShared: PropTypes.bool,
     isTotallyNormal: PropTypes.bool,
     loading: PropTypes.bool,
@@ -587,6 +590,7 @@ GUIComponent.defaultProps = {
     enableCommunity: false,
     isCreating: false,
     isShared: false,
+    isSharedViewer: false,
     isTotallyNormal: false,
     loading: false,
     showComingSoon: false,

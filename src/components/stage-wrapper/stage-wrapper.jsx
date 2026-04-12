@@ -13,6 +13,7 @@ import styles from './stage-wrapper.css';
 
 const StageWrapperComponent = function (props) {
     const {
+        hideHeader,
         isFullScreen,
         isRtl,
         isRendererSupported,
@@ -30,12 +31,14 @@ const StageWrapperComponent = function (props) {
             )}
             dir={isRtl ? 'rtl' : 'ltr'}
         >
-            <Box className={styles.stageMenuWrapper}>
-                <StageHeader
-                    stageSize={stageSize}
-                    vm={vm}
-                />
-            </Box>
+            {hideHeader ? null : (
+                <Box className={styles.stageMenuWrapper}>
+                    <StageHeader
+                        stageSize={stageSize}
+                        vm={vm}
+                    />
+                </Box>
+            )}
             <Box className={styles.stageCanvasWrapper}>
                 {
                     isRendererSupported ?
@@ -54,12 +57,19 @@ const StageWrapperComponent = function (props) {
 };
 
 StageWrapperComponent.propTypes = {
+    hideHeader: PropTypes.bool,
     isFullScreen: PropTypes.bool,
     isRendererSupported: PropTypes.bool.isRequired,
     isRtl: PropTypes.bool.isRequired,
     loading: PropTypes.bool,
     stageSize: PropTypes.oneOf(Object.keys(STAGE_DISPLAY_SIZES)).isRequired,
     vm: PropTypes.instanceOf(VM).isRequired
+};
+
+StageWrapperComponent.defaultProps = {
+    hideHeader: false,
+    isFullScreen: false,
+    loading: false
 };
 
 export default StageWrapperComponent;

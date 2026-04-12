@@ -61,14 +61,21 @@ const vmManagerHOC = function (WrappedComponent) {
                     // the renderer can be async.
                     setTimeout(() => this.props.onSetProjectUnchanged());
 
-                    // If the vm is not running, call draw on the renderer manually
-                    // This draws the state of the loaded project with no blocks running
-                    // which closely matches the 2.0 behavior, except for monitors–
-                    // 2.0 runs monitors and shows updates (e.g. timer monitor)
-                    // before the VM starts running other hat blocks.
-                    if (!this.props.isStarted) {
-                        // Wrap in a setTimeout because skin loading in
-                        // the renderer can be async.
+                    // In player-only mode, shared links should open the live project view,
+                    // not an idle stage that waits for a manual green flag click.
+                    if (this.props.isPlayerOnly) {
+                        setTimeout(() => {
+                            if (!this.props.isStarted) {
+                                this.props.vm.start();
+                            }
+                            this.props.vm.greenFlag();
+                            if (this.props.vm.renderer) {
+                                this.props.vm.renderer.draw();
+                            }
+                        });
+                    } else if (!this.props.isStarted) {
+                        // If the vm is not running, call draw on the renderer manually.
+                        // This renders the authored initial state without starting scripts.
                         setTimeout(() => this.props.vm.renderer.draw());
                     }
                 })
@@ -116,7 +123,7 @@ const vmManagerHOC = function (WrappedComponent) {
         onError: PropTypes.func,
         onLoadedProject: PropTypes.func,
         onSetProjectUnchanged: PropTypes.func,
-        projectData: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
+        projectData: PropTypes.oneOfType([PropTypes.object, PropTypes.string, PropTypes.instanceOf(ArrayBuffer)]),
         projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         username: PropTypes.string,
         vm: PropTypes.instanceOf(VM).isRequired
@@ -157,3 +164,4 @@ const vmManagerHOC = function (WrappedComponent) {
 };
 
 export default vmManagerHOC;
+

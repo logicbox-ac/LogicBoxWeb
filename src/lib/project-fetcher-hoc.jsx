@@ -15,6 +15,7 @@ import {
     projectError,
     setProjectId
 } from '../reducers/project-state';
+import {setProjectTitle} from '../reducers/project-title';
 import {
     activateTab,
     BLOCKS_TAB_INDEX
@@ -33,7 +34,8 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         constructor(props) {
             super(props);
             bindAll(this, [
-                'fetchProject'
+                'fetchProject',
+                'fetchSharedProject'
             ]);
             storage.setProjectHost(props.projectHost);
             storage.setProjectToken(props.projectToken);
@@ -44,6 +46,10 @@ const ProjectFetcherHOC = function (WrappedComponent) {
             // Either way, we now know what the initial projectId should be, so
             // set it in the redux store.
             if (
+                props.sharedToken
+            ) {
+                this.props.setProjectId(props.sharedToken);
+            } else if (
                 props.projectId !== '' &&
                 props.projectId !== null &&
                 typeof props.projectId !== 'undefined'
@@ -61,6 +67,9 @@ const ProjectFetcherHOC = function (WrappedComponent) {
             if (prevProps.assetHost !== this.props.assetHost) {
                 storage.setAssetHost(this.props.assetHost);
             }
+            if (prevProps.sharedToken !== this.props.sharedToken && this.props.sharedToken) {
+                this.props.setProjectId(this.props.sharedToken);
+            }
             if (this.props.isFetchingWithId && !prevProps.isFetchingWithId) {
                 this.fetchProject(this.props.reduxProjectId, this.props.loadingState);
             }
@@ -72,6 +81,9 @@ const ProjectFetcherHOC = function (WrappedComponent) {
             }
         }
         fetchProject(projectId, loadingState) {
+            if (this.props.sharedToken) {
+                return this.fetchSharedProject(this.props.sharedToken, loadingState);
+            }
             return storage
                 .load(storage.AssetType.Project, projectId, storage.DataFormat.JSON)
                 .then(projectAsset => {
@@ -82,6 +94,38 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                         // Throw to be caught by catch later on
                         throw new Error('Could not find project');
                     }
+                })
+                .catch(err => {
+                    this.props.onError(err);
+                    log.error(err);
+                });
+        }
+        fetchSharedProject(shareToken, loadingState) {
+            const shareUrl = `${this.props.projectHost}/${encodeURIComponent(shareToken)}`;
+            return fetch(shareUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Could not load shared project metadata (${response.status})`);
+                    }
+                    return response.json();
+                })
+                .then(shareData => {
+                    if (shareData.project_name) {
+                        this.props.onSetSharedProjectTitle(shareData.project_name);
+                    }
+                    if (!shareData.download_url) {
+                        throw new Error('Shared project download URL is missing');
+                    }
+                    return fetch(shareData.download_url);
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Could not download shared project (${response.status})`);
+                    }
+                    return response.arrayBuffer();
+                })
+                .then(projectBuffer => {
+                    this.props.onFetchedProjectData(projectBuffer, loadingState);
                 })
                 .catch(err => {
                     this.props.onError(err);
@@ -101,6 +145,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                 onProjectUnchanged,
                 projectHost,
                 projectId,
+                sharedToken,
                 reduxProjectId,
                 setProjectId: setProjectIdProp,
                 /* eslint-enable no-unused-vars */
@@ -131,12 +176,15 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         projectHost: PropTypes.string,
         projectToken: PropTypes.string,
         projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        sharedToken: PropTypes.string,
+        onSetSharedProjectTitle: PropTypes.func,
         reduxProjectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         setProjectId: PropTypes.func
     };
     ProjectFetcherComponent.defaultProps = {
         assetHost: 'https://cdn.assets.scratch.mit.edu',
-        projectHost: 'https://projects.scratch.mit.edu'
+        projectHost: 'https://projects.scratch.mit.edu',
+        sharedToken: null
     };
 
     const mapStateToProps = state => ({
@@ -152,6 +200,7 @@ const ProjectFetcherHOC = function (WrappedComponent) {
         onError: error => dispatch(projectError(error)),
         onFetchedProjectData: (projectData, loadingState) =>
             dispatch(onFetchedProjectData(projectData, loadingState)),
+        onSetSharedProjectTitle: title => dispatch(setProjectTitle(title)),
         setProjectId: projectId => dispatch(setProjectId(projectId)),
         onProjectUnchanged: () => dispatch(setProjectUnchanged())
     });
