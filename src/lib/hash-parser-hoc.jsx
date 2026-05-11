@@ -22,10 +22,12 @@ const HashParserHOC = function (WrappedComponent) {
             ]);
         }
         componentDidMount () {
+            if (this.props.sharedToken) return;
             window.addEventListener('hashchange', this.handleHashChange);
             this.handleHashChange();
         }
         componentDidUpdate (prevProps) {
+            if (this.props.sharedToken) return;
             // if we are newly fetching a non-hash project...
             if (this.props.isFetchingWithoutId && !prevProps.isFetchingWithoutId) {
                 // ...clear the hash from the url
@@ -60,6 +62,7 @@ const HashParserHOC = function (WrappedComponent) {
     HashParserComponent.propTypes = {
         isFetchingWithoutId: PropTypes.bool,
         reduxProjectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        sharedToken: PropTypes.string,
         setProjectId: PropTypes.func
     };
     const mapStateToProps = state => {

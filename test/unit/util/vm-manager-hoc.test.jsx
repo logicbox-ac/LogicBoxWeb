@@ -199,4 +199,27 @@ describe('VMManagerHOC', () => {
         expect(vm.loadProject).toHaveBeenCalledTimes(0);
         process.nextTick(() => expect(mockedOnLoadedProject).toHaveBeenCalledTimes(0));
     });
+
+    test('if it mounts already loading and fonts are ready, it loads project data into the vm', () => {
+        vm.loadProject = jest.fn(() => Promise.resolve());
+        const mockedOnLoadedProject = jest.fn();
+        const Component = () => <div />;
+        const WrappedComponent = vmManagerHOC(Component);
+        mount(
+            <WrappedComponent
+                canSave={false}
+                fontsLoaded
+                isLoadingWithId
+                loadingState={LoadingState.LOADING_VM_WITH_ID}
+                projectData="100"
+                store={store}
+                vm={vm}
+                onLoadedProject={mockedOnLoadedProject}
+            />
+        );
+        expect(vm.loadProject).toHaveBeenLastCalledWith('100');
+        process.nextTick(() => (
+            expect(mockedOnLoadedProject).toHaveBeenLastCalledWith(LoadingState.LOADING_VM_WITH_ID, false)
+        ));
+    });
 });

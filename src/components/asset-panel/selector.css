@@ -1,5 +1,6 @@
 @import "../../css/colors.css";
 @import "../../css/units.css";
+@import "../../css/z-index.css";
 
 .wrapper {
     width: 150px;
@@ -183,7 +184,7 @@ $fade-out-distance: 100px;
         display: flex !important;
         flex-direction: column !important;
         align-items: flex-end !important;
-        z-index: 22 !important;
+        z-index: $z-index-context-menu !important;
     }
 
     .new-buttons:before {

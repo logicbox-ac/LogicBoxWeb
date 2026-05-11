@@ -40,6 +40,9 @@ const vmManagerHOC = function (WrappedComponent) {
             }
             // Expose vm on window for React Native WebView integration
             window.vm = this.props.vm;
+            if (this.props.isLoadingWithId && this.props.fontsLoaded) {
+                this.loadProject();
+            }
         }
         componentDidUpdate(prevProps) {
             // if project is in loading state, AND fonts are loaded,
@@ -164,4 +167,3 @@ const vmManagerHOC = function (WrappedComponent) {
 };
 
 export default vmManagerHOC;
-

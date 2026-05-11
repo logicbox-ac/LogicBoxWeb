@@ -9,6 +9,12 @@
     overflow: hidden;
 }
 
+@media (min-width: 768px) {
+    .target-pane {
+        overflow: visible;
+    }
+}
+
 .stage-selector-wrapper {
     display: flex;
     flex-basis: 72px;

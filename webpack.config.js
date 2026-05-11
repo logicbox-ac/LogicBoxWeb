@@ -26,7 +26,9 @@ const baseConfig = new ScratchWebpackConfigBuilder(
         rootPath: path.resolve(__dirname),
         enableReact: true,
         shouldSplitChunks: false,
-        publicPath: 'auto'
+        // Shared viewer URLs live under /project/<token>, so assets must be
+        // resolved from the site root instead of relative to the current page.
+        publicPath: '/'
     })
     .setTarget('browserslist')
     .merge({
@@ -201,4 +203,3 @@ const buildDist = process.env.BUILD_MODE === 'dist';
 module.exports = buildDist ?
     [buildConfig.get(), distConfig.get()] :
     buildConfig.get();
-

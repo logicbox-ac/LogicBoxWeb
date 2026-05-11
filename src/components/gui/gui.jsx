@@ -130,7 +130,7 @@ const GUIComponent = props => {
         costumesTabVisible,
         debugModalVisible,
         enableCommunity,
-        extensionLibraryVisible,
+        extensionLibraryVisible, // eslint-disable-line no-unused-vars
         intl,
         isCreating,
         isFullScreen,
@@ -236,7 +236,6 @@ const GUIComponent = props => {
 
         return isPlayerOnly ? (
             <StageWrapper
-                hideHeader={isSharedViewer}
                 isFullScreen={isFullScreen}
                 isRendererSupported={isRendererSupported}
                 isRtl={isRtl}
@@ -244,6 +243,12 @@ const GUIComponent = props => {
                 stageSize={STAGE_SIZE_MODES.large}
                 vm={vm}
             >
+                {isSharedViewer ? (
+                    renderLazy(<LazyVirtualKeyboard
+                        visible
+                        vm={vm}
+                    />)
+                ) : null}
                 {alertsVisible ? (
                     <Alerts className={styles.alertsContainer} />
                 ) : null}

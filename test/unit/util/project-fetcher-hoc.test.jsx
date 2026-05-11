@@ -61,4 +61,49 @@ describe('ProjectFetcherHOC', () => {
                 .toHaveBeenLastCalledWith('100', LoadingState.FETCHING_WITH_ID)
         );
     });
+
+    test('when it mounts already fetching a shared project, it loads the shared project immediately', () => {
+        const originalFetch = global.fetch;
+        const mockedOnFetchedProject = jest.fn();
+        global.fetch = jest.fn(url => {
+            if (url === 'https://api.logicbox.one/shares/shared-token') {
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve({
+                        project_name: 'Shared Project',
+                        download_url: 'https://api.logicbox.one/shares/shared-token/download'
+                    })
+                });
+            }
+            if (url === 'https://api.logicbox.one/shares/shared-token/download') {
+                return Promise.resolve({
+                    ok: true,
+                    arrayBuffer: () => Promise.resolve('project-buffer')
+                });
+            }
+            return Promise.reject(new Error(`Unexpected fetch url: ${url}`));
+        });
+
+        const Component = ({projectId}) => <div>{projectId}</div>;
+        const WrappedComponent = ProjectFetcherHOC(Component);
+        mountWithIntl(
+            <WrappedComponent
+                isFetchingWithId
+                loadingState={LoadingState.FETCHING_WITH_ID}
+                onFetchedProjectData={mockedOnFetchedProject}
+                onSetSharedProjectTitle={jest.fn()}
+                reduxProjectId="shared-token"
+                sharedToken="shared-token"
+                projectHost="https://api.logicbox.one/shares"
+                store={store}
+            />
+        );
+
+        process.nextTick(() => process.nextTick(() => {
+            expect(global.fetch).toHaveBeenCalledWith('https://api.logicbox.one/shares/shared-token');
+            expect(mockedOnFetchedProject)
+                .toHaveBeenLastCalledWith('project-buffer', LoadingState.FETCHING_WITH_ID);
+            global.fetch = originalFetch;
+        }));
+    });
 });

@@ -13,6 +13,10 @@ $more-button-size: 2.25rem;
     z-index: $z-index-card;
 }
 
+.menu-container.expanded {
+    z-index: $z-index-context-menu;
+}
+
 .button {
     display: flex;
     flex-direction: column;
@@ -88,6 +92,10 @@ button::-moz-focus-inner {
 
     margin-bottom: calc($main-button-size / -2);
     padding-bottom: calc($main-button-size / 2);
+}
+
+.expanded .more-buttons-outer {
+    z-index: $z-index-context-menu;
 }
 
 .more-buttons {
@@ -223,20 +231,26 @@ $arrow-rounding: 0.125rem;
         z-index: $z-index-card !important;
     }
 
+    .mobile-inline.expanded,
+    .mobile-fixed.expanded {
+        z-index: $z-index-context-menu !important;
+    }
+
     .main-button {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
     .more-buttons-outer {
         position: absolute;
-        bottom: 100%;
+        top: calc(100% + 0.5rem);
+        bottom: auto;
         right: 0;
         left: auto;
-        z-index: $z-index-tooltip;
+        z-index: $z-index-context-menu;
         transform: none;
 
         margin: 0;
-        margin-bottom: 10px;
+        margin-bottom: 0;
         padding-bottom: 0;
 
         width: auto;
@@ -247,17 +261,17 @@ $arrow-rounding: 0.125rem;
         overflow: visible;
 
         display: flex;
-        flex-direction: column-reverse;
+        flex-direction: column;
         align-items: flex-end;
     }
 
     .mobile-inline .more-buttons-outer {
-        top: calc(100% + 0.5rem);
-        bottom: auto;
-        margin-bottom: 0;
+        top: -9px;
+        bottom: 0;
+        margin-bottom: 33px;
         padding-top: 0;
-        padding-bottom: 0;
-        flex-direction: column;
+        padding-bottom: 62px;
+        flex-direction: column-reverse;
         align-items: flex-end;
     }
 

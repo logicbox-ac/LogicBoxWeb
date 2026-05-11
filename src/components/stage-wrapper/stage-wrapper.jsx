@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import VM from 'scratch-vm';
 
 import Box from '../box/box.jsx';
-import { STAGE_DISPLAY_SIZES } from '../../lib/layout-constants.js';
+import {STAGE_DISPLAY_SIZES} from '../../lib/layout-constants.js';
 import StageHeader from '../../containers/stage-header.jsx';
 import Stage from '../../containers/stage.jsx';
 import Loader from '../loader/loader.jsx';
@@ -19,6 +19,7 @@ const StageWrapperComponent = function (props) {
         isRendererSupported,
         loading,
         stageSize,
+        children,
         vm
     } = props;
 
@@ -27,7 +28,7 @@ const StageWrapperComponent = function (props) {
         <Box
             className={classNames(
                 styles.stageWrapper,
-                { [styles.fullScreen]: isFullScreen }
+                {[styles.fullScreen]: isFullScreen}
             )}
             dir={isRtl ? 'rtl' : 'ltr'}
         >
@@ -52,11 +53,13 @@ const StageWrapperComponent = function (props) {
             {loading ? (
                 <Loader isFullScreen={isFullScreen} />
             ) : null}
+            {children}
         </Box>
     );
 };
 
 StageWrapperComponent.propTypes = {
+    children: PropTypes.node,
     hideHeader: PropTypes.bool,
     isFullScreen: PropTypes.bool,
     isRendererSupported: PropTypes.bool.isRequired,

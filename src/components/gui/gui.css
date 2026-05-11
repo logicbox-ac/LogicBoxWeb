@@ -242,6 +242,14 @@
     overflow: hidden;
 }
 
+@media (min-width: 768px) {
+    .target-wrapper {
+        position: relative;
+        z-index: $z-index-add-button;
+        overflow: visible;
+    }
+}
+
 .extension-button-container {
     width: 3.75rem;
     height: 3.25rem;
@@ -640,14 +648,14 @@ $fade-out-distance: 15px;
 
     [data-mobile-tab="code"] .blocks-wrapper {
         min-height: 0 !important;
-        padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: 0 !important;
     }
 
     [data-mobile-tab="code"] .extension-button-container {
-        position: fixed !important;
+        position: absolute !important;
         left: env(safe-area-inset-left, 0px) !important;
         right: auto !important;
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 0.5rem) !important;
+        bottom: 0 !important;
         width: 3rem !important;
         height: 3rem !important;
         box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.18) !important;
@@ -673,7 +681,7 @@ $fade-out-distance: 15px;
 
 @media (max-width: 324px) {
     [data-mobile-tab="code"] .blocks-wrapper {
-        padding-bottom: calc(3.25rem + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: 0 !important;
     }
 
     [data-mobile-tab="code"] .extension-button-container {

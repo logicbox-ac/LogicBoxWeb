@@ -78,4 +78,19 @@ describe('HashParserHOC', () => {
             .handleHashChange();
         expect(mockSetProjectIdFunc.mock.calls.length).toBe(2);
     });
+
+    test('when rendering a shared viewer route, it does not override with the default project id', () => {
+        const Component = ({projectId}) => <div>{projectId}</div>;
+        const WrappedComponent = HashParserHOC(Component);
+        window.location.hash = '';
+        const mockSetProjectIdFunc = jest.fn();
+        mount(
+            <WrappedComponent
+                setProjectId={mockSetProjectIdFunc}
+                sharedToken="shared-token"
+                store={store}
+            />
+        );
+        expect(mockSetProjectIdFunc).not.toHaveBeenCalled();
+    });
 });

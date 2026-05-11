@@ -29,6 +29,7 @@
     flex-direction: row;
     /* makes columns, for each label/form group */
     align-items: center;
+    min-width: 0;
 }
 
 .column {
@@ -76,6 +77,9 @@
 
 .sprite-input {
     width: 8rem;
+    box-sizing: border-box;
+    max-width: 100%;
+    min-width: 0;
 }
 
 @media (max-width: 767px) {
@@ -93,14 +97,16 @@
         align-items: center;
         gap: 8px;
         margin-bottom: 8px;
+        min-width: 0;
     }
 
     /* Sprite Name Group - takes most space */
     .row-primary .group:nth-child(1) {
-        flex: 2;
+        flex: 1 1 auto;
         display: flex;
         flex-direction: row;
         align-items: center;
+        min-width: 0;
     }
 
     /* Make Name label inline and compact */
@@ -109,6 +115,7 @@
         flex-direction: row;
         align-items: center;
         width: 100%;
+        min-width: 0;
     }
 
     .row-primary .group:nth-child(1) :global(span) {
@@ -129,7 +136,7 @@
     /* X & Y Groups - compact inline */
     .row-primary .group:nth-child(2),
     .row-primary .group:nth-child(3) {
-        flex: 0 0 auto;
+        flex: 0 1 auto;
         display: flex;
         flex-direction: row;
         align-items: center;
@@ -175,16 +182,18 @@
         align-items: center;
         justify-content: space-between;
         gap: 8px;
+        min-width: 0;
     }
 
     .row-secondary .group,
     .row-secondary .column {
-        flex: 1;
+        flex: 1 1 0;
         display: flex;
         flex-direction: row;
         align-items: center;
         justify-content: center;
         width: auto !important;
+        min-width: 0;
     }
 
     /* Labels inline with inputs */
@@ -237,5 +246,38 @@
     .column span {
         margin-bottom: 0;
         margin-right: 6px;
+    }
+}
+
+@media (max-width: 330px) {
+    .sprite-info {
+        padding: 6px 6px !important;
+    }
+
+    .row-primary,
+    .row-secondary {
+        gap: 4px;
+    }
+
+    .row-primary .group:nth-child(1) :global(span),
+    .row-secondary :global(span) {
+        margin-right: 3px;
+        font-size: 0.65rem;
+    }
+
+    .row-primary .group:nth-child(2) input,
+    .row-primary .group:nth-child(3) input,
+    .larger-input input,
+    .rotation-select {
+        width: 42px !important;
+        min-width: 0 !important;
+        max-width: 42px !important;
+        padding-left: 0.25rem !important;
+        padding-right: 0.25rem !important;
+    }
+
+    .sprite-input {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
     }
 }

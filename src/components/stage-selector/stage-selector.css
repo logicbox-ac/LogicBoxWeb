@@ -109,13 +109,32 @@ $header-height: calc($stage-menu-height - 2px);
     left: 0.5rem;
 }
 
+@media (min-width: 768px) {
+    .add-button {
+        overflow: visible;
+    }
+
+    .add-button :global([class*="action-menu_more-buttons-outer"]) {
+        top: auto !important;
+        bottom: calc(2.75rem) !important;
+        margin-bottom: calc(2.75rem / -2) !important;
+        padding-bottom: calc(2.75rem / 2) !important;
+        flex-direction: column-reverse !important;
+        z-index: $z-index-context-menu !important;
+    }
+
+    .add-button :global([class*="action-menu_more-buttons"]) {
+        flex-direction: column-reverse !important;
+    }
+}
+
 @media (max-width: 767px) {
     /* Keep stage add-button inside the stage panel on mobile
        so it doesn't overlap the floating sprite add-button. */
     .add-button {
         position: absolute !important;
         bottom: 0.75rem !important;
-        z-index: 50 !important;
+        z-index: $z-index-context-menu !important;
     }
 
     [dir="ltr"] .add-button {

@@ -80,6 +80,11 @@ const ProjectFetcherHOC = function (WrappedComponent) {
                 this.props.onActivateTab(BLOCKS_TAB_INDEX);
             }
         }
+        componentDidMount() {
+            if (this.props.isFetchingWithId) {
+                this.fetchProject(this.props.reduxProjectId, this.props.loadingState);
+            }
+        }
         fetchProject(projectId, loadingState) {
             if (this.props.sharedToken) {
                 return this.fetchSharedProject(this.props.sharedToken, loadingState);
