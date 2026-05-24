@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import omit from 'lodash.omit';
 import PropTypes from 'prop-types';
-import React, {Suspense, lazy, useCallback, useState} from 'react';
+import React, {Suspense, lazy, useCallback, useRef, useState} from 'react';
 import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-intl';
 import {connect} from 'react-redux';
 import MediaQuery from 'react-responsive';
@@ -100,6 +100,11 @@ const GUIComponent = props => {
     const [mobileActiveTab, setMobileActiveTab] = useState('code');
     // Collapsible stage state for code tab
     const [isStageCollapsed, setIsStageCollapsed] = useState(false);
+    // Remembers which target the user was coding, so tapping a sprite/stage in the
+    // Files tab (to edit its assets) doesn't leave the Code tab showing a different,
+    // often-empty workspace. The Blocks component's isVisible prop never toggles on
+    // mobile, so its own save/restore can't fire here — we drive it from tab changes.
+    const codeEditingTargetRef = useRef(null);
     const {
         accountNavOpen,
         activeTabIndex,
@@ -179,6 +184,28 @@ const GUIComponent = props => {
     } = omit(props, 'dispatch');
 
     const handleMobileTabChange = useCallback(tab => {
+        if (vm) {
+            // Leaving Code: remember the target we were coding.
+            if (mobileActiveTab === 'code' && tab !== 'code' && vm.editingTarget) {
+                codeEditingTargetRef.current = vm.editingTarget.id;
+            }
+            // Entering Code: snap back to that target if it still exists and the
+            // current editing target drifted (e.g. user tapped the Stage in Files).
+            if (tab === 'code' && mobileActiveTab !== 'code' && codeEditingTargetRef.current) {
+                const savedId = codeEditingTargetRef.current;
+                const exists = vm.runtime && typeof vm.runtime.getTargetById === 'function' ?
+                    Boolean(vm.runtime.getTargetById(savedId)) : true;
+                if (exists && vm.editingTarget && vm.editingTarget.id !== savedId) {
+                    vm.setEditingTarget(savedId);
+                }
+            }
+        }
+        // Record the timestamp when we land on the Files tab. The mobile editing-target
+        // guard uses it to ignore taps that fire too soon after switching tabs (those
+        // are almost always "finger landed mid-layout-shift" rather than intentional).
+        if (tab === 'files' && typeof window !== 'undefined') {
+            window.__lbFilesTabEnteredAt = Date.now();
+        }
         setMobileActiveTab(tab);
         if (tab === 'code') props.onActivateTab(0);
         if (tab === 'costumes') props.onActivateCostumesTab();
@@ -193,7 +220,14 @@ const GUIComponent = props => {
                 }
             }, 50);
         }
-    }, [props.onActivateTab, props.onActivateCostumesTab, props.onActivateSoundsTab, props.vm]);
+    }, [
+        mobileActiveTab,
+        props.onActivateTab,
+        props.onActivateCostumesTab,
+        props.onActivateSoundsTab,
+        props.vm,
+        props.activeTabIndex
+    ]);
 
     const handleStageToggle = useCallback(() => {
         setIsStageCollapsed(prev => !prev);

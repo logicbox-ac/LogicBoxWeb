@@ -14,21 +14,21 @@ import ExtensionLibrary from './extension-library.jsx';
 import extensionData from '../lib/libraries/extensions/index.jsx';
 import CustomProcedures from './custom-procedures.jsx';
 import errorBoundaryHOC from '../lib/error-boundary-hoc.jsx';
-import { BLOCKS_DEFAULT_SCALE, STAGE_DISPLAY_SIZES } from '../lib/layout-constants';
+import {BLOCKS_DEFAULT_SCALE, STAGE_DISPLAY_SIZES} from '../lib/layout-constants';
 import DropAreaHOC from '../lib/drop-area-hoc.jsx';
 import DragConstants from '../lib/drag-constants';
 import defineDynamicBlock from '../lib/define-dynamic-block';
-import { DEFAULT_THEME, getColorsForTheme, themeMap } from '../lib/themes';
-import { injectExtensionBlockTheme, injectExtensionCategoryTheme } from '../lib/themes/blockHelpers';
+import {DEFAULT_THEME, getColorsForTheme, themeMap} from '../lib/themes';
+import {injectExtensionBlockTheme, injectExtensionCategoryTheme} from '../lib/themes/blockHelpers';
 
-import { connect } from 'react-redux';
-import { updateToolbox } from '../reducers/toolbox';
-import { activateColorPicker } from '../reducers/color-picker';
-import { closeExtensionLibrary, openSoundRecorder, openConnectionModal } from '../reducers/modals';
-import { activateCustomProcedures, deactivateCustomProcedures } from '../reducers/custom-procedures';
-import { setConnectionModalExtensionId } from '../reducers/connection-modal';
-import { updateMetrics } from '../reducers/workspace-metrics';
-import { isTimeTravel2020 } from '../reducers/time-travel';
+import {connect} from 'react-redux';
+import {updateToolbox} from '../reducers/toolbox';
+import {activateColorPicker} from '../reducers/color-picker';
+import {closeExtensionLibrary, openSoundRecorder, openConnectionModal} from '../reducers/modals';
+import {activateCustomProcedures, deactivateCustomProcedures} from '../reducers/custom-procedures';
+import {setConnectionModalExtensionId} from '../reducers/connection-modal';
+import {updateMetrics} from '../reducers/workspace-metrics';
+import {isTimeTravel2020} from '../reducers/time-travel';
 
 import {
     activateTab,
@@ -48,26 +48,8 @@ const DroppableBlocks = DropAreaHOC([
     DragConstants.BACKPACK_CODE
 ])(BlocksComponent);
 
-const BLOCKLY_DIAG_PREFIX = '[BlocklyFlyoutDiag]';
-const BLOCKLY_DIAG_HISTORY_LIMIT = 250;
-const BLOCKLY_DIAG_TOP_BLOCK_LIMIT = 6;
-const BLOCKLY_DIAG_ELEMENT_LIMIT = 6;
-const roundDebugNumber = value => (
-    typeof value === 'number' && Number.isFinite(value) ?
-        Math.round(value * 100) / 100 :
-        value
-);
-const rectsOverlap = (a, b) => Boolean(
-    a &&
-    b &&
-    a.left < b.right &&
-    a.right > b.left &&
-    a.top < b.bottom &&
-    a.bottom > b.top
-);
-
 class Blocks extends React.Component {
-    constructor(props) {
+    constructor (props) {
         super(props);
         this.ScratchBlocks = VMScratchBlocks(props.vm, false);
         bindAll(this, [
@@ -75,9 +57,6 @@ class Blocks extends React.Component {
             'detachVM',
             'attachFlyoutListeners',
             'detachFlyoutListeners',
-            'attachInteractionDebugListeners',
-            'detachInteractionDebugListeners',
-            'onWorkspaceDebugEvent',
             'handleViewportInputModeChange',
             'isMobileTouchViewport',
             'getToolboxXML',
@@ -131,14 +110,15 @@ class Blocks extends React.Component {
         this.pendingCategorySelection = null;
         this._connectedFlyoutSvg = null;
         this._detachFlyoutListeners = null;
-        this._debugMoveCounter = 0;
-        this._blocklyDebugSequence = 0;
-        this._interactionDebugDetachers = [];
-        this._workspaceDebugChangeListener = null;
-        this._flyoutDebugRestore = null;
+        // Mobile flyout policy: the palette should be open on first load so the user
+        // sees the selected sprite's blocks (e.g. Motion) immediately. Start true.
+        // It is reset to false when leaving the Code tab for sounds/costumes/stage
+        // (componentDidUpdate) or when the user closes the flyout (handleCloseFlyout),
+        // so the monkey-patched flyout.show() still suppresses auto-opens on return.
+        this._userToggledOpen = true;
         bindAll(this, ['handleToggleToolbox']);
     }
-    componentDidMount() {
+    componentDidMount () {
         // MONKEY PATCH: Prevent IndexSizeError in Scratch Blocks/Paint
         // Mobile browsers sometimes report 0 width/height for canvases during initial layout,
         // causing getImageData to throw and break block creation.
@@ -233,7 +213,6 @@ class Blocks extends React.Component {
         this.attachVM();
         window.addEventListener('resize', this.handleViewportInputModeChange);
         this.handleViewportInputModeChange();
-        this.attachInteractionDebugListeners();
 
         // Only update blocks/vm locale when visible to avoid sizing issues
         // If locale changes while not visible it will get handled in didUpdate
@@ -241,7 +220,7 @@ class Blocks extends React.Component {
             this.setLocale();
         }
     }
-    shouldComponentUpdate(nextProps, nextState) {
+    shouldComponentUpdate (nextProps, nextState) {
         const shouldUpdate = (
             this.state.prompt !== nextState.prompt ||
             this.state.isToolboxCollapsed !== nextState.isToolboxCollapsed ||
@@ -259,7 +238,7 @@ class Blocks extends React.Component {
         );
         return shouldUpdate;
     }
-    componentDidUpdate(prevProps, prevState) {
+    componentDidUpdate (prevProps, prevState) {
         // resize workspace if toolbox collapsed state changed
         if (this.state.isToolboxCollapsed !== prevState.isToolboxCollapsed) {
             this.workspace.resize();
@@ -279,7 +258,6 @@ class Blocks extends React.Component {
 
         if (this.props.isVisible) {
             this.handleViewportInputModeChange();
-            this.attachInteractionDebugListeners();
         }
 
         if (this.props.isVisible === prevProps.isVisible) {
@@ -292,6 +270,11 @@ class Blocks extends React.Component {
         // @todo hack to resize blockly manually in case resize happened while hidden
         // @todo hack to reload the workspace due to gui bug #413
         if (this.props.isVisible) { // Scripts tab
+            // NOTE: the code-editing-target save/restore lives in gui.jsx, keyed off
+            // mobile tab transitions (it's the single source of truth). We must NOT
+            // restore here off isVisible: that fires when returning from the
+            // sounds/costumes/stage tabs and would clobber gui.jsx's restore with
+            // whatever target happened to be selected (e.g. the Stage tapped in Files).
             this.workspace.setVisible(true);
             if (prevProps.locale !== this.props.locale || this.props.locale !== this.props.vm.getLocale()) {
                 // call setLocale if the locale has changed, or changed while the blocks were hidden.
@@ -304,14 +287,15 @@ class Blocks extends React.Component {
 
             window.dispatchEvent(new Event('resize'));
         } else {
+            // Reset the user-open flag so returning to the code tab does not
+            // auto-reopen the flyout (Blockly may try via setVisible(true)).
+            this._userToggledOpen = false;
             this.workspace.setVisible(false);
         }
     }
-    componentWillUnmount() {
+    componentWillUnmount () {
         window.removeEventListener('resize', this.handleViewportInputModeChange);
-        this.detachInteractionDebugListeners();
         this.detachFlyoutListeners();
-        this.detachFlyoutDebugWrappers();
         this.detachVM();
         this.workspace.dispose();
         clearTimeout(this.toolboxUpdateTimeout);
@@ -323,10 +307,10 @@ class Blocks extends React.Component {
         this.props.vm.clearFlyoutBlocks();
     }
 
-    setupBlockCloseButtons() {
+    setupBlockCloseButtons () {
         if (!this.workspace) return;
 
-        this.workspace.addChangeListener((event) => {
+        this.workspace.addChangeListener(event => {
             if (event.type === this.ScratchBlocks.Events.BLOCK_CREATE) {
                 // Try multiple delays to ensure svgGroup_ is ready
                 setTimeout(() => this._ensureCloseButtonForBlock(event.blockId), 100);
@@ -354,7 +338,7 @@ class Blocks extends React.Component {
         }, 2000);
     }
 
-    _shouldShowCloseButton(block) {
+    _shouldShowCloseButton (block) {
         // Show close buttons on non-shadow stack blocks and on top-level reporters.
         // Nested reporter/value blocks stay button-free so they don't clutter inputs.
         if (!block) return false;
@@ -366,7 +350,7 @@ class Blocks extends React.Component {
         return true;
     }
 
-    _ensureCloseButtonForBlock(blockId) {
+    _ensureCloseButtonForBlock (blockId) {
         if (!this.workspace) return;
         const block = this.workspace.getBlockById(blockId);
         if (block && block.svgGroup_ && !block.closeButton_ && this._shouldShowCloseButton(block)) {
@@ -374,7 +358,7 @@ class Blocks extends React.Component {
         }
     }
 
-    addCloseButtonsToAllBlocks() {
+    addCloseButtonsToAllBlocks () {
         if (!this.workspace) return;
 
         // Add close buttons to all stack blocks and top-level reporters.
@@ -397,7 +381,7 @@ class Blocks extends React.Component {
         });
     }
 
-    _getBlockOwnWidth(block) {
+    _getBlockOwnWidth (block) {
         // Get the individual block's width (not including children stacked below)
         // block.svgPath_ is the SVG path element for just this block's shape
         try {
@@ -420,7 +404,7 @@ class Blocks extends React.Component {
         }
     }
 
-    _positionCloseButton(block) {
+    _positionCloseButton (block) {
         if (!block.closeButton_ || !block.svgGroup_) return;
         try {
             const blockWidth = this._getBlockOwnWidth(block);
@@ -432,7 +416,7 @@ class Blocks extends React.Component {
         }
     }
 
-    addCloseButtonToBlock(block) {
+    addCloseButtonToBlock (block) {
         if (!block.svgGroup_ || block.closeButton_ || !this._shouldShowCloseButton(block)) {
             return;
         }
@@ -479,7 +463,7 @@ class Blocks extends React.Component {
             setTimeout(() => this._positionCloseButton(block), 100);
 
             const self = this;
-            const deleteBlock = (e) => {
+            const deleteBlock = e => {
                 e.stopPropagation();
                 e.preventDefault();
                 e.stopImmediatePropagation();
@@ -512,12 +496,14 @@ class Blocks extends React.Component {
         }
     }
 
-    handleToggleToolbox() {
+    handleToggleToolbox () {
         // No-op for now as we removed the toggle logic
     }
-    handleCloseFlyout() {
+    handleCloseFlyout () {
         const flyout = this.workspace && this.workspace.getFlyout ? this.workspace.getFlyout() : null;
         const toolbox = this.workspace && this.workspace.getToolbox ? this.workspace.getToolbox() : null;
+
+        this._userToggledOpen = false;
 
         this.setState({
             isFlyoutVisible: false,
@@ -540,12 +526,12 @@ class Blocks extends React.Component {
             }
         }
     }
-    clearFlyoutCloseButtonPosition() {
+    clearFlyoutCloseButtonPosition () {
         if (this.state.flyoutCloseButtonStyle !== null) {
             this.setState({flyoutCloseButtonStyle: null});
         }
     }
-    updateFlyoutCloseButtonPosition() {
+    updateFlyoutCloseButtonPosition () {
         if (!this.blocks || !this.workspace || !this.isMobileTouchViewport()) {
             this.clearFlyoutCloseButtonPosition();
             return;
@@ -595,13 +581,13 @@ class Blocks extends React.Component {
 
         this.setState({flyoutCloseButtonStyle: nextStyle});
     }
-    requestToolboxUpdate() {
+    requestToolboxUpdate () {
         clearTimeout(this.toolboxUpdateTimeout);
         this.toolboxUpdateTimeout = setTimeout(() => {
             this.updateToolbox();
         }, 0);
     }
-    setLocale() {
+    setLocale () {
         this.ScratchBlocks.ScratchMsgs.setLocale(this.props.locale);
         this.props.vm.setLocale(this.props.locale, this.props.messages)
             .then(() => {
@@ -614,18 +600,12 @@ class Blocks extends React.Component {
             });
     }
 
-    updateToolbox() {
+    updateToolbox () {
         this.toolboxUpdateTimeout = false;
 
         const toolbox = this.workspace && this.workspace.getToolbox ? this.workspace.getToolbox() : this.workspace.toolbox_;
         const categoryId = this.getSelectedToolboxCategoryId(toolbox);
         const offset = this.getSelectedToolboxCategoryScrollOffset(toolbox);
-        this.emitBlockInteractionDebugLog('updateToolbox:start', {
-            selectedCategoryId: categoryId,
-            categoryScrollOffset: roundDebugNumber(offset),
-            pendingCategorySelection: this.pendingCategorySelection,
-            flyoutSnapshot: this.buildFlyoutDebugSnapshot({reason: 'updateToolbox:start'})
-        });
         this.workspace.updateToolbox(this.props.toolboxXML);
         this._renderedToolboxXML = this.props.toolboxXML;
 
@@ -664,10 +644,6 @@ class Blocks extends React.Component {
         setTimeout(() => {
             this.refreshFlyoutLayout({reason: 'updateToolbox:postUpdate'});
             this.attachFlyoutListeners();
-            this.attachInteractionDebugListeners();
-            this.logFlyoutDiagnostics('updateToolbox:postUpdate', {
-                selectedCategoryId: this.getSelectedToolboxCategoryId(toolbox)
-            });
         }, 0);
 
         const queue = this.toolboxUpdateQueue;
@@ -675,7 +651,7 @@ class Blocks extends React.Component {
         queue.forEach(fn => fn());
     }
 
-    withToolboxUpdates(fn) {
+    withToolboxUpdates (fn) {
         // if there is a queued toolbox update, we need to wait
         if (this.toolboxUpdateTimeout) {
             this.toolboxUpdateQueue.push(fn);
@@ -684,33 +660,17 @@ class Blocks extends React.Component {
         }
     }
 
-    refreshFlyoutLayout(options = {}) {
+    refreshFlyoutLayout (options = {}) {
         if (!this.workspace || !this.workspace.getFlyout) return;
 
-        const {scrollToStart = false, reason = 'manual'} = options;
-        this.emitBlockInteractionDebugLog('refreshFlyoutLayout:schedule', {
-            reason,
-            scrollToStart,
-            flyoutSnapshot: this.buildFlyoutDebugSnapshot({
-                reason: `refreshFlyoutLayout:schedule:${reason}`
-            })
-        });
+        const {scrollToStart = false} = options;
 
-        const relayout = pass => {
+        const relayout = () => {
             if (!this.workspace || !this.workspace.getFlyout) return;
             const flyout = this.workspace.getFlyout();
             if (!flyout) return;
 
             try {
-                this.emitBlockInteractionDebugLog('refreshFlyoutLayout:before', {
-                    reason,
-                    pass,
-                    scrollToStart,
-                    flyoutSnapshot: this.buildFlyoutDebugSnapshot({
-                        reason: `refreshFlyoutLayout:before:${reason}`,
-                        pass
-                    })
-                });
                 if (typeof flyout.reflow === 'function') {
                     flyout.reflow();
                 }
@@ -727,56 +687,30 @@ class Blocks extends React.Component {
                     flyout.scrollToStart();
                 }
                 this.updateFlyoutCloseButtonPosition();
-                this.logFlyoutDiagnostics('refreshFlyoutLayout:after', {
-                    reason,
-                    pass,
-                    scrollToStart
-                });
             } catch (error) {
                 log.warn('[Blocks] Failed to refresh flyout layout', error);
-                this.emitBlockInteractionDebugLog('refreshFlyoutLayout:error', {
-                    reason,
-                    pass,
-                    error: error && error.message ? error.message : String(error)
-                });
             }
         };
 
-        setTimeout(() => relayout('t+0'), 0);
-        setTimeout(() => relayout('t+60'), 60);
+        setTimeout(relayout, 0);
+        setTimeout(relayout, 60);
     }
 
-    selectToolboxCategory(categoryId) {
+    selectToolboxCategory (categoryId) {
         if (!categoryId || !this.workspace || !this.workspace.toolbox_) return false;
 
         const categoryPosition = this.workspace.toolbox_.getCategoryPositionById(categoryId);
         if (typeof categoryPosition !== 'number' || Number.isNaN(categoryPosition)) {
-            this.emitBlockInteractionDebugLog('selectToolboxCategory:missingCategoryPosition', {
-                categoryId,
-                flyoutSnapshot: this.buildFlyoutDebugSnapshot({
-                    reason: 'selectToolboxCategory:missingCategoryPosition',
-                    categoryId
-                })
-            });
             return false;
         }
 
-        this.emitBlockInteractionDebugLog('selectToolboxCategory:start', {
-            categoryId,
-            categoryPosition: roundDebugNumber(categoryPosition)
-        });
         this.workspace.toolbox_.setSelectedCategoryById(categoryId);
         this.refreshFlyoutLayout({scrollToStart: true, reason: `selectToolboxCategory:${categoryId}`});
         this.attachFlyoutListeners();
-        this.attachInteractionDebugListeners();
-        this.logFlyoutDiagnostics('selectToolboxCategory:after', {
-            categoryId,
-            categoryPosition: roundDebugNumber(categoryPosition)
-        });
         return true;
     }
 
-    ensureWorkspaceSize(attempts = 0) {
+    ensureWorkspaceSize (attempts = 0) {
         if (!this.workspace || !this.blocks) return;
 
         const width = this.blocks.clientWidth;
@@ -792,11 +726,7 @@ class Blocks extends React.Component {
         }
     }
 
-    isBlockInteractionDebugEnabled() {
-        return false;
-    }
-
-    getBlockIdFromTarget(target, stopAt) {
+    getBlockIdFromTarget (target, stopAt) {
         let current = target;
         while (current && current !== stopAt) {
             if (current.getAttribute) {
@@ -808,314 +738,8 @@ class Blocks extends React.Component {
         return null;
     }
 
-    formatTargetForDebug(target) {
-        if (!target || !target.tagName) return 'unknown';
-        const className = (target.className && target.className.baseVal) ||
-            target.className ||
-            '';
-        const normalizedClassName = String(className)
-            .trim()
-            .replace(/\s+/g, '.');
-        const id = target.id ? `#${target.id}` : '';
-        const dataId = target.getAttribute ? target.getAttribute('data-id') : null;
-        const role = target.getAttribute ? target.getAttribute('role') : null;
-        const fragments = [
-            `${target.tagName.toLowerCase()}${id}`,
-            normalizedClassName ? `.${normalizedClassName}` : '',
-            dataId ? `[data-id="${dataId}"]` : '',
-            role ? `[role="${role}"]` : ''
-        ].filter(Boolean);
-        return fragments.join('');
-    }
 
-    getBlockInteractionDebugConsole() {
-        if (typeof window !== 'undefined' && window.console) {
-            return window.console;
-        }
-        return null;
-    }
-
-    buildCompactBlockInteractionDebugSummary(payload = {}) {
-        const summaryParts = [];
-        if (payload.reason) {
-            summaryParts.push(`reason=${payload.reason}`);
-        }
-        if (payload.showPhase) {
-            summaryParts.push(`phase=${payload.showPhase}`);
-        }
-        if (typeof payload.flyoutListenerCount === 'number') {
-            summaryParts.push(`listeners=${payload.flyoutListenerCount}`);
-        }
-        if (typeof payload.flyoutTopBlockCount === 'number') {
-            summaryParts.push(`blocks=${payload.flyoutTopBlockCount}`);
-        }
-        if (typeof payload.flyoutBackgroundButtonCount === 'number') {
-            summaryParts.push(`targets=${payload.flyoutBackgroundButtonCount}`);
-        }
-        if (payload.event) {
-            if (payload.event.target) {
-                summaryParts.push(`target=${payload.event.target}`);
-            }
-            if (payload.event.blockId) {
-                summaryParts.push(`block=${payload.event.blockId}`);
-            }
-        }
-        if (payload.sourceBlock && payload.sourceBlock.id) {
-            summaryParts.push(`source=${payload.sourceBlock.id}`);
-        }
-        if (payload.resolvedBlock && payload.resolvedBlock.id) {
-            summaryParts.push(`resolved=${payload.resolvedBlock.id}`);
-        }
-        if (payload.newWorkspaceBlock && payload.newWorkspaceBlock.id) {
-            summaryParts.push(`new=${payload.newWorkspaceBlock.id}`);
-        }
-        if (typeof payload.clickedInFlyout === 'boolean') {
-            summaryParts.push(`inFlyout=${payload.clickedInFlyout}`);
-        }
-        if (typeof payload.clickedInToolbox === 'boolean') {
-            summaryParts.push(`inToolbox=${payload.clickedInToolbox}`);
-        }
-        if (payload.handler) {
-            summaryParts.push(`handler=${payload.handler}`);
-        }
-        return summaryParts.slice(0, 4).join(' ');
-    }
-
-    emitBlockInteractionDebugLog(label, payload = {}) {
-        if (!this.isBlockInteractionDebugEnabled()) return;
-
-        const entry = {
-            seq: this._blocklyDebugSequence + 1,
-            label,
-            timestamp: new Date().toISOString(),
-            ...payload
-        };
-        this._blocklyDebugSequence = entry.seq;
-
-        if (typeof window !== 'undefined') {
-            const history = window.__logicboxBlocklyDiagHistory || [];
-            history.push(entry);
-            while (history.length > BLOCKLY_DIAG_HISTORY_LIMIT) {
-                history.shift();
-            }
-            window.__logicboxBlocklyDiagHistory = history;
-            window.__logicboxBlocklyDiagLastEntry = entry;
-        }
-
-        const consoleRef = this.getBlockInteractionDebugConsole();
-        if (!consoleRef || typeof consoleRef.log !== 'function') return;
-
-        const compactSummary = this.buildCompactBlockInteractionDebugSummary(payload);
-        const heading = compactSummary ?
-            `${BLOCKLY_DIAG_PREFIX} #${entry.seq} ${label} ${compactSummary}` :
-            `${BLOCKLY_DIAG_PREFIX} #${entry.seq} ${label}`;
-        if (typeof consoleRef.groupCollapsed === 'function' &&
-            typeof consoleRef.groupEnd === 'function') {
-            consoleRef.groupCollapsed(heading);
-            consoleRef.log(entry);
-            consoleRef.groupEnd();
-            return;
-        }
-        consoleRef.log(heading, entry);
-    }
-
-    getElementRectForDebug(element) {
-        if (!element || typeof element.getBoundingClientRect !== 'function') return null;
-        const rect = element.getBoundingClientRect();
-        return {
-            left: roundDebugNumber(rect.left),
-            top: roundDebugNumber(rect.top),
-            right: roundDebugNumber(rect.right),
-            bottom: roundDebugNumber(rect.bottom),
-            width: roundDebugNumber(rect.width),
-            height: roundDebugNumber(rect.height)
-        };
-    }
-
-    getComputedStyleForDebug(element) {
-        if (!element || typeof window === 'undefined' || !window.getComputedStyle) return null;
-        const style = window.getComputedStyle(element);
-        return {
-            position: style.position,
-            display: style.display,
-            visibility: style.visibility,
-            opacity: style.opacity,
-            pointerEvents: style.pointerEvents,
-            zIndex: style.zIndex,
-            touchAction: style.touchAction,
-            cursor: style.cursor,
-            transform: style.transform === 'none' ? null : style.transform
-        };
-    }
-
-    getElementDebugSnapshot(element) {
-        if (!element) return null;
-        const textContent = typeof element.textContent === 'string' ?
-            element.textContent.replace(/\s+/g, ' ').trim().slice(0, 80) :
-            '';
-        const snapshot = {
-            target: this.formatTargetForDebug(element),
-            rect: this.getElementRectForDebug(element),
-            style: this.getComputedStyleForDebug(element)
-        };
-        if (textContent) {
-            snapshot.text = textContent;
-        }
-        if (element.getAttribute) {
-            const ariaLabel = element.getAttribute('aria-label');
-            if (ariaLabel) snapshot.ariaLabel = ariaLabel;
-            const transform = element.getAttribute('transform');
-            if (transform) snapshot.transform = transform;
-        }
-        return snapshot;
-    }
-
-    getPointFromDebugEvent(event) {
-        if (!event) return null;
-        if (event.changedTouches && event.changedTouches.length > 0) {
-            const touch = event.changedTouches[0];
-            return {
-                source: 'changedTouches',
-                clientX: roundDebugNumber(touch.clientX),
-                clientY: roundDebugNumber(touch.clientY)
-            };
-        }
-        if (event.touches && event.touches.length > 0) {
-            const touch = event.touches[0];
-            return {
-                source: 'touches',
-                clientX: roundDebugNumber(touch.clientX),
-                clientY: roundDebugNumber(touch.clientY)
-            };
-        }
-        if (typeof event.clientX === 'number' && typeof event.clientY === 'number') {
-            return {
-                source: 'client',
-                clientX: roundDebugNumber(event.clientX),
-                clientY: roundDebugNumber(event.clientY)
-            };
-        }
-        return null;
-    }
-
-    getElementsFromPointForDebug(x, y) {
-        if (typeof document === 'undefined' || typeof document.elementsFromPoint !== 'function') {
-            return [];
-        }
-        return document
-            .elementsFromPoint(x, y)
-            .slice(0, BLOCKLY_DIAG_ELEMENT_LIMIT)
-            .map(element => this.getElementDebugSnapshot(element));
-    }
-
-    getRectHitSamplesForDebug(rect) {
-        if (!rect || !rect.width || !rect.height) return [];
-
-        const xPad = Math.min(20, Math.max(8, rect.width / 4));
-        const topY = rect.top + Math.min(14, Math.max(6, rect.height * 0.25));
-        const midY = rect.top + Math.max(8, rect.height / 2);
-        const samples = [
-            {label: 'topCenter', x: rect.left + (rect.width / 2), y: topY},
-            {label: 'midLeft', x: rect.left + xPad, y: midY},
-            {label: 'midCenter', x: rect.left + (rect.width / 2), y: midY},
-            {label: 'midRight', x: rect.right - xPad, y: midY}
-        ];
-
-        return samples.map(sample => ({
-            label: sample.label,
-            clientX: roundDebugNumber(sample.x),
-            clientY: roundDebugNumber(sample.y),
-            elements: this.getElementsFromPointForDebug(sample.x, sample.y)
-        }));
-    }
-
-    getBlockDebugSnapshot(block, options = {}) {
-        if (!block) return null;
-
-        const root = block.getSvgRoot ? block.getSvgRoot() : null;
-        const rootRect = this.getElementRectForDebug(root);
-        const flyoutRect = this.getElementRectForDebug(block.flyoutRect_);
-        const relativeXY = block.getRelativeToSurfaceXY ? block.getRelativeToSurfaceXY() : null;
-        const heightWidth = block.getHeightWidth ? block.getHeightWidth() : null;
-
-        return {
-            id: block.id,
-            type: block.type,
-            disabled: Boolean(block.disabled),
-            startHat: Boolean(block.startHat_),
-            isInFlyout: Boolean(block.isInFlyout),
-            hasCheckboxInFlyout: typeof block.hasCheckboxInFlyout === 'function' ?
-                block.hasCheckboxInFlyout() :
-                false,
-            root: this.formatTargetForDebug(root),
-            surfaceXY: relativeXY ? {
-                x: roundDebugNumber(relativeXY.x),
-                y: roundDebugNumber(relativeXY.y)
-            } : null,
-            heightWidth: heightWidth ? {
-                width: roundDebugNumber(heightWidth.width),
-                height: roundDebugNumber(heightWidth.height)
-            } : null,
-            rootRect,
-            flyoutRect,
-            hitSamples: options.includeHitSamples ?
-                this.getRectHitSamplesForDebug(rootRect || flyoutRect) :
-                undefined
-        };
-    }
-
-    buildEventDebugSnapshot(event, rootElement) {
-        if (!event) return null;
-        const point = this.getPointFromDebugEvent(event);
-        return {
-            type: event.type,
-            target: this.formatTargetForDebug(event.target),
-            currentTarget: this.formatTargetForDebug(event.currentTarget),
-            rootElement: this.formatTargetForDebug(rootElement),
-            blockId: this.getBlockIdFromTarget(event.target, rootElement),
-            button: typeof event.button === 'number' ? event.button : null,
-            buttons: typeof event.buttons === 'number' ? event.buttons : null,
-            detail: typeof event.detail === 'number' ? event.detail : null,
-            pointerType: event.pointerType || null,
-            isPrimary: typeof event.isPrimary === 'boolean' ? event.isPrimary : null,
-            defaultPrevented: Boolean(event.defaultPrevented),
-            cancelable: Boolean(event.cancelable),
-            touches: event.touches ? event.touches.length : 0,
-            changedTouches: event.changedTouches ? event.changedTouches.length : 0,
-            point: point ? {
-                ...point,
-                elementsAtPoint: this.getElementsFromPointForDebug(point.clientX, point.clientY)
-            } : null
-        };
-    }
-
-    getTouchInteractionDebugSnapshot(interaction) {
-        if (!interaction) return null;
-        return {
-            identifier: interaction.identifier,
-            x: roundDebugNumber(interaction.x),
-            y: roundDebugNumber(interaction.y),
-            moved: Boolean(interaction.moved),
-            time: interaction.time,
-            checkboxInitialState: interaction.checkboxInitialState,
-            target: this.formatTargetForDebug(interaction.target)
-        };
-    }
-
-    summarizeCategoryInfoForDebug(categoryInfo) {
-        if (!categoryInfo) return null;
-        return {
-            id: categoryInfo.id,
-            name: categoryInfo.name,
-            blockCount: Array.isArray(categoryInfo.blocks) ? categoryInfo.blocks.length : 0,
-            menuCount: Array.isArray(categoryInfo.menus) ? categoryInfo.menus.length : 0,
-            customFieldTypes: categoryInfo.customFieldTypes ?
-                Object.keys(categoryInfo.customFieldTypes) :
-                []
-        };
-    }
-
-    getSelectedToolboxCategoryId(toolbox = null) {
+    getSelectedToolboxCategoryId (toolbox = null) {
         const resolvedToolbox = toolbox ||
             (this.workspace && this.workspace.getToolbox ? this.workspace.getToolbox() : null) ||
             (this.workspace && this.workspace.toolbox_ ? this.workspace.toolbox_ : null);
@@ -1138,7 +762,7 @@ class Blocks extends React.Component {
         }
     }
 
-    getSelectedToolboxCategoryScrollOffset(toolbox = null) {
+    getSelectedToolboxCategoryScrollOffset (toolbox = null) {
         const resolvedToolbox = toolbox ||
             (this.workspace && this.workspace.getToolbox ? this.workspace.getToolbox() : null) ||
             (this.workspace && this.workspace.toolbox_ ? this.workspace.toolbox_ : null);
@@ -1153,382 +777,8 @@ class Blocks extends React.Component {
         }
     }
 
-    buildFlyoutDebugSnapshot(context = {}) {
-        try {
-            const flyout = this.workspace && this.workspace.getFlyout ? this.workspace.getFlyout() : null;
-            const toolbox = this.workspace && this.workspace.getToolbox ? this.workspace.getToolbox() : null;
-            const flyoutWorkspace = flyout && flyout.getWorkspace ? flyout.getWorkspace() : null;
-            const flyoutSvgGroup = flyout && flyout.svgGroup_ ? flyout.svgGroup_ : null;
-            const flyoutBackground = flyout && flyout.svgBackground_ ? flyout.svgBackground_ : null;
-            const flyoutRect = this.getElementRectForDebug(flyoutSvgGroup);
-            const topBlocks = flyoutWorkspace ?
-                flyoutWorkspace.getTopBlocks(false)
-                    .slice()
-                    .sort((a, b) => {
-                        const aY = a.getRelativeToSurfaceXY ? a.getRelativeToSurfaceXY().y : 0;
-                        const bY = b.getRelativeToSurfaceXY ? b.getRelativeToSurfaceXY().y : 0;
-                        return aY - bY;
-                    }) :
-                [];
-            const flyoutMetrics = flyout && typeof flyout.getMetrics_ === 'function' ? flyout.getMetrics_() : null;
-            const workspaceMetrics = this.workspace && typeof this.workspace.getMetrics === 'function' ?
-                this.workspace.getMetrics() :
-                null;
-            const flyoutWorkspaceMetrics = flyoutWorkspace && typeof flyoutWorkspace.getMetrics === 'function' ?
-                flyoutWorkspace.getMetrics() :
-                null;
-            const selectedCategoryId = this.getSelectedToolboxCategoryId(toolbox);
-            const flyoutCloseButton = this.blocks ?
-                this.blocks.querySelector('[aria-label="Close flyout"]') :
-                null;
-            const siblingOverlays = this.blocks && this.blocks.parentElement ?
-                Array.from(this.blocks.parentElement.children)
-                    .filter(node => node !== this.blocks)
-                    .map(node => this.getElementDebugSnapshot(node))
-                    .filter(snapshot => snapshot && rectsOverlap(snapshot.rect, flyoutRect))
-                    .slice(0, BLOCKLY_DIAG_ELEMENT_LIMIT) :
-                [];
 
-            const buttonSummaries = flyout && Array.isArray(flyout.buttons_) ?
-                flyout.buttons_.slice(0, BLOCKLY_DIAG_TOP_BLOCK_LIMIT).map(button => ({
-                    text: button.getText ? button.getText() : null,
-                    isCategoryLabel: button.getIsCategoryLabel ? button.getIsCategoryLabel() : false,
-                    position: button.getPosition ? {
-                        x: roundDebugNumber(button.getPosition().x),
-                        y: roundDebugNumber(button.getPosition().y)
-                    } : null,
-                    width: roundDebugNumber(button.width),
-                    height: roundDebugNumber(button.height),
-                    svgGroup: this.getElementDebugSnapshot(button.svgGroup_)
-                })) :
-                [];
-
-            return {
-                context,
-                viewport: typeof window !== 'undefined' ? {
-                    innerWidth: window.innerWidth,
-                    innerHeight: window.innerHeight,
-                    devicePixelRatio: roundDebugNumber(window.devicePixelRatio)
-                } : null,
-                selectedCategoryId,
-                pendingCategorySelection: this.pendingCategorySelection,
-                isMobileTouchViewport: typeof window !== 'undefined' ? this.isMobileTouchViewport() : null,
-                workspaceDragging: this.workspace && this.workspace.isDragging ? this.workspace.isDragging() : false,
-                workspaceScale: this.workspace ? roundDebugNumber(this.workspace.scale) : null,
-                workspaceScroll: this.workspace ? {
-                    x: roundDebugNumber(this.workspace.scrollX),
-                    y: roundDebugNumber(this.workspace.scrollY)
-                } : null,
-                workspaceMetrics: workspaceMetrics ? {
-                    viewWidth: roundDebugNumber(workspaceMetrics.viewWidth),
-                    viewHeight: roundDebugNumber(workspaceMetrics.viewHeight),
-                    absoluteLeft: roundDebugNumber(workspaceMetrics.absoluteLeft),
-                    absoluteTop: roundDebugNumber(workspaceMetrics.absoluteTop),
-                    flyoutWidth: roundDebugNumber(workspaceMetrics.flyoutWidth),
-                    flyoutHeight: roundDebugNumber(workspaceMetrics.flyoutHeight)
-                } : null,
-                toolbox: toolbox ? {
-                    width: roundDebugNumber(toolbox.getWidth && toolbox.getWidth()),
-                    htmlDiv: this.getElementDebugSnapshot(toolbox.HtmlDiv)
-                } : null,
-                flyout: flyout ? {
-                    visible: flyout.isVisible ? flyout.isVisible() : null,
-                    autoClose: flyout.autoClose,
-                    width: roundDebugNumber(flyout.width_),
-                    height: roundDebugNumber(flyout.height_),
-                    listenerCount: Array.isArray(flyout.listeners_) ? flyout.listeners_.length : 0,
-                    buttonCount: Array.isArray(flyout.buttons_) ? flyout.buttons_.length : 0,
-                    backgroundButtonCount: Array.isArray(flyout.backgroundButtons_) ? flyout.backgroundButtons_.length : 0,
-                    recycleBlockCount: Array.isArray(flyout.recycleBlocks_) ? flyout.recycleBlocks_.length : 0,
-                    topBlockCount: topBlocks.length,
-                    scrollPos: typeof flyout.getScrollPos === 'function' ?
-                        roundDebugNumber(flyout.getScrollPos()) :
-                        null,
-                    scrollTarget: roundDebugNumber(flyout.scrollTarget),
-                    svgGroup: this.getElementDebugSnapshot(flyoutSvgGroup),
-                    background: this.getElementDebugSnapshot(flyoutBackground),
-                    closeButton: this.getElementDebugSnapshot(flyoutCloseButton),
-                    metrics: flyoutMetrics ? {
-                        viewWidth: roundDebugNumber(flyoutMetrics.viewWidth),
-                        viewHeight: roundDebugNumber(flyoutMetrics.viewHeight),
-                        contentWidth: roundDebugNumber(flyoutMetrics.contentWidth),
-                        contentHeight: roundDebugNumber(flyoutMetrics.contentHeight),
-                        viewTop: roundDebugNumber(flyoutMetrics.viewTop),
-                        contentTop: roundDebugNumber(flyoutMetrics.contentTop),
-                        absoluteTop: roundDebugNumber(flyoutMetrics.absoluteTop)
-                    } : null,
-                    workspaceMetrics: flyoutWorkspaceMetrics ? {
-                        viewWidth: roundDebugNumber(flyoutWorkspaceMetrics.viewWidth),
-                        viewHeight: roundDebugNumber(flyoutWorkspaceMetrics.viewHeight),
-                        contentWidth: roundDebugNumber(flyoutWorkspaceMetrics.contentWidth),
-                        contentHeight: roundDebugNumber(flyoutWorkspaceMetrics.contentHeight)
-                    } : null,
-                    topBandHitSamples: this.getRectHitSamplesForDebug(flyoutRect ? {
-                        ...flyoutRect,
-                        bottom: Math.min(flyoutRect.bottom, flyoutRect.top + 48),
-                        height: Math.min(flyoutRect.height, 48)
-                    } : null),
-                    buttons: buttonSummaries,
-                    backgroundButtons: flyout.backgroundButtons_ ?
-                        flyout.backgroundButtons_
-                            .slice(0, BLOCKLY_DIAG_TOP_BLOCK_LIMIT)
-                            .map(button => this.getElementDebugSnapshot(button)) :
-                        []
-                } : null,
-                overlapSiblings: siblingOverlays,
-                topBlocks: topBlocks
-                    .slice(0, BLOCKLY_DIAG_TOP_BLOCK_LIMIT)
-                    .map(block => this.getBlockDebugSnapshot(block, {includeHitSamples: true}))
-            };
-        } catch (error) {
-            return {
-                context,
-                snapshotError: {
-                    message: error && error.message ? error.message : String(error),
-                    name: error && error.name ? error.name : 'Error'
-                },
-                pendingCategorySelection: this.pendingCategorySelection,
-                isMobileTouchViewport: typeof window !== 'undefined' ? this.isMobileTouchViewport() : null
-            };
-        }
-    }
-
-    logFlyoutDiagnostics(label, context = {}) {
-        this.emitBlockInteractionDebugLog(label, {
-            flyoutSnapshot: this.buildFlyoutDebugSnapshot(context)
-        });
-    }
-
-    detachFlyoutDebugWrappers() {
-        if (this._flyoutDebugRestore) {
-            this._flyoutDebugRestore();
-            this._flyoutDebugRestore = null;
-        }
-    }
-
-    attachFlyoutDebugWrappers() {
-        if (!this.workspace || !this.isBlockInteractionDebugEnabled()) {
-            this.detachFlyoutDebugWrappers();
-            return;
-        }
-
-        if (this._flyoutDebugRestore) return;
-
-        const flyout = this.workspace.getFlyout && this.workspace.getFlyout();
-        if (!flyout) return;
-
-        const restoreFns = [];
-        const self = this;
-
-        if (typeof flyout.createBlock === 'function') {
-            const originalCreateBlock = flyout.createBlock.bind(flyout);
-            flyout.createBlock = function (originalBlock) {
-                self.emitBlockInteractionDebugLog('flyout.createBlock:before', {
-                    sourceBlock: self.getBlockDebugSnapshot(originalBlock, {includeHitSamples: true}),
-                    flyoutSnapshot: self.buildFlyoutDebugSnapshot({reason: 'flyout.createBlock:before'})
-                });
-                const newBlock = originalCreateBlock(originalBlock);
-                self.emitBlockInteractionDebugLog('flyout.createBlock:after', {
-                    sourceBlock: self.getBlockDebugSnapshot(originalBlock),
-                    newWorkspaceBlock: self.getBlockDebugSnapshot(newBlock),
-                    flyoutSnapshot: self.buildFlyoutDebugSnapshot({reason: 'flyout.createBlock:after'})
-                });
-                return newBlock;
-            };
-            restoreFns.push(() => {
-                flyout.createBlock = originalCreateBlock;
-            });
-        }
-
-        if (typeof flyout.blockMouseDown_ === 'function') {
-            const originalBlockMouseDownFactory = flyout.blockMouseDown_.bind(flyout);
-            flyout.blockMouseDown_ = function (block) {
-                const handler = originalBlockMouseDownFactory(block);
-                return function (event) {
-                    self.emitBlockInteractionDebugLog('flyout.blockMouseDown', {
-                        handler: 'blockMouseDown_',
-                        event: self.buildEventDebugSnapshot(event, flyout.svgGroup_),
-                        sourceBlock: self.getBlockDebugSnapshot(block, {includeHitSamples: true}),
-                        flyoutSnapshot: self.buildFlyoutDebugSnapshot({
-                            reason: 'flyout.blockMouseDown',
-                            blockId: block && block.id
-                        })
-                    });
-                    return handler.call(this, event);
-                };
-            };
-            restoreFns.push(() => {
-                flyout.blockMouseDown_ = originalBlockMouseDownFactory;
-            });
-        }
-
-        if (typeof flyout.onMouseDown_ === 'function') {
-            const originalOnMouseDown = flyout.onMouseDown_.bind(flyout);
-            flyout.onMouseDown_ = function (event) {
-                self.emitBlockInteractionDebugLog('flyout.backgroundMouseDown', {
-                    handler: 'onMouseDown_',
-                    event: self.buildEventDebugSnapshot(event, flyout.svgGroup_),
-                    flyoutSnapshot: self.buildFlyoutDebugSnapshot({
-                        reason: 'flyout.backgroundMouseDown'
-                    })
-                });
-                return originalOnMouseDown(event);
-            };
-            restoreFns.push(() => {
-                flyout.onMouseDown_ = originalOnMouseDown;
-            });
-        }
-
-        if (typeof flyout.scrollTo === 'function') {
-            const originalScrollTo = flyout.scrollTo.bind(flyout);
-            flyout.scrollTo = function (pos) {
-                self.emitBlockInteractionDebugLog('flyout.scrollTo', {
-                    pos: roundDebugNumber(pos),
-                    beforeScrollPos: typeof flyout.getScrollPos === 'function' ?
-                        roundDebugNumber(flyout.getScrollPos()) :
-                        null
-                });
-                return originalScrollTo(pos);
-            };
-            restoreFns.push(() => {
-                flyout.scrollTo = originalScrollTo;
-            });
-        }
-
-        if (typeof flyout.scrollToStart === 'function') {
-            const originalScrollToStart = flyout.scrollToStart.bind(flyout);
-            flyout.scrollToStart = function () {
-                self.emitBlockInteractionDebugLog('flyout.scrollToStart', {
-                    beforeScrollPos: typeof flyout.getScrollPos === 'function' ?
-                        roundDebugNumber(flyout.getScrollPos()) :
-                        null
-                });
-                return originalScrollToStart();
-            };
-            restoreFns.push(() => {
-                flyout.scrollToStart = originalScrollToStart;
-            });
-        }
-
-        this._flyoutDebugRestore = () => {
-            restoreFns.reverse().forEach(restore => restore());
-        };
-
-        this.emitBlockInteractionDebugLog('flyout.debugWrappers:attached', {
-            flyoutSnapshot: this.buildFlyoutDebugSnapshot({reason: 'flyout.debugWrappers:attached'})
-        });
-    }
-
-    onWorkspaceDebugEvent(source, eventType, event, rootElement) {
-        if (!this.isBlockInteractionDebugEnabled()) return;
-
-        const isMoveEvent = eventType === 'pointermove' || eventType === 'mousemove';
-        if (isMoveEvent) {
-            const isDraggingPointer = Boolean(event.buttons);
-            if (!isDraggingPointer) return;
-            this._debugMoveCounter = (this._debugMoveCounter + 1) % 6;
-            if (this._debugMoveCounter !== 0) return;
-        }
-
-        const flyout = this.workspace && this.workspace.getFlyout ? this.workspace.getFlyout() : null;
-        const compactEvent = this.buildEventDebugSnapshot(event, rootElement);
-        const label = `dom.${source}.${eventType}`;
-
-        if (isMoveEvent) {
-            this.emitBlockInteractionDebugLog(label, {
-                event: compactEvent,
-                flyoutVisible: flyout && flyout.isVisible ? flyout.isVisible() : false,
-                workspaceDragging: this.workspace && this.workspace.isDragging ? this.workspace.isDragging() : false
-            });
-            return;
-        }
-
-        this.emitBlockInteractionDebugLog(label, {
-            event: compactEvent,
-            flyoutSnapshot: this.buildFlyoutDebugSnapshot({
-                reason: label,
-                eventType,
-                source
-            })
-        });
-    }
-
-    detachInteractionDebugListeners() {
-        const hadListeners = this._interactionDebugDetachers.length > 0 || Boolean(this._workspaceDebugChangeListener);
-        this._interactionDebugDetachers.forEach(detach => detach());
-        this._interactionDebugDetachers = [];
-
-        if (this.workspace && this._workspaceDebugChangeListener) {
-            this.workspace.removeChangeListener(this._workspaceDebugChangeListener);
-        }
-        this._workspaceDebugChangeListener = null;
-        if (hadListeners && this.isBlockInteractionDebugEnabled()) {
-            this.emitBlockInteractionDebugLog('interactionDebug.detach', {});
-        }
-    }
-
-    attachInteractionDebugListeners() {
-        if (!this.workspace || !this.isBlockInteractionDebugEnabled()) {
-            this.detachInteractionDebugListeners();
-            this.detachFlyoutDebugWrappers();
-            return;
-        }
-
-        this.detachInteractionDebugListeners();
-        this.attachFlyoutDebugWrappers();
-
-        const addDomDebugListener = (element, eventType, source, options = true) => {
-            if (!element) return;
-            const handler = event => this.onWorkspaceDebugEvent(source, eventType, event, element);
-            element.addEventListener(eventType, handler, options);
-            this._interactionDebugDetachers.push(() => {
-                element.removeEventListener(eventType, handler, options);
-            });
-        };
-
-        const workspaceSvg = this.workspace.getParentSvg && this.workspace.getParentSvg();
-        const flyout = this.workspace.getFlyout && this.workspace.getFlyout();
-        const flyoutSvgGroup = flyout && flyout.svgGroup_;
-
-        ['mousedown', 'mousemove', 'mouseup', 'click', 'pointerdown', 'pointermove', 'pointerup', 'touchstart', 'touchend', 'touchcancel'].forEach(eventType => {
-            addDomDebugListener(workspaceSvg, eventType, 'workspaceSvg');
-            addDomDebugListener(flyoutSvgGroup, eventType, 'flyoutSvg');
-        });
-
-        this._workspaceDebugChangeListener = event => {
-            if (!this.isBlockInteractionDebugEnabled()) return;
-            if (event.type !== this.ScratchBlocks.Events.BLOCK_CREATE &&
-                event.type !== this.ScratchBlocks.Events.BLOCK_DRAG &&
-                event.type !== this.ScratchBlocks.Events.CLICK) {
-                return;
-            }
-
-            this.emitBlockInteractionDebugLog(`workspace.change.${event.type}`, {
-                blockId: event.blockId || event.blockId_ || event.newElementId || null,
-                isStart: typeof event.isStart === 'boolean' ? event.isStart : null,
-                oldCoordinate: event.oldCoordinate ? {
-                    x: roundDebugNumber(event.oldCoordinate.x),
-                    y: roundDebugNumber(event.oldCoordinate.y)
-                } : null,
-                newCoordinate: event.newCoordinate ? {
-                    x: roundDebugNumber(event.newCoordinate.x),
-                    y: roundDebugNumber(event.newCoordinate.y)
-                } : null,
-                flyoutSnapshot: this.buildFlyoutDebugSnapshot({
-                    reason: `workspace.change.${event.type}`
-                })
-            });
-        };
-
-        this.workspace.addChangeListener(this._workspaceDebugChangeListener);
-        this.emitBlockInteractionDebugLog('interactionDebug.attach', {
-            workspaceSvg: this.getElementDebugSnapshot(workspaceSvg),
-            flyoutSvg: this.getElementDebugSnapshot(flyoutSvgGroup),
-            flyoutSnapshot: this.buildFlyoutDebugSnapshot({reason: 'interactionDebug.attach'})
-        });
-    }
-
-    isMobileTouchViewport() {
+    isMobileTouchViewport () {
         if (window.innerWidth > 767) return false;
         if (window.matchMedia) {
             const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
@@ -1538,20 +788,15 @@ class Blocks extends React.Component {
         return ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
     }
 
-    isTouchPointerEvent(event) {
+    isTouchPointerEvent (event) {
         if (!event || !event.isPrimary) return false;
         if (!event.pointerType) return true;
         return event.pointerType === 'touch' || event.pointerType === 'pen';
     }
 
-    handleViewportInputModeChange() {
+    handleViewportInputModeChange () {
         if (!this.workspace) return;
         const isMobileTouchViewport = this.isMobileTouchViewport();
-        this.emitBlockInteractionDebugLog('viewportInputModeChange', {
-            isVisible: this.props.isVisible,
-            isMobileTouchViewport,
-            flyoutSnapshot: this.buildFlyoutDebugSnapshot({reason: 'viewportInputModeChange'})
-        });
         if (!this.props.isVisible || !isMobileTouchViewport) {
             this.clearFlyoutCloseButtonPosition();
         }
@@ -1563,52 +808,37 @@ class Blocks extends React.Component {
         this.updateFlyoutCloseButtonPosition();
     }
 
-    detachFlyoutListeners() {
+    detachFlyoutListeners () {
         if (this._detachFlyoutListeners) {
             this._detachFlyoutListeners();
             this._detachFlyoutListeners = null;
             if (process.env.DEBUG) {
                 log.info('[Blocks] Detached custom flyout touch handlers');
             }
-            this.emitBlockInteractionDebugLog('flyout.touchListeners:detached', {
-                flyoutSnapshot: this.buildFlyoutDebugSnapshot({reason: 'flyout.touchListeners:detached'})
-            });
         }
         this._connectedFlyoutSvg = null;
     }
 
-    attachFlyoutListeners() {
+    attachFlyoutListeners () {
         if (!this.isMobileTouchViewport()) {
-            this.emitBlockInteractionDebugLog('flyout.touchListeners:skip', {
-                reason: 'notMobileTouchViewport'
-            });
             this.detachFlyoutListeners();
             return;
         }
 
         const flyout = this.workspace.getFlyout();
         if (!flyout) {
-            this.emitBlockInteractionDebugLog('flyout.touchListeners:skip', {
-                reason: 'missingFlyout'
-            });
             this.detachFlyoutListeners();
             return;
         }
 
         const flyoutSvgGroup = flyout.svgGroup_;
         if (!flyoutSvgGroup) {
-            this.emitBlockInteractionDebugLog('flyout.touchListeners:skip', {
-                reason: 'missingFlyoutSvg'
-            });
             this.detachFlyoutListeners();
             return;
         }
 
         // Avoid duplicate listeners on the same element
         if (this._connectedFlyoutSvg === flyoutSvgGroup && this._detachFlyoutListeners) {
-            this.emitBlockInteractionDebugLog('flyout.touchListeners:reuse', {
-                flyoutSnapshot: this.buildFlyoutDebugSnapshot({reason: 'flyout.touchListeners:reuse'})
-            });
             return;
         }
 
@@ -1682,10 +912,6 @@ class Blocks extends React.Component {
 
         const onTouchStart = e => {
             if (!e.changedTouches || e.changedTouches.length !== 1) {
-                this.emitBlockInteractionDebugLog('flyout.touchstart:ignored', {
-                    reason: 'unexpectedTouchCount',
-                    event: this.buildEventDebugSnapshot(e, flyoutSvgGroup)
-                });
                 clearTouchState();
                 return;
             }
@@ -1701,12 +927,6 @@ class Blocks extends React.Component {
                 time: Date.now(),
                 checkboxInitialState: checkboxObj ? checkboxObj.clicked : null
             };
-            this.emitBlockInteractionDebugLog('flyout.touchstart', {
-                event: this.buildEventDebugSnapshot(e, flyoutSvgGroup),
-                checkboxBlockId: checkboxObj && checkboxObj.block ? checkboxObj.block.id : null,
-                resolvedBlock: this.getBlockDebugSnapshot(getFlyoutTopBlockFromTarget(e.target), {includeHitSamples: true}),
-                flyoutSnapshot: this.buildFlyoutDebugSnapshot({reason: 'flyout.touchstart'})
-            });
         };
 
         const onTouchMove = e => {
@@ -1716,15 +936,6 @@ class Blocks extends React.Component {
             const dx = Math.abs(touch.clientX - touchStartInfo.x);
             const dy = Math.abs(touch.clientY - touchStartInfo.y);
             if (dx >= TAP_THRESHOLD || dy >= TAP_THRESHOLD) {
-                if (!touchStartInfo.moved) {
-                    this.emitBlockInteractionDebugLog('flyout.touchmove:thresholdExceeded', {
-                        delta: {
-                            x: roundDebugNumber(dx),
-                            y: roundDebugNumber(dy)
-                        },
-                        event: this.buildEventDebugSnapshot(e, flyoutSvgGroup)
-                    });
-                }
                 touchStartInfo.moved = true;
             }
         };
@@ -1735,55 +946,25 @@ class Blocks extends React.Component {
             clearTouchState();
 
             if (!interaction || !touch) {
-                this.emitBlockInteractionDebugLog('flyout.touchend:ignored', {
-                    reason: 'missingInteraction',
-                    event: this.buildEventDebugSnapshot(e, flyoutSvgGroup)
-                });
                 return;
             }
             if (!flyout.isVisible()) {
-                this.emitBlockInteractionDebugLog('flyout.touchend:ignored', {
-                    reason: 'flyoutHidden',
-                    event: this.buildEventDebugSnapshot(e, flyoutSvgGroup)
-                });
                 return;
             }
             if (interaction.moved) {
-                this.emitBlockInteractionDebugLog('flyout.touchend:ignored', {
-                    reason: 'touchMoved',
-                    interaction: this.getTouchInteractionDebugSnapshot(interaction),
-                    event: this.buildEventDebugSnapshot(e, flyoutSvgGroup)
-                });
                 return;
             }
             const duration = Date.now() - interaction.time;
             if (duration >= TAP_DURATION) {
-                this.emitBlockInteractionDebugLog('flyout.touchend:ignored', {
-                    reason: 'tapTooLong',
-                    duration,
-                    event: this.buildEventDebugSnapshot(e, flyoutSvgGroup)
-                });
                 return;
             }
             if (this.workspace.isDragging && this.workspace.isDragging()) {
-                this.emitBlockInteractionDebugLog('flyout.touchend:ignored', {
-                    reason: 'workspaceDragging',
-                    duration,
-                    event: this.buildEventDebugSnapshot(e, flyoutSvgGroup)
-                });
                 return;
             }
 
             const tapTarget = interaction.target || e.target;
             if (isCheckboxTapTarget(tapTarget)) {
                 const checkboxObj = getFlyoutCheckboxFromTarget(tapTarget);
-                this.emitBlockInteractionDebugLog('flyout.touchend:checkboxTap', {
-                    event: this.buildEventDebugSnapshot(e, flyoutSvgGroup),
-                    target: this.formatTargetForDebug(tapTarget),
-                    checkboxBlockId: checkboxObj && checkboxObj.block ? checkboxObj.block.id : null,
-                    checkboxInitialState: interaction.checkboxInitialState,
-                    checkboxCurrentState: checkboxObj ? checkboxObj.clicked : null
-                });
                 if (checkboxObj && checkboxObj.clicked === interaction.checkboxInitialState) {
                     flyout.setCheckboxState(checkboxObj.block.id, !checkboxObj.clicked);
                 }
@@ -1792,12 +973,6 @@ class Blocks extends React.Component {
 
             const block = getFlyoutTopBlockFromTarget(tapTarget);
             if (!block) {
-                this.emitBlockInteractionDebugLog('flyout.touchend:ignored', {
-                    reason: 'noResolvedBlock',
-                    event: this.buildEventDebugSnapshot(e, flyoutSvgGroup),
-                    target: this.formatTargetForDebug(tapTarget),
-                    flyoutSnapshot: this.buildFlyoutDebugSnapshot({reason: 'flyout.touchend:noResolvedBlock'})
-                });
                 return;
             }
 
@@ -1807,23 +982,12 @@ class Blocks extends React.Component {
                 e.stopImmediatePropagation();
             }
 
-            this.emitBlockInteractionDebugLog('flyout.touchend:createBlock', {
-                duration,
-                event: this.buildEventDebugSnapshot(e, flyoutSvgGroup),
-                target: this.formatTargetForDebug(tapTarget),
-                resolvedBlock: this.getBlockDebugSnapshot(block, {includeHitSamples: true}),
-                flyoutSnapshot: this.buildFlyoutDebugSnapshot({reason: 'flyout.touchend:createBlock'})
-            });
             flyout.createBlock(block);
             setTimeout(() => this.addCloseButtonsToAllBlocks(), 50);
             setTimeout(() => this.addCloseButtonsToAllBlocks(), 200);
         };
 
-        const onTouchCancel = e => {
-            this.emitBlockInteractionDebugLog('flyout.touchcancel', {
-                event: this.buildEventDebugSnapshot(e, flyoutSvgGroup),
-                flyoutSnapshot: this.buildFlyoutDebugSnapshot({reason: 'flyout.touchcancel'})
-            });
+        const onTouchCancel = () => {
             clearTouchState();
         };
 
@@ -1844,13 +1008,9 @@ class Blocks extends React.Component {
             log.info('[Blocks] Attached custom flyout touch handlers');
         }
 
-        this.emitBlockInteractionDebugLog('flyout.touchListeners:attached', {
-            flyoutSnapshot: this.buildFlyoutDebugSnapshot({reason: 'flyout.touchListeners:attached'})
-        });
-        this.attachInteractionDebugListeners();
     }
 
-    attachVM() {
+    attachVM () {
         this.workspace.addChangeListener(this.props.vm.blockListener);
 
         this.flyoutWorkspace = this.workspace
@@ -1858,6 +1018,7 @@ class Blocks extends React.Component {
             .getWorkspace();
         this.flyoutWorkspace.addChangeListener(this.props.vm.flyoutBlockListener);
         this.flyoutWorkspace.addChangeListener(this.props.vm.monitorBlockListener);
+
         this.props.vm.addListener('SCRIPT_GLOW_ON', this.onScriptGlowOn);
         this.props.vm.addListener('SCRIPT_GLOW_OFF', this.onScriptGlowOff);
         this.props.vm.addListener('BLOCK_GLOW_ON', this.onBlockGlowOn);
@@ -1879,26 +1040,17 @@ class Blocks extends React.Component {
         let showTimestamp = 0;
         let showInProgress = false;
 
-        const getFlyoutLifecycleCounts = currentFlyout => {
-            const activeFlyout = currentFlyout || (self.workspace && self.workspace.getFlyout ? self.workspace.getFlyout() : null);
-            const activeFlyoutWorkspace = activeFlyout && activeFlyout.getWorkspace ? activeFlyout.getWorkspace() : null;
-            return {
-                flyoutListenerCount: Array.isArray(activeFlyout && activeFlyout.listeners_) ? activeFlyout.listeners_.length : 0,
-                flyoutButtonCount: Array.isArray(activeFlyout && activeFlyout.buttons_) ? activeFlyout.buttons_.length : 0,
-                flyoutBackgroundButtonCount: Array.isArray(activeFlyout && activeFlyout.backgroundButtons_) ? activeFlyout.backgroundButtons_.length : 0,
-                flyoutTopBlockCount: activeFlyoutWorkspace && typeof activeFlyoutWorkspace.getTopBlocks === 'function' ?
-                    activeFlyoutWorkspace.getTopBlocks(false).length :
-                    0
-            };
-        };
-
         flyout.show = function (xmlList) {
-            self.emitBlockInteractionDebugLog('flyout.show:before', {
-                xmlCount: Array.isArray(xmlList) ? xmlList.length : null,
-                showPhase: 'before',
-                ...getFlyoutLifecycleCounts(this),
-                flyoutSnapshot: self.buildFlyoutDebugSnapshot({reason: 'flyout.show:before'})
-            });
+            // On mobile, suppress auto-shows triggered by Blockly's internal lifecycle
+            // (e.g. returning to the code tab). A real category tap by the user flips
+            // _userToggledOpen to true via the toolbox pointerdown listener below.
+            if (self.isMobileTouchViewport() && !self._userToggledOpen) {
+                // Ensure the flyout is actually hidden in case Blockly left it visible
+                if (typeof originalHide === 'function' && this.isVisible && this.isVisible()) {
+                    originalHide.call(this);
+                }
+                return;
+            }
             showInProgress = true;
             try {
                 originalShow.call(this, xmlList);
@@ -1910,48 +1062,20 @@ class Blocks extends React.Component {
             self.setState({isFlyoutVisible: true}, () => {
                 self.updateFlyoutCloseButtonPosition();
             });
-            self.logFlyoutDiagnostics('flyout.show:after', {
-                xmlCount: Array.isArray(xmlList) ? xmlList.length : null,
-                showPhase: 'after',
-                ...getFlyoutLifecycleCounts(this)
-            });
         };
         flyout.hide = function () {
             if (showInProgress) {
-                self.emitBlockInteractionDebugLog('flyout.hide:internalShowCleanup', {
-                    reason: 'showInternalCleanup',
-                    showPhase: 'internal',
-                    ...getFlyoutLifecycleCounts(this),
-                    flyoutSnapshot: self.buildFlyoutDebugSnapshot({reason: 'flyout.hide:internalShowCleanup'})
-                });
                 return originalHide.call(this);
             }
             // Prevent hide if show was just called (within 50ms) - this prevents the show/hide race condition
             const timeSinceShow = showTimestamp ? Date.now() - showTimestamp : null;
             if (typeof timeSinceShow === 'number' && timeSinceShow < 50) {
-                self.emitBlockInteractionDebugLog('flyout.hide:skipped', {
-                    reason: 'showHideRaceGuard',
-                    timeSinceShow,
-                    showPhase: 'guarded',
-                    ...getFlyoutLifecycleCounts(this)
-                });
                 return;
             }
-            self.emitBlockInteractionDebugLog('flyout.hide:before', {
-                timeSinceShow,
-                showPhase: 'before',
-                ...getFlyoutLifecycleCounts(this),
-                flyoutSnapshot: self.buildFlyoutDebugSnapshot({reason: 'flyout.hide:before'})
-            });
             originalHide.call(this);
             self.setState({
                 isFlyoutVisible: false,
                 flyoutCloseButtonStyle: null
-            });
-            self.logFlyoutDiagnostics('flyout.hide:after', {
-                timeSinceShow,
-                showPhase: 'after',
-                ...getFlyoutLifecycleCounts(this)
             });
             // On mobile, resize workspace to take full width after flyout hides
             if (self.isMobileTouchViewport()) {
@@ -1985,6 +1109,23 @@ class Blocks extends React.Component {
             }
         });
 
+        // On mobile, a tap inside the toolbox category menu counts as a user-initiated
+        // open: flip the flag BEFORE Blockly's internal click handler fires flyout.show.
+        // Using pointerdown (capture phase) so we win the race against Blockly's listeners.
+        if (this.isMobileTouchViewport()) {
+            const toolbox = this.workspace.getToolbox && this.workspace.getToolbox();
+            const toolboxDiv = toolbox && toolbox.HtmlDiv;
+            if (toolboxDiv) {
+                const markUserOpen = () => {
+                    if (!self._userToggledOpen) {
+                        self._userToggledOpen = true;
+                    }
+                };
+                toolboxDiv.addEventListener('pointerdown', markUserOpen, true);
+                toolboxDiv.addEventListener('touchstart', markUserOpen, {capture: true, passive: true});
+            }
+        }
+
         // On mobile, close flyout when clicking on the main workspace area (outside flyout/toolbox)
         if (this.isMobileTouchViewport()) {
             const workspaceSvg = this.workspace.getParentSvg();
@@ -2002,19 +1143,7 @@ class Blocks extends React.Component {
                     const clickedInToolbox = toolboxDiv && toolboxDiv.contains(e.target);
 
                     if (!clickedInFlyout && !clickedInToolbox) {
-                        this.emitBlockInteractionDebugLog('workspace.pointerdown:hideFlyout', {
-                            event: this.buildEventDebugSnapshot(e, workspaceSvg),
-                            clickedInFlyout,
-                            clickedInToolbox,
-                            flyoutSnapshot: this.buildFlyoutDebugSnapshot({reason: 'workspace.pointerdown:hideFlyout'})
-                        });
                         currentFlyout.hide();
-                    } else {
-                        this.emitBlockInteractionDebugLog('workspace.pointerdown:keepFlyout', {
-                            event: this.buildEventDebugSnapshot(e, workspaceSvg),
-                            clickedInFlyout,
-                            clickedInToolbox
-                        });
                     }
                 }, true);
 
@@ -2068,7 +1197,7 @@ class Blocks extends React.Component {
 
                 if (blockSvg) {
                     const touch = e.touches[0];
-                    longPressStartPos = { x: touch.clientX, y: touch.clientY };
+                    longPressStartPos = {x: touch.clientX, y: touch.clientY};
 
                     // Find the block ID from the SVG element
                     let blockId = blockSvg.getAttribute('data-id');
@@ -2092,7 +1221,7 @@ class Blocks extends React.Component {
                         }
                     }
                 }
-            }, { passive: true });
+            }, {passive: true});
 
             workspaceSvg.addEventListener('touchmove', e => {
                 if (longPressTimer && longPressStartPos) {
@@ -2109,7 +1238,7 @@ class Blocks extends React.Component {
                         this.longPressBlockId = null;
                     }
                 }
-            }, { passive: true });
+            }, {passive: true});
 
             workspaceSvg.addEventListener('touchend', () => {
                 if (longPressTimer) {
@@ -2118,7 +1247,7 @@ class Blocks extends React.Component {
                 }
                 longPressStartPos = null;
                 this.longPressBlockId = null;
-            }, { passive: true });
+            }, {passive: true});
 
             workspaceSvg.addEventListener('touchcancel', () => {
                 if (longPressTimer) {
@@ -2127,14 +1256,13 @@ class Blocks extends React.Component {
                 }
                 longPressStartPos = null;
                 this.longPressBlockId = null;
-            }, { passive: true });
+            }, {passive: true});
         }
 
-        this.attachFlyoutDebugWrappers();
     }
 
 
-    detachVM() {
+    detachVM () {
         this.props.vm.removeListener('SCRIPT_GLOW_ON', this.onScriptGlowOn);
         this.props.vm.removeListener('SCRIPT_GLOW_OFF', this.onScriptGlowOff);
         this.props.vm.removeListener('BLOCK_GLOW_ON', this.onBlockGlowOn);
@@ -2149,7 +1277,7 @@ class Blocks extends React.Component {
         this.props.vm.removeListener('PERIPHERAL_DISCONNECTED', this.handleStatusButtonUpdate);
     }
 
-    updateToolboxBlockValue(id, value) {
+    updateToolboxBlockValue (id, value) {
         this.withToolboxUpdates(() => {
             const block = this.workspace
                 .getFlyout()
@@ -2161,7 +1289,7 @@ class Blocks extends React.Component {
         });
     }
 
-    onTargetsUpdate() {
+    onTargetsUpdate () {
         if (this.props.vm.editingTarget && this.workspace.getFlyout()) {
             ['glide', 'move', 'set'].forEach(prefix => {
                 this.updateToolboxBlockValue(`${prefix}x`, Math.round(this.props.vm.editingTarget.x).toString());
@@ -2169,7 +1297,7 @@ class Blocks extends React.Component {
             });
         }
     }
-    onWorkspaceMetricsChange() {
+    onWorkspaceMetricsChange () {
         const target = this.props.vm.editingTarget;
         if (target && target.id) {
             // Dispatch updateMetrics later, since onWorkspaceMetricsChange may be (very indirectly)
@@ -2185,27 +1313,27 @@ class Blocks extends React.Component {
             }, 0);
         }
     }
-    onScriptGlowOn(data) {
+    onScriptGlowOn (data) {
         this.workspace.glowStack(data.id, true);
     }
-    onScriptGlowOff(data) {
+    onScriptGlowOff (data) {
         this.workspace.glowStack(data.id, false);
     }
-    onBlockGlowOn(data) {
+    onBlockGlowOn (data) {
         this.workspace.glowBlock(data.id, true);
     }
-    onBlockGlowOff(data) {
+    onBlockGlowOff (data) {
         this.workspace.glowBlock(data.id, false);
     }
-    onVisualReport(data) {
+    onVisualReport (data) {
         this.workspace.reportValue(data.id, data.value);
     }
-    getToolboxXML() {
+    getToolboxXML () {
         // Use try/catch because this requires digging pretty deep into the VM
         // Code inside intentionally ignores several error situations (no stage, etc.)
         // Because they would get caught by this try/catch
         try {
-            let { editingTarget: target, runtime } = this.props.vm;
+            let {editingTarget: target, runtime} = this.props.vm;
             const stage = runtime.getTargetForStage();
             if (!target) target = stage; // If no editingTarget, use the stage
 
@@ -2226,7 +1354,7 @@ class Blocks extends React.Component {
             return null;
         }
     }
-    onWorkspaceUpdate(data) {
+    onWorkspaceUpdate (data) {
         // When we change sprites, update the toolbox to have the new sprite's blocks
         const toolboxXML = this.getToolboxXML();
         if (toolboxXML) {
@@ -2260,7 +1388,7 @@ class Blocks extends React.Component {
         this.workspace.addChangeListener(this.props.vm.blockListener);
 
         if (this.props.vm.editingTarget && this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id]) {
-            const { scrollX, scrollY, scale } = this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id];
+            const {scrollX, scrollY, scale} = this.props.workspaceMetrics.targets[this.props.vm.editingTarget.id];
             this.workspace.scrollX = scrollX;
             this.workspace.scrollY = scrollY;
             this.workspace.scale = scale;
@@ -2272,12 +1400,9 @@ class Blocks extends React.Component {
         // workspace to be 'undone' here.
         this.workspace.clearUndo();
         this.refreshFlyoutLayout({reason: 'workspaceUpdate'});
-        this.logFlyoutDiagnostics('workspaceUpdate:after', {
-            editingTargetId: this.props.vm.editingTarget ? this.props.vm.editingTarget.id : null
-        });
         setTimeout(() => this.addCloseButtonsToAllBlocks(), 0);
     }
-    handleMonitorsUpdate(monitors) {
+    handleMonitorsUpdate (monitors) {
         // Update the checkboxes of the relevant monitors.
         // TODO: What about monitors that have fields? See todo in scratch-vm blocks.js changeBlock:
         // https://github.com/LLK/scratch-vm/blob/2373f9483edaf705f11d62662f7bb2a57fbb5e28/src/engine/blocks.js#L569-L576
@@ -2295,14 +1420,7 @@ class Blocks extends React.Component {
             }
         }
     }
-    handleExtensionAdded(categoryInfo) {
-        this.emitBlockInteractionDebugLog('handleExtensionAdded:start', {
-            categoryInfo: this.summarizeCategoryInfoForDebug(categoryInfo),
-            flyoutSnapshot: this.buildFlyoutDebugSnapshot({
-                reason: 'handleExtensionAdded:start',
-                categoryId: categoryInfo && categoryInfo.id
-            })
-        });
+    handleExtensionAdded (categoryInfo) {
         const defineBlocks = blockInfoArray => {
             if (blockInfoArray && blockInfoArray.length > 0) {
                 const staticBlocksJson = [];
@@ -2342,16 +1460,12 @@ class Blocks extends React.Component {
         if (toolboxXML) {
             this.props.updateToolboxState(toolboxXML);
         }
-        this.emitBlockInteractionDebugLog('handleExtensionAdded:end', {
-            categoryInfo: this.summarizeCategoryInfoForDebug(categoryInfo),
-            toolboxXmlLength: toolboxXML ? toolboxXML.length : 0
-        });
     }
-    handleBlocksInfoUpdate(categoryInfo) {
+    handleBlocksInfoUpdate (categoryInfo) {
         // @todo Later we should replace this to avoid all the warnings from redefining blocks.
         this.handleExtensionAdded(categoryInfo);
     }
-    handleCategorySelected(categoryId) {
+    handleCategorySelected (categoryId) {
         const extension = extensionData.find(ext => ext.extensionId === categoryId);
         if (extension && extension.launchPeripheralConnectionFlow) {
             this.handleConnectionModalStart(categoryId);
@@ -2366,11 +1480,11 @@ class Blocks extends React.Component {
             this.pendingCategorySelection = categoryId;
         });
     }
-    setBlocks(blocks) {
+    setBlocks (blocks) {
         this.blocks = blocks;
     }
-    handlePromptStart(message, defaultValue, callback, optTitle, optVarType) {
-        const p = { prompt: { callback, message, defaultValue } };
+    handlePromptStart (message, defaultValue, callback, optTitle, optVarType) {
+        const p = {prompt: {callback, message, defaultValue}};
         p.prompt.title = optTitle ? optTitle :
             this.ScratchBlocks.Msg.VARIABLE_MODAL_TITLE;
         p.prompt.varType = typeof optVarType === 'string' ?
@@ -2382,13 +1496,13 @@ class Blocks extends React.Component {
         p.prompt.showCloudOption = (optVarType === this.ScratchBlocks.SCALAR_VARIABLE_TYPE) && this.props.canUseCloud;
         this.setState(p);
     }
-    handleConnectionModalStart(extensionId) {
+    handleConnectionModalStart (extensionId) {
         this.props.onOpenConnectionModal(extensionId);
     }
-    handleStatusButtonUpdate() {
+    handleStatusButtonUpdate () {
         this.ScratchBlocks.refreshStatusButtons(this.workspace);
     }
-    handleOpenSoundRecorder() {
+    handleOpenSoundRecorder () {
         this.props.onOpenSoundRecorder();
     }
 
@@ -2397,23 +1511,23 @@ class Blocks extends React.Component {
     * and additional potentially conflicting variable names from the VM
     * to the variable validation prompt callback used in scratch-blocks.
     */
-    handlePromptCallback(input, variableOptions) {
+    handlePromptCallback (input, variableOptions) {
         this.state.prompt.callback(
             input,
             this.props.vm.runtime.getAllVarNamesOfType(this.state.prompt.varType),
             variableOptions);
         this.handlePromptClose();
     }
-    handlePromptClose() {
-        this.setState({ prompt: null });
+    handlePromptClose () {
+        this.setState({prompt: null});
     }
-    handleCustomProceduresClose(data) {
+    handleCustomProceduresClose (data) {
         this.props.onRequestCloseCustomProcedures(data);
         const ws = this.workspace;
         ws.refreshToolboxSelection_();
         ws.toolbox_.scrollToCategoryById('myBlocks');
     }
-    handleDrop(dragInfo) {
+    handleDrop (dragInfo) {
         fetch(dragInfo.payload.bodyUrl)
             .then(response => response.json())
             .then(blocks => this.props.vm.shareBlocksToTarget(blocks, this.props.vm.editingTarget.id))
@@ -2424,15 +1538,15 @@ class Blocks extends React.Component {
     }
 
     // Mobile long-press block handlers
-    handleMobileBlockLongPress(blockId, x, y) {
+    handleMobileBlockLongPress (blockId, x, y) {
         if (!this.isMobileTouchViewport()) return; // Only on touch-first mobile view
         this.setState({
-            mobileDeletePosition: { x, y },
+            mobileDeletePosition: {x, y},
             mobileDeleteBlockId: blockId
         });
     }
 
-    handleMobileDelete() {
+    handleMobileDelete () {
         const blockId = this.state.mobileDeleteBlockId;
         if (blockId && this.workspace) {
             const block = this.workspace.getBlockById(blockId);
@@ -2447,13 +1561,13 @@ class Blocks extends React.Component {
         });
     }
 
-    handleCancelMobileDelete() {
+    handleCancelMobileDelete () {
         this.setState({
             mobileDeletePosition: null,
             mobileDeleteBlockId: null
         });
     }
-    render() {
+    render () {
         /* eslint-disable no-unused-vars */
         const {
             anyModalVisible,

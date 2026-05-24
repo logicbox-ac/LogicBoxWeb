@@ -144,9 +144,13 @@
         z-index: 25 !important;
         /* Allow pointer events to pass through to workspace when dragging */
         pointer-events: auto;
-        /* Smooth slide animation */
-        transform: translateX(0);
-        transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+        /*
+            NOTE: scratch-blocks positions the flyout by writing an inline CSS
+            transform (flyout_vertical.js position()). A `transition: transform`
+            here animates every reposition and fights Blockly's layout, leaving
+            the flyout mid-slide / blocks appearing missing. Do not re-add a
+            transform/transition to this rule.
+        */
         /* Account for mobile tab bar */
         height: calc(100% - 56px) !important;
     }
