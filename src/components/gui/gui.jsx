@@ -205,6 +205,22 @@ const GUIComponent = props => {
         }
         setMobileActiveTab(tab);
         if (tab === 'code') props.onActivateTab(0);
+        // On mobile the Blocks component's isVisible prop never toggles, so the
+        // re-sync desktop runs when the Scripts tab is shown (setVisible +
+        // refreshWorkspace) never fires here. Without it the Blockly workspace
+        // can keep the previously selected sprite's blocks while the VM's
+        // editingTarget already points at a newly added/selected sprite — and
+        // editing that stale workspace leaks the blocks onto the wrong target.
+        // Reload the workspace for the current editingTarget once the tab is
+        // visible (the load fails silently on a zero-size hidden workspace).
+        if (tab === 'code' && mobileActiveTab !== 'code' && props.vm) {
+            setTimeout(() => {
+                if (props.vm) {
+                    props.vm.refreshWorkspace();
+                    window.dispatchEvent(new Event('resize'));
+                }
+            }, 50);
+        }
         if (tab === 'costumes') props.onActivateCostumesTab();
         if (tab === 'sounds') props.onActivateSoundsTab();
         // When switching to stage tab, trigger a redraw after DOM updates
