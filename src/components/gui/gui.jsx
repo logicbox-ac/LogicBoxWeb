@@ -184,11 +184,6 @@ const GUIComponent = props => {
     } = omit(props, 'dispatch');
 
     const handleMobileTabChange = useCallback(tab => {
-        const etChange = vm && vm.editingTarget;
-        const etChangeName = etChange && etChange.getName ? etChange.getName() : 'none';
-        console.log(`[LB-DEBUG] Tab change ${mobileActiveTab} -> ${tab}. ` + // eslint-disable-line no-console
-            `Editing "${etChangeName}" (id=${etChange && etChange.id}, isStage=${etChange && etChange.isStage}). ` +
-            `Saved code target=${codeEditingTargetRef.current}.`);
         if (vm) {
             // Leaving Code: remember the target we were coding.
             if (mobileActiveTab === 'code' && tab !== 'code' && vm.editingTarget) {
@@ -204,8 +199,6 @@ const GUIComponent = props => {
                     Boolean(vm.runtime.getTargetById(savedId)) : true;
                 if (exists && vm.editingTarget && vm.editingTarget.id !== savedId &&
                     vm.editingTarget.isStage) {
-                    console.log('[LB-DEBUG] Snapback: editing target drifted to Stage, ' + // eslint-disable-line no-console, max-len
-                        `restoring saved sprite ${savedId}.`);
                     vm.setEditingTarget(savedId);
                 }
             }
@@ -228,10 +221,6 @@ const GUIComponent = props => {
             // device speed.
             requestAnimationFrame(() => requestAnimationFrame(() => {
                 if (props.vm) {
-                    const etRaf = props.vm.editingTarget;
-                    const etRafName = etRaf && etRaf.getName ? etRaf.getName() : 'none';
-                    console.log('[LB-DEBUG] Code tab visible (rAF): refreshing workspace for ' + // eslint-disable-line no-console, max-len
-                        `"${etRafName}" (id=${etRaf && etRaf.id}).`);
                     props.vm.refreshWorkspace();
                     window.dispatchEvent(new Event('resize'));
                 }

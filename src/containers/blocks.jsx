@@ -1012,15 +1012,6 @@ class Blocks extends React.Component {
 
     attachVM () {
         this.workspace.addChangeListener(this.props.vm.blockListener);
-        this.workspace.addChangeListener(e => {
-            if (e && (e.type === this.ScratchBlocks.Events.BLOCK_CREATE ||
-                e.type === this.ScratchBlocks.Events.BLOCK_DELETE)) {
-                const etBlk = this.props.vm.editingTarget;
-                const etBlkName = etBlk && etBlk.getName ? etBlk.getName() : 'none';
-                console.log(`[LB-DEBUG] Block ${e.type} written to editing target ` + // eslint-disable-line no-console
-                    `"${etBlkName}" (id=${etBlk && etBlk.id}), blockId=${e.blockId}.`);
-            }
-        });
 
         this.flyoutWorkspace = this.workspace
             .getFlyout()
@@ -1364,11 +1355,6 @@ class Blocks extends React.Component {
         }
     }
     onWorkspaceUpdate (data) {
-        const etEnter = this.props.vm.editingTarget;
-        const etEnterName = etEnter && etEnter.getName ? etEnter.getName() : 'none';
-        console.log(`[LB-DEBUG] onWorkspaceUpdate fired for "${etEnterName}" (id=${etEnter && etEnter.id}); ` + // eslint-disable-line no-console, max-len
-            `xml length=${data.xml && data.xml.length}; isVisible prop=${this.props.isVisible}; ` +
-            `workspace visible=${this.workspace && this.workspace.isVisible && this.workspace.isVisible()}.`);
         // When we change sprites, update the toolbox to have the new sprite's blocks
         const toolboxXML = this.getToolboxXML();
         if (toolboxXML) {
@@ -1397,8 +1383,6 @@ class Blocks extends React.Component {
             if (error.message) {
                 error.message = `Workspace Update Error: ${error.message}`;
             }
-            console.log('[LB-DEBUG] onWorkspaceUpdate LOAD FAILED: ' + // eslint-disable-line no-console
-                `${error && error.message}`);
             log.error(error);
         }
         this.workspace.addChangeListener(this.props.vm.blockListener);
@@ -1416,14 +1400,6 @@ class Blocks extends React.Component {
         // workspace to be 'undone' here.
         this.workspace.clearUndo();
         this.refreshFlyoutLayout({reason: 'workspaceUpdate'});
-        const svg = this.workspace.getParentSvg && this.workspace.getParentSvg();
-        const rect = svg && svg.getBoundingClientRect ? svg.getBoundingClientRect() : null;
-        const flyout = this.workspace.getFlyout && this.workspace.getFlyout();
-        console.log(`[LB-DEBUG] onWorkspaceUpdate done: target id=${this.props.vm.editingTarget && this.props.vm.editingTarget.id}; ` + // eslint-disable-line no-console, max-len
-            `loaded ${this.workspace.getTopBlocks(false).length} top blocks; ` +
-            `workspace visible=${this.workspace.isVisible && this.workspace.isVisible()}; ` +
-            `flyout visible=${flyout && flyout.isVisible && flyout.isVisible()}; ` +
-            `canvas size=${rect && Math.round(rect.width)}x${rect && Math.round(rect.height)}.`);
         setTimeout(() => this.addCloseButtonsToAllBlocks(), 0);
     }
     handleMonitorsUpdate (monitors) {
