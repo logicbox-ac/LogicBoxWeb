@@ -214,12 +214,17 @@ const GUIComponent = props => {
         // Reload the workspace for the current editingTarget once the tab is
         // visible (the load fails silently on a zero-size hidden workspace).
         if (tab === 'code' && mobileActiveTab !== 'code' && props.vm) {
-            setTimeout(() => {
+            // Wait for React to commit and the browser to lay out the now-visible
+            // Code panel before reloading — a fixed timeout can fire while the
+            // canvas is still zero-size on slower devices, so the reload renders
+            // blank. Double rAF runs after layout (and one paint) regardless of
+            // device speed.
+            requestAnimationFrame(() => requestAnimationFrame(() => {
                 if (props.vm) {
                     props.vm.refreshWorkspace();
                     window.dispatchEvent(new Event('resize'));
                 }
-            }, 50);
+            }));
         }
         if (tab === 'costumes') props.onActivateCostumesTab();
         if (tab === 'sounds') props.onActivateSoundsTab();
