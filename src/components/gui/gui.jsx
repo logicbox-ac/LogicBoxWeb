@@ -189,22 +189,19 @@ const GUIComponent = props => {
             if (mobileActiveTab === 'code' && tab !== 'code' && vm.editingTarget) {
                 codeEditingTargetRef.current = vm.editingTarget.id;
             }
-            // Entering Code: snap back to that target if it still exists and the
-            // current editing target drifted (e.g. user tapped the Stage in Files).
+            // Entering Code: snap back to the saved target only if the editing target
+            // drifted to the Stage in the Files tab (e.g. applying a backdrop selects
+            // the Stage). Drifting to a sprite is intentional — adding a new sprite or
+            // tapping an existing one in Files should persist, so we leave it alone.
             if (tab === 'code' && mobileActiveTab !== 'code' && codeEditingTargetRef.current) {
                 const savedId = codeEditingTargetRef.current;
                 const exists = vm.runtime && typeof vm.runtime.getTargetById === 'function' ?
                     Boolean(vm.runtime.getTargetById(savedId)) : true;
-                if (exists && vm.editingTarget && vm.editingTarget.id !== savedId) {
+                if (exists && vm.editingTarget && vm.editingTarget.id !== savedId &&
+                    vm.editingTarget.isStage) {
                     vm.setEditingTarget(savedId);
                 }
             }
-        }
-        // Record the timestamp when we land on the Files tab. The mobile editing-target
-        // guard uses it to ignore taps that fire too soon after switching tabs (those
-        // are almost always "finger landed mid-layout-shift" rather than intentional).
-        if (tab === 'files' && typeof window !== 'undefined') {
-            window.__lbFilesTabEnteredAt = Date.now();
         }
         setMobileActiveTab(tab);
         if (tab === 'code') props.onActivateTab(0);
