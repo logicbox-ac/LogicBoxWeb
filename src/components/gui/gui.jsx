@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import omit from 'lodash.omit';
 import PropTypes from 'prop-types';
-import React, {Suspense, lazy, useCallback, useRef, useState} from 'react';
+import React, {Suspense, lazy, useCallback, useState} from 'react';
 import {defineMessages, FormattedMessage, injectIntl, intlShape} from 'react-intl';
 import {connect} from 'react-redux';
 import MediaQuery from 'react-responsive';
@@ -100,11 +100,6 @@ const GUIComponent = props => {
     const [mobileActiveTab, setMobileActiveTab] = useState('code');
     // Collapsible stage state for code tab
     const [isStageCollapsed, setIsStageCollapsed] = useState(false);
-    // Remembers which target the user was coding, so tapping a sprite/stage in the
-    // Files tab (to edit its assets) doesn't leave the Code tab showing a different,
-    // often-empty workspace. The Blocks component's isVisible prop never toggles on
-    // mobile, so its own save/restore can't fire here — we drive it from tab changes.
-    const codeEditingTargetRef = useRef(null);
     const {
         accountNavOpen,
         activeTabIndex,
@@ -184,25 +179,11 @@ const GUIComponent = props => {
     } = omit(props, 'dispatch');
 
     const handleMobileTabChange = useCallback(tab => {
-        if (vm) {
-            // Leaving Code: remember the target we were coding.
-            if (mobileActiveTab === 'code' && tab !== 'code' && vm.editingTarget) {
-                codeEditingTargetRef.current = vm.editingTarget.id;
-            }
-            // Entering Code: snap back to the saved target only if the editing target
-            // drifted to the Stage in the Files tab (e.g. applying a backdrop selects
-            // the Stage). Drifting to a sprite is intentional — adding a new sprite or
-            // tapping an existing one in Files should persist, so we leave it alone.
-            if (tab === 'code' && mobileActiveTab !== 'code' && codeEditingTargetRef.current) {
-                const savedId = codeEditingTargetRef.current;
-                const exists = vm.runtime && typeof vm.runtime.getTargetById === 'function' ?
-                    Boolean(vm.runtime.getTargetById(savedId)) : true;
-                if (exists && vm.editingTarget && vm.editingTarget.id !== savedId &&
-                    vm.editingTarget.isStage) {
-                    vm.setEditingTarget(savedId);
-                }
-            }
-        }
+        // Whichever target the user picked in Files (sprite or Stage) is the one
+        // they want to code. Don't second-guess it with a save/restore — the rAF
+        // workspace re-sync below renders the current editingTarget on Code-tab
+        // entry, so the user always sees the blocks for the sprite/stage they
+        // last selected.
         setMobileActiveTab(tab);
         if (tab === 'code') props.onActivateTab(0);
         // On mobile the Blocks component's isVisible prop never toggles, so the
