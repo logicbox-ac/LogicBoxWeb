@@ -30,3 +30,23 @@ body,
         /* Let specific containers handle scroll */
     }
 }
+
+/*
+ * Short desktop / laptop screens (≥768px wide, ≤699px tall). The 640px
+ * min-height above forces the page taller than the viewport on these screens,
+ * leaving a white gap below the editor and clipping the bottom of the sprite
+ * selector. Collapse the page to the viewport so the editor fills it exactly;
+ * the matching @media (min-width: 768px) and (max-height: 699px) rule in
+ * sprite-selector.css makes the sprite list scroll so nothing is cut off.
+ */
+@media only screen and (min-width: 768px) and (max-height: 699px) {
+
+    html,
+    body,
+    .app {
+        min-height: 0;
+        height: 100vh;
+        overflow: hidden;
+        /* Let specific containers handle scroll */
+    }
+}
