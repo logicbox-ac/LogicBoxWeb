@@ -172,6 +172,23 @@ class SoundTab extends React.Component {
         this.fileInput = input;
     }
 
+    isSelectedSoundReady () {
+        const editingTarget = this.props.vm.editingTarget;
+        const sprite = editingTarget && editingTarget.sprite;
+        if (!sprite || !sprite.sounds || !sprite.sounds[this.state.selectedSoundIndex]) {
+            return false;
+        }
+        // A sound's decoded audio buffer can be momentarily unavailable (for
+        // example a freshly added sound that is still decoding). Wait for it
+        // before mounting the editor, since SoundEditor reads the buffer
+        // directly in mapStateToProps and would otherwise crash on null.
+        try {
+            return Boolean(this.props.vm.getSoundBuffer(this.state.selectedSoundIndex));
+        } catch {
+            return false;
+        }
+    }
+
     render () {
         const {
             dispatchUpdateRestore, // eslint-disable-line no-unused-vars
@@ -257,7 +274,7 @@ class SoundTab extends React.Component {
                 onExportClick={this.handleExportSound}
                 onItemClick={this.handleSelectSound}
             >
-                {sprite.sounds && sprite.sounds[this.state.selectedSoundIndex] ? (
+                {this.isSelectedSoundReady() ? (
                     <SoundEditor soundIndex={this.state.selectedSoundIndex} />
                 ) : null}
                 {this.props.soundRecorderVisible ? (

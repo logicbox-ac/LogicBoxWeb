@@ -170,6 +170,14 @@ class SoundEditor extends React.Component {
                         this.undoStack.push(this.getUndoItem());
                     }
                     this.resetState(newSamples, newSampleRate);
+                    // The audio buffer is created lazily (only once the sound is
+                    // played), so materialize it before handing it to the VM.
+                    // Otherwise a null buffer gets stored in the sound bank, which
+                    // crashes SoundEditor's mapStateToProps on the next render.
+                    if (!this.audioBufferPlayer.ensureBuffer()) {
+                        log.error('Could not create audio buffer for sound update');
+                        return false; // Edit was not applied
+                    }
                     this.props.vm.updateSoundBuffer(
                         this.props.soundIndex,
                         this.audioBufferPlayer.buffer,
@@ -255,6 +263,7 @@ class SoundEditor extends React.Component {
     }
     copyCurrentBuffer() {
         // Cannot reliably use props.samples because it gets detached by Firefox
+        this.audioBufferPlayer.ensureBuffer();
         return {
             samples: this.audioBufferPlayer.buffer.getChannelData(0),
             sampleRate: this.audioBufferPlayer.buffer.sampleRate
@@ -263,6 +272,13 @@ class SoundEditor extends React.Component {
     handleEffect(name) {
         const trimStart = this.state.trimStart === null ? 0.0 : this.state.trimStart;
         const trimEnd = this.state.trimEnd === null ? 1.0 : this.state.trimEnd;
+
+        // The audio buffer is created lazily, so make sure it exists before
+        // reading from it (applying an effect without playing first otherwise
+        // dereferences a null buffer).
+        if (!this.audioBufferPlayer.ensureBuffer()) {
+            return;
+        }
 
         // Offline audio context needs at least 2 samples
         if (this.audioBufferPlayer.buffer.length < 2) {
