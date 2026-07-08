@@ -1,13 +1,13 @@
 {
-  "name": "scratch-gui",
+  "name": "logicbox-web",
   "version": "5.2.16",
-  "description": "Graphical User Interface for creating and running Scratch 3.0 projects",
-  "author": "Massachusetts Institute of Technology",
+  "description": "LogicBox visual block editor",
+  "author": "LogicBox",
   "license": "AGPL-3.0-only",
-  "homepage": "https://github.com/scratchfoundation/scratch-gui#readme",
+  "homepage": "https://editor.logicbox.one/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/scratchfoundation/scratch-gui.git"
+    "url": "https://github.com/logicbox-ac/LogicBoxWeb.git"
   },
   "main": "./dist/scratch-gui.js",
   "scripts": {

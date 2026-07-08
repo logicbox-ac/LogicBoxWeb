@@ -22,19 +22,14 @@ const blockIconURI = '/static/extension-logos/face.jpeg';
 
 const Message = {
     getX: {
-        'ja': '[PERSON_NUMBER] 人目の [KEYPOINT] のx座標',
-        'ja-Hira': '[PERSON_NUMBER] にんめの [KEYPOINT] のxざひょう',
-        'en': 'x of person [PERSON_NUMBER], point [KEYPOINT]'
+        'ja': '[KEYPOINT] のx座標',
+        'ja-Hira': '[KEYPOINT] のxざひょう',
+        'en': 'x of [KEYPOINT]'
     },
     getY: {
-        'ja': '[PERSON_NUMBER] 人目の [KEYPOINT] のy座標',
-        'ja-Hira': '[PERSON_NUMBER] にんめの [KEYPOINT] のyざひょう',
-        'en': 'y of person [PERSON_NUMBER], point [KEYPOINT]'
-    },
-    peopleCount: {
-        'ja': '人数',
-        'ja-Hira': 'にんずう',
-        'en': 'people count'
+        'ja': '[KEYPOINT] のy座標',
+        'ja-Hira': '[KEYPOINT] のyざひょう',
+        'en': 'y of [KEYPOINT]'
     },
     videoToggle: {
         'ja': 'ビデオを [VIDEO_STATE] にする',
@@ -405,14 +400,6 @@ class WorkerFaceDetector {
 }
 
 class Scratch3Facemesh2ScratchBlocks {
-    get PERSON_NUMBER_MENU () {
-        const personNumberMenu = [];
-        for (let i = 1; i <= MAX_SUPPORTED_FACES; i++) {
-            personNumberMenu.push({text: String(i), value: String(i)});
-        }
-        return personNumberMenu;
-    }
-
     get KEYPOINT_MENU () {
         return FACEMESH_ANCHOR_MENU;
     }
@@ -645,11 +632,6 @@ class Scratch3Facemesh2ScratchBlocks {
                     blockType: BlockType.REPORTER,
                     text: Message.getX[this._locale],
                     arguments: {
-                        PERSON_NUMBER: {
-                            defaultValue: '1',
-                            menu: 'personNumberMenu',
-                            type: ArgumentType.STRING
-                        },
                         KEYPOINT: {
                             defaultValue: 'nose',
                             menu: 'keypointMenu',
@@ -662,22 +644,12 @@ class Scratch3Facemesh2ScratchBlocks {
                     blockType: BlockType.REPORTER,
                     text: Message.getY[this._locale],
                     arguments: {
-                        PERSON_NUMBER: {
-                            defaultValue: '1',
-                            menu: 'personNumberMenu',
-                            type: ArgumentType.STRING
-                        },
                         KEYPOINT: {
                             defaultValue: 'nose',
                             menu: 'keypointMenu',
                             type: ArgumentType.STRING
                         }
                     }
-                },
-                {
-                    opcode: 'getPeopleCount',
-                    blockType: BlockType.REPORTER,
-                    text: Message.peopleCount[this._locale]
                 },
                 {
                     opcode: 'videoToggle',
@@ -723,10 +695,6 @@ class Scratch3Facemesh2ScratchBlocks {
                     acceptReporters: true,
                     items: this.KEYPOINT_MENU
                 },
-                personNumberMenu: {
-                    acceptReporters: true,
-                    items: this.PERSON_NUMBER_MENU
-                },
                 ratioMenu: {
                     acceptReporters: true,
                     items: this.RATIO_MENU
@@ -744,8 +712,7 @@ class Scratch3Facemesh2ScratchBlocks {
             this._ensureFacemesh();
         }
 
-        const faceIndex = parseInt(args.PERSON_NUMBER, 10) - 1;
-        const point = resolveFacePoint(this.faces[faceIndex], args.KEYPOINT);
+        const point = resolveFacePoint(this.faces[0], args.KEYPOINT);
         if (!point) {
             return '';
         }
@@ -757,8 +724,7 @@ class Scratch3Facemesh2ScratchBlocks {
             this._ensureFacemesh();
         }
 
-        const faceIndex = parseInt(args.PERSON_NUMBER, 10) - 1;
-        const point = resolveFacePoint(this.faces[faceIndex], args.KEYPOINT);
+        const point = resolveFacePoint(this.faces[0], args.KEYPOINT);
         if (!point) {
             return '';
         }
