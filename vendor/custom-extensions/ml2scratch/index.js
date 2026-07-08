@@ -22,6 +22,34 @@ const HAT_TIMEOUT = 100;
 const blockIconURI = '/static/extension-logos/image.jpeg';
 
 const Message = {
+  train_label_1: {
+    'ja': 'ラベル1を学習する',
+    'ja-Hira': 'ラベル1をがくしゅうする',
+    'en': 'train label 1',
+    'zh-cn': '学习标签1',
+    'zh-tw': '學習標籤1'
+  },
+  train_label_2: {
+    'ja': 'ラベル2を学習する',
+    'ja-Hira': 'ラベル2をがくしゅうする',
+    'en': 'train label 2',
+    'zh-cn': '学习标签2',
+    'zh-tw': '學習標籤2'
+  },
+  train_label_3: {
+    'ja': 'ラベル3を学習する',
+    'ja-Hira': 'ラベル3をがくしゅうする',
+    'en': 'train label 3',
+    'zh-cn': '学习标签3',
+    'zh-tw': '學習標籤3'
+  },
+  train: {
+    'ja': 'ラベル[LABEL]を学習する',
+    'ja-Hira': 'ラベル[LABEL]をがくしゅうする',
+    'en': 'train label [LABEL]',
+    'zh-cn': '学习标签[LABEL]',
+    'zh-tw': '學習標籤[LABEL]'
+  },
   when_received_block: {
     'ja': 'ラベル[LABEL]を受け取ったとき',
     'ja-Hira': 'ラベル[LABEL]をうけとったとき',
@@ -324,6 +352,44 @@ class Scratch3ML2ScratchBlocks {
       extensionURL: Scratch3ML2ScratchBlocks.extensionURL,
       blockIconURI: blockIconURI,
       blocks: [
+        {
+          opcode: 'addExample1',
+          blockType: BlockType.COMMAND,
+          text: Message.train_label_1[this.locale]
+        },
+        {
+          opcode: 'addExample2',
+          blockType: BlockType.COMMAND,
+          text: Message.train_label_2[this.locale]
+        },
+        {
+          opcode: 'addExample3',
+          blockType: BlockType.COMMAND,
+          text: Message.train_label_3[this.locale]
+        },
+        {
+          opcode: 'train',
+          text: Message.train[this.locale],
+          blockType: BlockType.COMMAND,
+          arguments: {
+            LABEL: {
+              type: ArgumentType.STRING,
+              menu: 'train_menu',
+              defaultValue: '4'
+            }
+          }
+        },
+        {
+          opcode: 'trainAny',
+          text: Message.train[this.locale],
+          blockType: BlockType.COMMAND,
+          arguments: {
+            LABEL: {
+              type: ArgumentType.STRING,
+              defaultValue: '11'
+            }
+          }
+        },
         {
           opcode: 'getLabel',
           text: Message.label_block[this.locale],
