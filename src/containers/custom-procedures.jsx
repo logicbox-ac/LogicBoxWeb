@@ -36,6 +36,16 @@ class CustomProcedures extends React.Component {
             this.props.options,
             {rtl: this.props.isRtl}
         );
+        const isMobileViewport = typeof window !== 'undefined' &&
+            window.matchMedia &&
+            window.matchMedia('(max-width: 640px)').matches;
+
+        if (isMobileViewport) {
+            workspaceConfig.zoom = Object.assign({}, workspaceConfig.zoom, {
+                startScale: 0.62
+            });
+            workspaceConfig.scrollbars = false;
+        }
 
         // @todo This is a hack to make there be no toolbox.
         const oldDefaultToolbox = ScratchBlocks.Blocks.defaultToolbox;
@@ -106,7 +116,12 @@ class CustomProcedures extends React.Component {
         this.setState({warp: this.mutationRoot.getWarp()});
         // Allow the initial events to run to position this block, then focus.
         setTimeout(() => {
-            this.mutationRoot.focusLastEditor_();
+            if (this.workspace && typeof this.workspace.resize === 'function') {
+                this.workspace.resize();
+            }
+            if (!isMobileViewport) {
+                this.mutationRoot.focusLastEditor_();
+            }
         });
     }
     handleCancel () {

@@ -21,6 +21,7 @@
 .workspace {
     min-height: 200px;
     position: relative;
+    overflow: hidden;
 }
 
 .workspace :global(.injectionDiv) {
@@ -109,26 +110,33 @@
 /* Mobile Responsiveness */
 @media (max-width: 640px) {
     .modal-content {
-        width: 95%;
-        margin: 20px auto;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 100dvh;
+        max-height: 100dvh;
+        margin: 0;
         display: flex;
         flex-direction: column;
-        max-height: 90vh;
+        overflow: hidden;
     }
 
     .body {
-        padding: 1rem;
+        flex: 1 1 auto;
+        min-height: 0;
+        padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
         overflow-y: auto;
-        /* Allow scrolling if content is tall */
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
     }
 
     .options-row {
         flex-direction: column;
+        gap: 0.75rem;
     }
 
     .option-card+.option-card {
         margin-left: 0;
-        margin-top: 0.75rem;
+        margin-top: 0;
     }
 
     .option-card {
@@ -137,6 +145,8 @@
         justify-content: flex-start;
         padding: 0.75rem;
         text-align: left;
+        min-height: 5rem;
+        width: 100%;
     }
 
     .option-icon {
@@ -145,32 +155,78 @@
         margin-right: 1rem;
     }
 
+    .option-title {
+        font-size: 1rem;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+
     .option-description {
         display: none;
-        /* Hide descriptions to save space, or keep tight */
     }
 
     .workspace {
-        min-height: 150px;
-        /* Smaller workspace on mobile */
-        flex-shrink: 0;
+        min-height: 130px;
+        height: 32dvh;
+        max-height: 180px;
+        width: 100%;
+        flex: 0 0 auto;
+        overflow: hidden;
+    }
+
+    .workspace :global(.injectionDiv),
+    .workspace :global(.blocklySvg) {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+    }
+
+    .workspace :global(.blocklyScrollbarHorizontal),
+    .workspace :global(.blocklyScrollbarVertical) {
+        display: none;
+    }
+
+    .checkbox-row label {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        line-height: 1.3;
+    }
+
+    .button-row {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
     }
 
     .button-row button {
-        padding: 0.75rem 1.5rem;
-        /* Larger touch targets */
-        width: 100%;
-        /* Full width buttons? Or side by side? */
+        flex: 1 1 0;
+        min-height: 2.75rem;
+        min-width: 0;
+        padding: 0.75rem 1rem;
+        white-space: normal;
+        width: auto;
     }
 
-    /* Make buttons distinct row */
-    .button-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 10px;
-    }
-
-    [dir="ltr"] .button-row button+button {
+    [dir="ltr"] .button-row button+button,
+    [dir="rtl"] .button-row button+button {
         margin-left: 0;
+        margin-right: 0;
+    }
+}
+
+@media (max-width: 380px) {
+    .workspace {
+        height: 28dvh;
+        max-height: 150px;
+    }
+
+    .option-card {
+        min-height: 4.5rem;
+    }
+
+    .option-icon {
+        max-height: 28px;
+        margin-right: 0.75rem;
     }
 }
